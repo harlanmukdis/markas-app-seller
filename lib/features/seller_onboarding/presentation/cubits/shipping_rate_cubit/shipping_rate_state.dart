@@ -35,6 +35,35 @@ final class ShippingRateLoadSuccess extends ShippingRateState {
     return leaves.isEmpty ? zones : leaves;
   }
 
+  /// `Jawa Barat › Bekasi › Bekasi Kota`.
+  ///
+  /// Leaf zone names on their own are ambiguous in a flat list — several
+  /// cities have a "Kota"/"Kabupaten" pair — so the parent chain is walked to
+  /// make the picker readable.
+  String zonePathLabel(Zone zone) {
+    final byId = <int, Zone>{for (final z in zones) z.id: z};
+    final segments = <String>[zone.name];
+
+    var parentId = zone.parentId;
+    // Bounded rather than `while (parentId != null)`: a cycle in the data
+    // would otherwise hang the build.
+    for (var depth = 0; depth < 4 && parentId != null; depth++) {
+      final parent = byId[parentId];
+      if (parent == null) break;
+      segments.insert(0, parent.name);
+      parentId = parent.parentId;
+    }
+
+    return segments.join(' › ');
+  }
+
+  String zoneNameFor(int zoneId) {
+    for (final zone in zones) {
+      if (zone.id == zoneId) return zonePathLabel(zone);
+    }
+    return 'Zona $zoneId';
+  }
+
   ShippingRateLoadSuccess copyWith({
     List<ShippingRate>? rates,
     List<Zone>? zones,

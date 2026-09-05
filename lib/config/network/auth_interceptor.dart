@@ -94,10 +94,10 @@ class AuthInterceptor extends QueuedInterceptor {
 
   /// Returns the new access token, or null if the refresh failed.
   ///
-  /// The request body shape is an assumption: API doc 5.1 documents the
-  /// response of `POST /auth/refresh` but not its request. `refresh_token` in
-  /// the JSON body is the conventional pairing; if the backend expects it
-  /// somewhere else, this is the one place to change.
+  /// The API doc specifies the response of `POST /auth/refresh` but not its
+  /// request. `{"refresh_token": ...}` in the JSON body was verified against
+  /// the running backend, which answers with a fresh access token (and no
+  /// `seller_id`, which is why [SessionStore.save] leaves that field alone).
   Future<String?> _refreshAccessToken() async {
     try {
       final response = await refreshDio.post<dynamic>(

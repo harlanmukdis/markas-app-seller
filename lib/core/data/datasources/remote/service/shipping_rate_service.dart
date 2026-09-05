@@ -2,6 +2,7 @@ import '../../../../../config/network/api_endpoints.dart';
 import '../../../../domain/model/shipping/fleet_type.dart';
 import '../../../../domain/model/shipping/shipping_rate.dart';
 import '../../../../domain/model/shipping/zone.dart';
+import '../../../../utils/json_parse.dart';
 import 'base_service.dart';
 
 class ShippingRateService extends BaseService {
@@ -49,7 +50,20 @@ class ShippingRateService extends BaseService {
         'akses_sulit_fee': aksesSulitFee,
       },
     );
-    return ShippingRate.fromJson(envelope.map);
+
+    // The response is just `{ "id": 1 }` — verified against the running
+    // backend, not assumed. Parsing it as a full row would yield a rate with
+    // zone 0 and a base rate of 0, so the submitted values are folded back in.
+    return ShippingRate(
+      id: asInt(envelope.map['id'] ?? envelope.map['shipping_rate_id']),
+      zoneId: zoneId,
+      fleetTypeCode: fleetTypeCode,
+      baseRate: baseRate,
+      mode: mode,
+      kuliBongkarFee: kuliBongkarFee ?? 0,
+      lantaiAtasFee: lantaiAtasFee ?? 0,
+      aksesSulitFee: aksesSulitFee ?? 0,
+    );
   }
 
   Future<void> deleteRate(int rateId) async {

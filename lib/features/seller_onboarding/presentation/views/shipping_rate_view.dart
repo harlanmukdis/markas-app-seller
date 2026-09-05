@@ -166,7 +166,7 @@ class _ShippingRateBodyState extends State<_ShippingRateBody> {
                 ...state.rates.map(
                   (rate) => _RateRow(
                     rate: rate,
-                    zoneName: _zoneNameFor(state.zones, rate.zoneId),
+                    zoneName: state.zoneNameFor(rate.zoneId),
                     onDelete: state.isBusy ? null : () => _delete(rate),
                   ),
                 ),
@@ -207,7 +207,7 @@ class _ShippingRateBodyState extends State<_ShippingRateBody> {
                         hint: 'Pilih zona',
                         value: _selectedZone(state),
                         items: state.selectableZones,
-                        itemLabel: (zone) => zone.name,
+                        itemLabel: state.zonePathLabel,
                         onChanged: (zone) =>
                             setState(() => _zoneId = zone?.id),
                         validator: (zone) =>
@@ -315,19 +315,9 @@ class _ShippingRateBodyState extends State<_ShippingRateBody> {
 
   String _fleetLabel(List<FleetType> fleetTypes, String code) {
     for (final fleetType in fleetTypes) {
-      if (fleetType.code != code) continue;
-      final capacity = fleetType.capacityKg;
-      if (capacity == null) return fleetType.name;
-      return '${fleetType.name} (${formatThousands(capacity.round())} kg)';
+      if (fleetType.code == code) return fleetType.displayLabel;
     }
     return code;
-  }
-
-  String _zoneNameFor(List<Zone> zones, int zoneId) {
-    for (final zone in zones) {
-      if (zone.id == zoneId) return zone.name;
-    }
-    return 'Zona $zoneId';
   }
 }
 
