@@ -311,9 +311,11 @@ class _ReadyBanner extends StatelessWidget {
   }
 }
 
-/// The warehouse requirement is not a gate, which is exactly why it needs its
-/// own card: a store can be `VERIFIED` with every gate green and still have
-/// every checkout fail with `409 NO_WAREHOUSE`.
+/// The warehouse requirement is not a gate, which is exactly why it needs to
+/// sit in the same list: a store can be `VERIFIED` with every gate green and
+/// still have every checkout fail with `409 NO_WAREHOUSE`. It renders through
+/// the same [ChecklistTile] as the gates so it reads as part of the checklist
+/// rather than as a stray card.
 class _WarehouseCard extends StatelessWidget {
   const _WarehouseCard({required this.state, required this.onOpen});
 
@@ -322,9 +324,8 @@ class _WarehouseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = isAppDarkMode();
-    final needsWarehouse = state.needsWarehouse;
     final error = state.warehouseError;
+    final needsWarehouse = state.needsWarehouse;
 
     final String subtitle;
     if (error != null) {
@@ -336,55 +337,16 @@ class _WarehouseCard extends StatelessWidget {
       subtitle = '${state.warehouses.length} gudang terdaftar.';
     }
 
-    return Material(
-      color: isDark ? kDarkColor : kWhiteColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: () => onOpen(SellerRoutes.warehouse),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: 16.pa,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: needsWarehouse
-                  ? kWarningColor
-                  : (isDark ? Colors.white12 : kBorderColor),
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Icon(
-                needsWarehouse
-                    ? Icons.warehouse_outlined
-                    : Icons.check_circle_outline_rounded,
-                color: needsWarehouse ? kWarningColor : kSuccessColor,
-              ),
-              12.sbw,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Gudang (di luar gerbang aktivasi)',
-                      style: AppStyles.styleSemiBold14(context),
-                    ),
-                    4.sbh,
-                    Text(
-                      subtitle,
-                      style: AppStyles.styleRegular12(context)
-                          .copyWith(color: kLightThirdColor),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios_rounded,
-                  size: 14, color: kLightThirdColor),
-            ],
-          ),
-        ),
-      ),
+    return ChecklistTile(
+      title: 'Gudang (di luar gerbang aktivasi)',
+      subtitle: subtitle,
+      // A failed read is not a completed requirement — keep it pending so the
+      // row stays actionable.
+      isDone: error == null && !needsWarehouse,
+      pendingIcon: Icons.warehouse_outlined,
+      pendingAccent: kWarningColor,
+      highlightBorder: true,
+      onTap: () => onOpen(SellerRoutes.warehouse),
     );
   }
 }

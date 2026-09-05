@@ -7,6 +7,8 @@
 /// fields through these helpers instead.
 library;
 
+import 'dart:convert';
+
 int? asIntOrNull(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
@@ -97,3 +99,25 @@ List<Map<String, dynamic>> asMapList(dynamic value) {
 
 List<T> asModelList<T>(dynamic value, T Function(Map<String, dynamic>) fromJson) =>
     asMapList(value).map(fromJson).toList(growable: false);
+
+/// Some columns hold JSON that the backend hands back **as a string** rather
+/// than as a decoded structure — `photos_json` on an offer and
+/// `tier_snapshot_json` on an order item both do this. Reading them as a List
+/// or Map without decoding silently yields nothing.
+dynamic asDecodedJson(dynamic value) {
+  if (value is List || value is Map) return value;
+  final raw = asStringOrNull(value);
+  if (raw == null) return null;
+  try {
+    return jsonDecode(raw);
+  } on FormatException {
+    return null;
+  }
+}
+
+/// [asMapList] for a field that may arrive either decoded or as a JSON string.
+List<Map<String, dynamic>> asEncodedMapList(dynamic value) =>
+    asMapList(asDecodedJson(value));
+
+/// [asMap] for a field that may arrive either decoded or as a JSON string.
+Map<String, dynamic> asEncodedMap(dynamic value) => asMap(asDecodedJson(value));
