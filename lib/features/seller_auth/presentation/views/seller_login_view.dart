@@ -60,7 +60,7 @@ class _SellerLoginBodyState extends State<_SellerLoginBody> {
       return;
     }
 
-    context.go(SellerRoutes.onboarding);
+    context.go(SellerRoutes.home);
   }
 
   @override

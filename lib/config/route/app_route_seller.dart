@@ -9,7 +9,9 @@ import '../../features/seller_onboarding/presentation/views/bank_account_view.da
 import '../../features/seller_onboarding/presentation/views/kyc_upload_view.dart';
 import '../../features/seller_onboarding/presentation/views/onboarding_gates_view.dart';
 import '../../features/seller_onboarding/presentation/views/shipping_rate_view.dart';
+import '../../features/seller_home/presentation/views/seller_home_shell.dart';
 import '../../features/seller_onboarding/presentation/views/warehouse_view.dart';
+import '../../features/seller_orders/presentation/views/sub_order_detail_view.dart';
 import '../../features/seller_shell/presentation/views/seller_bootstrap_view.dart';
 
 /// Paths for the seller domain.
@@ -21,6 +23,14 @@ abstract class SellerRoutes {
   static const String bootstrap = '/';
   static const String login = '/seller/login';
   static const String register = '/seller/register';
+
+  /// The main shell once the store is up and running.
+  static const String home = '/seller/home';
+
+  static const String subOrderDetail = '/seller/orders/detail';
+
+  /// The activation checklist. Reachable at any time, but only the *landing*
+  /// page for a store that has not finished activating.
   static const String onboarding = '/seller/onboarding';
   static const String kyc = '/seller/onboarding/kyc';
   static const String bankAccount = '/seller/onboarding/bank-account';
@@ -34,7 +44,17 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.bootstrap, const SellerBootstrapView()),
   _sellerRoute(SellerRoutes.login, const SellerLoginView()),
   _sellerRoute(SellerRoutes.register, const SellerRegisterView()),
+  _sellerRoute(SellerRoutes.home, const SellerHomeShell()),
   _sellerRoute(SellerRoutes.onboarding, const OnboardingGatesView()),
+  GoRoute(
+    path: SellerRoutes.subOrderDetail,
+    pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
+      transitionKey: state.pageKey,
+      // Arguments travel untyped through `extra` and are cast, matching the
+      // kit's existing convention.
+      page: SubOrderDetailView(subOrderId: state.extra! as int),
+    ),
+  ),
   _sellerRoute(SellerRoutes.kyc, const KycUploadView()),
   _sellerRoute(SellerRoutes.bankAccount, const BankAccountView()),
   _sellerRoute(SellerRoutes.agreement, const AgreementView()),

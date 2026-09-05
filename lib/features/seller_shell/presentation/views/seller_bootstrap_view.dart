@@ -40,7 +40,11 @@ class _SellerBootstrapViewState extends State<SellerBootstrapView> {
       return;
     }
 
-    router.go(SellerRoutes.onboarding);
+    // The shell, not the activation checklist. A store that has already
+    // finished activating has no reason to land on a page full of green ticks,
+    // and one that has not gets an "Aktivasi belum selesai" card on the
+    // dashboard that links straight to it.
+    router.go(SellerRoutes.home);
   }
 
   @override

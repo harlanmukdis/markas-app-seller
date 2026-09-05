@@ -80,6 +80,8 @@ class _SellerRegisterBodyState extends State<_SellerRegisterBody> {
       context,
       'Akun toko dibuat. Lanjutkan proses aktivasi.',
     );
+    // A brand-new store lands on the checklist rather than the shell: every
+    // gate is still open and that is genuinely where its next action is.
     context.go(SellerRoutes.onboarding);
   }
 
