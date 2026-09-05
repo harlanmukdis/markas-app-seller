@@ -148,7 +148,7 @@ class _WarehouseBodyState extends State<_WarehouseBody> {
                     8.sbh,
                     CustomTextFormField(
                       controller: _addressIdController,
-                      hintText: '5',
+                      hintText: 'Kosongkan',
                       keyboardType: TextInputType.number,
                       textInputAction: TextInputAction.done,
                       filled: true,
@@ -160,8 +160,24 @@ class _WarehouseBodyState extends State<_WarehouseBody> {
                         if (int.tryParse(trimmed) == null) {
                           return 'ID alamat harus berupa angka';
                         }
+                        if (int.parse(trimmed) <= 0) {
+                          return 'ID alamat harus lebih dari 0';
+                        }
                         return null;
                       },
+                    ),
+                    6.sbh,
+                    // The field used to suggest "5", which sent people
+                    // straight into a foreign-key violation: the id must match
+                    // an existing address, and `GET /addresses` is empty on
+                    // this backend. The failure surfaces as an HTTP 500 with
+                    // an HTML error page rather than a validation error.
+                    Text(
+                      'Biarkan kosong kecuali alamat dengan ID tersebut '
+                      'benar-benar ada. ID yang tidak terdaftar membuat server '
+                      'membalas error 500, bukan pesan validasi.',
+                      style: AppStyles.styleRegular10(context)
+                          .copyWith(color: kWarningColor),
                     ),
                     24.sbh,
                     CustomButton(

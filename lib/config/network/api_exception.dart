@@ -95,12 +95,42 @@ class ApiException implements Exception {
   static String _plainBodyMessage(Response<dynamic>? response) {
     final status = response?.statusCode;
     final data = response?.data;
+
     if (data is String && data.trim().isNotEmpty) {
-      // CodeIgniter answers an unrouted path with a bare "Endpoint not found"
-      // rather than the JSON envelope.
-      return data.trim();
+      final body = data.trim();
+
+      // An unhandled PHP/database error escapes CodeIgniter as a full HTML
+      // error page instead of the JSON envelope. Rendering that verbatim would
+      // put a whole document into a snackbar, so it is summarised instead.
+      // Seen for real: POST /sellers/{id}/warehouses with an address_id that
+      // does not exist returns a "Database Error" page.
+      if (_looksLikeHtml(body)) {
+        final title = _htmlTitle(body);
+        return 'Server mengalami kesalahan internal (HTTP $status'
+            '${title == null ? '' : ': $title'}). '
+            'Periksa log backend — respons ini bukan JSON.';
+      }
+
+      // A short plain-text body is genuinely useful: an unrouted path answers
+      // with a bare "Endpoint not found".
+      if (body.length <= 200) return body;
+      return '${body.substring(0, 200)}…';
     }
+
     return 'Server membalas dengan status $status.';
+  }
+
+  static bool _looksLikeHtml(String body) {
+    final head = body.trimLeft().toLowerCase();
+    return head.startsWith('<!doctype html') || head.startsWith('<html');
+  }
+
+  static String? _htmlTitle(String body) {
+    final match =
+        RegExp(r'<title>(.*?)</title>', caseSensitive: false, dotAll: true)
+            .firstMatch(body);
+    final title = match?.group(1)?.trim();
+    return (title == null || title.isEmpty) ? null : title;
   }
 
   @override

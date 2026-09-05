@@ -143,6 +143,43 @@ void main() {
       expect(exception.message, contains('CORS'));
     });
 
+    test('summarises an HTML error page instead of dumping it', () {
+      // Real response from POST /sellers/{id}/warehouses when address_id
+      // points at a row that does not exist: CodeIgniter's unhandled database
+      // error escapes as a full HTML document, not the JSON envelope.
+      const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
+          '<meta charset="utf-8">\n<title>Database Error</title>\n'
+          '<style type="text/css">body { margin: 40px; }</style></head>'
+          '<body><h1>A Database Error Occurred</h1></body></html>';
+
+      final exception = ApiException.fromDio(
+        DioException(
+          requestOptions: RequestOptions(path: '/sellers/2/warehouses'),
+          response: _response(html, status: 500),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      expect(exception.statusCode, 500);
+      expect(exception.message, contains('Database Error'));
+      expect(exception.message, contains('500'));
+      // The point of the summary: no markup reaches the snackbar.
+      expect(exception.message, isNot(contains('<')));
+      expect(exception.message.length, lessThan(200));
+    });
+
+    test('passes a short plain-text body through unchanged', () {
+      final exception = ApiException.fromDio(
+        DioException(
+          requestOptions: RequestOptions(path: '/returns/1'),
+          response: _response('Endpoint not found', status: 404),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      expect(exception.message, 'Endpoint not found');
+    });
+
     test('converts cleanly into a DataError for the UI', () {
       final error = const ApiException(
         code: 'NO_SELLER_CONTEXT',

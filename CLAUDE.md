@@ -101,6 +101,8 @@ Rules that are load-bearing:
 - `GET /fleet-types` sends `capacity_kg_desc` as prose (`"± 5 ton"`, `"< 20 kg"`), not a numeric `capacity_kg`. It is display-only — never parse it into a weight limit.
 - `GET /zones` returns a flat list of 32 rows across `PROVINCE` / `CITY` / `ZONE`. Only `ZONE` rows can carry a tariff, and their names alone are ambiguous ("Bekasi Kota" vs "Bekasi Kabupaten"), so the picker walks `parent_id` to render `Jawa Barat › Bekasi › Bekasi Kota`.
 - `POST /sellers/{id}/sign_agreement` returns `{ seller_status, activation_gates }`. Signing while KYC and bank are still pending correctly leaves `status` at `DRAFT`.
+- `POST /sellers/{id}/warehouses` **fails with HTTP 500 if `address_id` is set to an id that does not exist**, and the failure escapes CodeIgniter as a full HTML error page rather than the JSON envelope. `GET /addresses` exists but is empty on this backend, so in practice `address_id` must be omitted. The warehouse form says so; `ApiException` summarises HTML bodies rather than putting a document into a snackbar.
+- **Any unhandled backend error arrives as HTML, not JSON.** `ApiException._plainBodyMessage` detects that and reports the `<title>` plus the status code. Never assume an error response is parseable.
 
 What is implemented: auth (register/login/refresh/me) and the whole of onboarding — the four activation gates, KYC document submission, bank accounts, the agreement, warehouses, and shipping tariffs. All of it has been exercised end to end against a live backend. Catalogue, orders, shipments, finance, returns, disputes, RFQ, chat, vouchers and reports are **not** started.
 
