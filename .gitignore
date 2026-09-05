@@ -101,7 +101,6 @@ GoogleService-Info.plist
 **/linux/flutter/ephemeral/
 
 # ---- Web ----
-lib/generated_plugin_registrant.dart
 
 # ---- Aset promo UI kit (48MB, tidak direferensikan kode) ----
 assets/screen_shot/

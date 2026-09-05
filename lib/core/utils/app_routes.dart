@@ -2,6 +2,8 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../config/route/app_route_seller.dart';
+
 import '../../features/auth/presentation/views/login_view.dart';
 import '../../features/auth/presentation/views/register_view.dart';
 import '../../features/auth/presentation/views/reset_password_view.dart';
@@ -58,8 +60,14 @@ class AppRoutes {
 }
 
 final GoRouter router = GoRouter(
-  initialLocation: AppRoutes.splash,
+  // The seller flow is the app. The UI kit's animated splash renders SVGs from
+  // `assets/images/`, which does not exist in this repo, so it cannot be the
+  // entry point — SellerBootstrapView decides where to go instead. Every kit
+  // route below stays registered and reachable.
+  initialLocation: SellerRoutes.bootstrap,
   routes: <RouteBase>[
+    // Seller domain routes live in their own file (config/route/).
+    ...appRouterSeller,
     GoRoute(
       path: AppRoutes.splash,
       pageBuilder: (BuildContext context, GoRouterState state) {

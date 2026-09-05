@@ -27,3 +27,14 @@ const String kAppLanguage = 'appLanguage';
 const String kAppTheme = 'appTheme';
 const String kDark = 'dark';
 const String kLight = 'light';
+
+// Seller session (Markas API)
+const String kSellerId = 'sellerId';
+const String kUserRole = 'userRole';
+const String kUserFullName = 'userFullName';
+const String kUserPhone = 'userPhone';
+
+/// Locally recorded KYC doc types, so the upload screen can show what has
+/// already been sent. The backend exposes no endpoint that lists KYC documents
+/// back, so this is a client-side note only — never treat it as server truth.
+const String kKycSubmittedDocTypes = 'kycSubmittedDocTypes';

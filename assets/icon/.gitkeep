@@ -1,0 +1,11 @@
+Placeholder.
+
+The UI kit's image assets were never copied into this repo (inherited from
+markas-app-member). `pubspec.yaml` glob-registers this directory and
+`AppImages` references files inside it, so the directory has to exist for
+`flutter build` to bundle assets at all.
+
+Screens that render these files (the kit's splash, onboarding and product
+screens) will show a missing-asset error until the real files are restored
+here. The seller screens added for the API integration are asset-free by
+design and do not depend on this.

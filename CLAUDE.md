@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **This document has two parts, and they do not describe the same thing.**
 > **Part 1 — Current state** is what the code actually is today; verified against the repo.
-> **Part 2 — Target architecture** is where the project is headed. None of it exists in this repo yet.
+> **Part 2 — Target architecture** is where the project is headed. It is now **partly built** — the migration checklist marks what landed.
 > Never run a command or follow a pattern from Part 2 until the corresponding migration step is done. If the two parts conflict, Part 1 wins for any change you make right now.
 
 ## Project identity
@@ -24,6 +24,7 @@ Flutter e-commerce **seller app**, duplicated from `markas-app-member` on 2026-0
 
 ```bash
 flutter pub get                       # install dependencies
+flutter run -d chrome                 # the target platform for this app (see below)
 flutter run                           # run on connected device/emulator
 flutter analyze                       # static analysis (flutter_lints 4.0.0 via analysis_options.yaml)
 flutter test                          # run all tests
@@ -39,11 +40,64 @@ Regenerate localizations after editing `lib/l10n/*.arb`:
 dart run intl_utils:generate          # requires: dart pub global activate intl_utils (not a declared dev_dependency)
 ```
 
-There is **no `build_runner` step in this repo** — no `freezed`, `json_serializable`, or `envied` is installed. See Part 2.
+There is **no `build_runner` step in this repo** — no `freezed`, `json_serializable`, or `envied` is installed. This is deliberate, not merely unfinished: see *Seller API integration* below.
+
+Point the app at a different backend without editing code:
+
+```bash
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost/markas/api/v1
+flutter run -d chrome --dart-define=LOG_HTTP=false      # silence the request log
+```
+
+`intl` is pinned to `^0.20.2`. Flutter 3.41's bundled `flutter_localizations` requires exactly `0.20.2`, and the kit's original `^0.19.0` made `flutter pub get` fail outright.
 
 ## Architecture
 
-There is **no backend**. `dio` and `get_it` are declared in `pubspec.yaml` but never imported; all product/review/cart data is hardcoded as fields inside cubits (e.g. `HomePageCubit.productsTShirt`). Models like `ProductModel` already carry `fromJson` factories, so wiring a real API means replacing the cubit's literal lists, not restructuring.
+**Two architectures coexist in `lib/` right now, on purpose.**
+
+- The **UI kit** (`lib/features/auth`, `home`, `my_cart`, `favorites`, `trending`, `onboarding`, `profile`, `spalsh`, `notifications&messages`, `shared`) still has no backend. `HomePageCubit.productsTShirt` and friends are hardcoded lists. Nothing about it changed.
+- The **seller app** (`lib/config`, `lib/core/data`, `lib/core/domain`, `lib/di`, `lib/features/seller_*`) talks to the real Markas Bangunan API and follows the Part 2 layering. New seller work goes here.
+
+When the two conflict, follow the seller-app conventions for anything touching the API, and the kit's conventions for anything touching its screens. Do not retrofit one onto the other file by file.
+
+### Seller API integration
+
+Backend: CodeIgniter 3 + MySQL + JWT at `http://localhost/markas/api/v1` (**port 80, not 8080**). The contract lives in `docs/API-SELLER-APP.md` — read it before touching anything in `lib/core/data`.
+
+**Target platform is Flutter web in Chrome.** Never import `dart:io` in shared code. The dev server and the API sit on different ports, so every call is cross-origin; the backend answers preflight `OPTIONS` with 204 and open CORS headers, which is the only reason this works. A failed request on web cannot distinguish "server down" from "CORS blocked" — `ApiException` says both in one message rather than guessing.
+
+Layering, bottom up:
+
+```
+lib/config/env/app_config.dart          # base URL via String.fromEnvironment
+lib/config/network/                     # dio_client, auth_interceptor, api_envelope,
+                                        #   api_exception, api_endpoints
+lib/config/route/app_route_seller.dart  # SellerRoutes + appRouterSeller
+lib/core/data_state.dart                # DataState<T> + DataError + DataErrorCode
+lib/core/data/local/session_store.dart  # token / seller_id / role, over CachedHelper
+lib/core/data/datasources/remote/service/   # *Service — owns Dio, throws ApiException
+lib/core/data/repositories/                 # *RepositoryImpl — never throws
+lib/core/domain/model/                      # hand-written models
+lib/core/domain/repositories/               # abstract interfaces cubits depend on
+lib/di/                                     # injector, injector_service, injector_repository
+lib/features/seller_auth/ + seller_onboarding/ + seller_shell/
+```
+
+Rules that are load-bearing:
+
+- **Never cast a JSON value directly.** The backend hands MySQL columns to `json_encode`, so `"id": "1"`, `"score": "100.00"` and `"is_official_store": "0"` are normal. Every model reads through `lib/core/utils/json_parse.dart` (`asInt`, `asDouble`, `asBool`, `asStringOrNull`, `asDateTime`, `asMapList`). `test/core/json_parse_test.dart` pins this behaviour.
+- **Timestamps are server wall clock with no timezone.** `asDateTime` parses them as local and does not convert — converting would shift every displayed deadline.
+- **Models are hand-written, not `freezed`.** Chosen deliberately over Part 2's codegen so editing a model does not require a `build_runner` round trip, and so the tolerant parsing above needs no custom `JsonConverter`. Cubit states are hand-written sealed classes, which give the same exhaustive `switch` as a freezed union.
+- **`seller_id` is never sent to the server.** The backend reads it from the JWT claim and rejects a mismatched path segment with 403. `SessionStore.sellerId` exists only to build URLs; `SellerRepositoryImpl` throws `NO_SELLER_CONTEXT` locally when it is missing so the UI has one code path for "this account is not a store".
+- **Services throw, repositories don't.** A `*Service` catches `DioException` and rethrows `ApiException`; `RepositoryGuard.guard` turns that into `DataFailed(DataError)`. An empty collection becomes `DataEmpty`, which cubits must treat as an empty list, not a failure.
+- **Surface `error.code` and `error.details` to the user.** For `GATES_NOT_PASSED` and `VALIDATION_ERROR` the details block is the only statement of which gate or field failed. `ErrorStateView` and `showErrorSnackBar` already render both.
+- **Cubits pull repositories with `injector<XRepository>()`**, not constructor injection, and expose `static XCubit get(context)` like the kit's cubits. Action methods (`login`, `add`, `create`, `signAgreement`) **return `DataError?`** rather than emitting an error state — the view shows a snackbar and keeps the typed form intact.
+- **Token refresh is automatic.** `AuthInterceptor` is a `QueuedInterceptor`, so parallel 401s produce one refresh, not four. `POST /auth/register` returns no refresh token, so `AuthRepositoryImpl.register` logs in immediately afterwards to get one. **The refresh request body shape (`{"refresh_token": ...}`) is an assumption** — the API doc specifies the response but not the request. It is isolated in `AuthInterceptor._refreshAccessToken`.
+- **Adding an endpoint** means: path constant in `api_endpoints.dart` -> method on a `*Service` -> method on the abstract repository -> implementation via `guard` -> registration in `injector_service.dart` / `injector_repository.dart` **in that dependency order**.
+
+What is implemented: auth (register/login/refresh/me) and the whole of onboarding — the four activation gates, KYC document submission, bank accounts, the agreement, warehouses, and shipping tariffs. Catalogue, orders, shipments, finance, returns, disputes, RFQ, chat, vouchers and reports are **not** started.
+
+`SellerRoutes.bootstrap` (`/`) is the router's `initialLocation`, not the kit's splash — see *Known rough edges*.
 
 ### Feature-first layout
 
@@ -55,6 +109,8 @@ lib/generated/  # Flutter Intl output — DO NOT EDIT
 lib/l10n/       # .arb translation sources
 ```
 
+The seller features (`seller_auth`, `seller_onboarding`, `seller_shell`) use the same `presentation/{cubits,views,views/widgets}` shape but keep **no** `data/` subtree — their models and repositories are centralised under `lib/core/domain` and `lib/core/data`, per the target architecture.
+
 The convention is applied loosely: `favorites`, `trending`, and `spalsh` are single files with no `presentation/` layer. Directory names contain typos that are part of the real paths — `spalsh` (splash), `presentaion` (profile only), and `notifications&messages` (literal `&`). Match the existing spelling rather than "fixing" it, or every import breaks.
 
 ### State: Cubits with mutable fields, not immutable state
@@ -64,6 +120,8 @@ The convention is applied loosely: `favorites`, `trending`, and `spalsh` are sin
 Cubits hold **public mutable fields** (`currentIndex`, `products`, controllers) and emit **marker states** that carry no data (`class HomeChangeBottomNav extends HomeLayoutState {}`). `BlocBuilder` reacts to the emit, then reads the field off the cubit. Follow this pattern; do not convert to data-carrying states piecemeal. (Part 2 replaces this with freezed sealed unions — a deliberate, project-wide migration, not a per-file change.)
 
 Every cubit exposes `static XCubit get(context) => BlocProvider.of(context);` — used as `HomePageCubit.get(context)`.
+
+**The seller cubits do not follow the marker-state pattern.** They emit hand-written sealed states that carry their data (`OnboardingLoadSuccess`, `ShippingRateLoadFailure`, …) and are consumed with an exhaustive `switch`. That is the intended end state for the whole app; the kit's cubits are simply not migrated yet.
 
 `MyBlocObserver` (`lib/core/utils/bloc_observer.dart`) logs all cubit lifecycle in debug.
 
@@ -95,6 +153,10 @@ color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
 - **Spacing**: extensions in [extensions.dart](lib/core/utils/extensions.dart) — `16.pa`, `16.ps`/`.pe` (start/end), `.pt`/`.pb`, `.psh`/`.psv` all return **`EdgeInsetsDirectional`** (RTL-aware — important, Arabic is supported). Gaps use `12.sbh` / `12.sbw` for `SizedBox`. Screen size via `context.screenWidth` / `context.screenHeight`.
 - **Assets**: referenced through `AppImages` constants; `assets/images/` and `assets/icon/` are glob-registered in `pubspec.yaml`, so new files need only an `AppImages` entry.
 - **App bar**: `customAppBar(context, title, action: ...)` in [custom_app_bar.dart](lib/core/function/custom_app_bar.dart).
+- **States**: `LoadingIndicatorView`, `ErrorStateView`, `EmptyStateView`, `showErrorSnackBar`, `showSuccessSnackBar` in [state_widgets.dart](lib/core/widgets/state_widgets.dart). Use these rather than hand-rolling a spinner, so every API failure is reported the same way.
+- **Forms**: `AppDropdownField<T>` in [app_dropdown_field.dart](lib/core/widgets/app_dropdown_field.dart) for closed-list fields, and `Validators` in [validators.dart](lib/core/utils/validators.dart). Several backend fields accept only a fixed list (doc types, fleet codes, cancellation reasons) — a free-text box just produces 422s.
+- **Numbers and dates**: `formatRupiah`, `formatThousands`, `formatDate`, `formatDateTime`, `parseRupiahInput` in [format_helper.dart](lib/core/utils/format_helper.dart). These avoid `intl`'s locale-aware formatters on purpose — a missing `id_ID` dataset throws at runtime on web. Amounts are whole rupiah; the server rounds and there are no cents.
+- **Note**: `CustomTextFormField`'s default validator returns Arabic text (`'هذا الحقل مطلوب'`). Always pass an explicit `validator`.
 
 ### Localization
 
@@ -106,8 +168,10 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 
 ## Known rough edges
 
-- `test/widget_test.dart` is still the unmodified Flutter counter template and **fails** — it pumps `MyApp` and looks for a `+` icon. Replace it before treating `flutter test` as a signal.
-- Stale `*.dart~` backup files litter `lib/` (and `android/`). They are not compiled but **do show up in grep results** — always confirm a hit isn't in a `~` file before editing.
+- **Assets are still missing, and the app renders wrong because of it.** `assets/images/` and `assets/icon/` now exist but contain only a `.gitkeep` — the UI kit's real files were never copied over from `markas-app-member`. Any kit screen that renders an `AppImages` path shows a missing-asset error. The seller screens are asset-free by design and are unaffected.
+- **The kit's custom font is disabled.** `assets/fonts/Hanimation_Arabic_Regular.otf` is not in the repo, and a declared-but-missing font file fails asset bundling and blocks `flutter build` entirely, so the `fonts:` block in `pubspec.yaml` is commented out. `kFontFamily = 'Hanimation'` is still referenced in the theme; an unregistered family falls back to the platform default silently. Restore the `.otf` and uncomment to get the kit's typography back.
+- **The router's `initialLocation` is `SellerRoutes.bootstrap` (`/`), not `AppRoutes.splash`.** The kit's animated splash renders four SVGs from the missing `assets/images/`, so it cannot be the entry point. `SellerBootstrapView` decides between the seller login and the onboarding dashboard based on the stored session. Every kit route stays registered and reachable.
+- `test/widget_test.dart` (the Flutter counter template, which failed) has been **replaced**. `flutter test` now runs 32 real tests covering the tolerant JSON parsers, `SellerModel`/`ActivationGates`/`BankAccount` parsing against the payload printed in the API doc, and envelope/error handling. It is a genuine signal — keep it green.
 - `lib/features/my_cart/presentation/views/map_screen.dart` is 100% commented out, and the `com.google.android.geo.API_KEY` meta-data in `android/app/src/main/AndroidManifest.xml` is commented out too. Restoring the map needs both, plus an iOS key. Location permissions are already declared in the manifest.
 - `DevicePreview` wraps the app when `kDebugMode`, so debug builds render inside a simulated device frame — layout that looks wrong in debug may be the preview frame, not the code.
 - Orientation is locked to portrait in `main()`.
@@ -117,20 +181,26 @@ Current state: `en` and `ar` are complete (284 keys) and selectable. `fr` appear
 
 # Part 2 — Target architecture
 
-**Status: not implemented.** Nothing below exists in this repo yet — verified: no `freezed`/`json_serializable`/`build_runner`/`envied` in `pubspec.yaml`; no `lib/config/`, `lib/di/`, `lib/ui/`, `lib/core/data/`, `lib/core/domain/`; no `.env`, `firebase.json`, or `lib/firebase_options.dart`; zero `*.freezed.dart` / `*.g.dart` files. `dio` and `get_it` are declared but unimported.
+**Status: partly implemented.** The layering, DI and result-wrapper landed with the seller API integration; the codegen did not, deliberately.
+
+Present: `lib/config/`, `lib/di/`, `lib/core/data/`, `lib/core/domain/`, `lib/core/data_state.dart`, the named `"api"` Dio singleton, `lib/config/route/app_route_seller.dart`.
+
+Still absent, by choice: `freezed` / `json_serializable` / `build_runner` / `envied` and any `*.freezed.dart` / `*.g.dart`. Models and cubit states are hand-written; env config is `String.fromEnvironment` rather than `.env` + `envied`, which needs no build step and works identically on web.
+
+Still absent, not yet done: `lib/ui/`, and any migration of the UI kit's own features. No Firebase, no `.env`, no `lib/firebase_options.dart`.
 
 This is the layering the project is being moved toward: **data → domain → presentation** per feature, wired with `get_it` for DI and `go_router` for navigation.
 
-## Additional commands (only after the deps below are added)
+## Additional commands (only if codegen is adopted later)
 
-Models use `freezed` + `json_serializable`; env vars use `envied`. Changes to `*_model.dart`, `*_state.dart`, `*_cubit.dart` (freezed part files), or `.env` require regenerating the related `*.freezed.dart` / `*.g.dart`:
+**Not applicable today** — there is no `build_runner` in this project and the seller integration was built without one. If `freezed` + `json_serializable` are adopted later, every change to a model or cubit state file gains a regeneration step:
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs   # while iterating
 ```
 
-`lib/config/env/env.dart` reads `.env` (the gitignored key names are listed in `.gitignore`) and produces `env.g.dart` via `envied`. It starts with a single `API_BASE_URL` placeholder — add one `EnviedField` per new base URL / API key as feature domains are added.
+Env config today is `lib/config/env/app_config.dart` reading `String.fromEnvironment` — override with `--dart-define`, no `.env` and no `envied`. Add a new constant there per base URL / API key as feature domains are added.
 
 ## Target layout
 
@@ -166,21 +236,33 @@ lib/
 
 ## Migration checklist (current → target)
 
-Derived from the gap between Part 1 and Part 2; no step is started yet.
+1. ~~Add `freezed_annotation`, `json_annotation`, `envied` + generators.~~ **Dropped deliberately.** Models and states are hand-written; see *Seller API integration*. Revisit only if `copyWith`/equality boilerplate becomes the bottleneck.
+2. ~~Create `lib/config/env/env.dart` + `.env`.~~ **Done differently** — `lib/config/env/app_config.dart` with `String.fromEnvironment`, overridable via `--dart-define`. No `.env` file exists or is needed.
+3. ~~Create `lib/config/network/dio_client.dart` with the named `"api"` Dio singleton.~~ **Done**, plus `auth_interceptor.dart` (queued, auto-refresh), `api_envelope.dart`, `api_exception.dart`, `api_endpoints.dart`.
+4. ~~Add `lib/core/data_state.dart` with the `DataState<T>` union.~~ **Done**, with `DataError` and `DataErrorCode` alongside it.
+5. ~~Build `lib/di/{injector,injector_service,injector_repository}.dart` and call `initialize()` before `runApp`.~~ **Done** — `main()` runs `CachedHelper.init()` then `initialize(onSessionExpired: …)`.
+6. **Partly done.** The *seller* domain is fully behind `*Service` + `*RepositoryImpl` (auth, seller, shipping rates). The UI kit's hardcoded lists (`HomePageCubit.productsTShirt` and friends) are untouched — and note the kit sells fashion, so most of it has no counterpart in the seller API and will likely be deleted rather than wired up.
+7. **Partly done.** Seller cubits emit hand-written sealed states carrying data. The kit's marker states are unchanged.
+8. **Started.** `lib/config/route/app_route_seller.dart` holds `SellerRoutes` + `appRouterSeller`, spread into the single `GoRouter` in [app_routes.dart](lib/core/utils/app_routes.dart). The kit's routes are still a flat table in that file.
+9. **Not started.** `lib/features/` vs `lib/ui/` is still undecided. Seller features currently live under `lib/features/seller_*`.
 
-1. Add `freezed_annotation`, `json_annotation`, `envied` to dependencies and `build_runner`, `freezed`, `json_serializable`, `envied_generator` to dev_dependencies.
-2. Create `lib/config/env/env.dart` + `.env` with `API_BASE_URL`; add `.env` to `.gitignore`.
-3. Create `lib/config/network/dio_client.dart` with the named `"api"` Dio singleton — `dio` is already in `pubspec.yaml`, just unused.
-4. Add `lib/core/data_state.dart` with the `DataState<T>` union.
-5. Build `lib/di/{injector,injector_service,injector_repository}.dart` and call `initialize()` before `runApp` in [main.dart](lib/main.dart), where `CachedHelper.init()` already runs — `get_it` is already in `pubspec.yaml`, just unused.
-6. Move the hardcoded lists out of cubits (`HomePageCubit.productsTShirt` and friends) behind a `*Service` + `*RepositoryImpl` pair. `ProductModel.fromJson` already exists as a starting point.
-7. Convert marker states to `@freezed` unions, one feature at a time, and switch cubits from public mutable fields to emitted state data.
-8. Split [app_routes.dart](lib/core/utils/app_routes.dart) into per-domain route files under `lib/config/route/`.
-9. Decide the fate of `lib/features/` vs `lib/ui/` — the target names the presentation root `ui/`, which is a rename of the existing tree, not a second one.
+### Remaining API surface
+
+`docs/API-SELLER-APP.md` covers roughly 80 endpoints; onboarding is one of sixteen groups. Build the rest in this order, since each depends on the last: catalogue (SKU requests, offers, price tiers, activation gates, inventory) -> orders (sub-orders, shipments, POD) -> finance (balance, ledger, withdrawals) -> returns and disputes -> RFQ, chat, vouchers, reports.
+
+Traps documented in the API reference that must be handled when those land — each one fails silently or confusingly otherwise:
+
+- `photos_json` must be objects `{url, width, height}`, not URL strings, and the app must measure the images itself. A bare string array makes `width` read as 0 and offer activation fails with no clear reason. Minimum 3 photos, each ≥ 800×800.
+- `POST /offers/{id}/price_tiers` is a **replace**, not an append. Read the current tiers, edit locally, send the complete list back.
+- `POST /sku-requests` answers **HTTP 200** when it did *not* create anything — branch on `data.similar_found`, never on the status code.
+- `GET /returns/{id}` and `GET /disputes/{id}` do not exist; use `/returns/{id}/detail` and `/disputes/{id}/detail`.
+- `strikethrough_price` is silently dropped if unproven; compare the response against what was sent and tell the store why it vanished.
+- Deadlines are in *working hours* and skip weekends and holidays. Never compute them client-side — use the server's `*_deadline` / `*_at` fields.
+- There is no file upload endpoint anywhere. Every `file_url` / `photo_url` / `photos_json` field takes a URL the app must have uploaded elsewhere first.
 
 ## Follow-ups when starting a new project from this base
 
 - **Firebase**: this repo has no Firebase at all today. If it is adopted (or if this project is duplicated from one that has it), run `flutterfire configure` rather than inheriting another project's `firebase.json`, `lib/firebase_options.dart`, and platform config files — a copied config points at the origin project.
 - **App identifier**: already done for this project — Android `applicationId`/`namespace`, iOS/macOS `PRODUCT_BUNDLE_IDENTIFIER`, `android:label`, `CFBundleDisplayName`, `MaterialApp.title` and the desktop/web names all say `com.markas.seller` / "Markas Seller". `name:` in `pubspec.yaml` is intentionally still `navy_wear` — see Project identity.
 - **In-app brand text is still "Shopapay"** and was deliberately left alone during the rebrand, because the strings live in `lib/l10n/*.arb` and changing them requires regenerating `lib/generated/` (`dart run intl_utils:generate`, which needs `dart pub global activate intl_utils` first — it is not a declared dev_dependency). What remains: the `appName` and `aboutShopapay` keys in `intl_en.arb` / `intl_ar.arb`, the `AppImages.Shopapay` constant in [app_images.dart](lib/core/utils/app_images.dart), and its use in `about_app_view.dart`, `profile_view.dart`, `settings_view.dart` and `splash_screen.dart`. Never hand-edit `lib/generated/`.
-- **Missing assets**: `assets/images/` and `assets/icon/` are registered in `pubspec.yaml` and referenced throughout `AppImages`, but neither directory exists on disk — inherited from `markas-app-member`, where the UI kit's asset folders were never copied in. The app cannot render until they are restored.
+- **Missing assets**: see *Known rough edges*. The directories now exist so the build succeeds, but the files themselves are still absent.
