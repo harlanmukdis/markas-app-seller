@@ -41,12 +41,41 @@ class OffersCubit extends Cubit<OffersState> {
     emit(OffersLoadSuccess(offers: offers));
     if (offers.isEmpty) return;
 
-    // Names and stock are enrichment: the list is already usable without them,
-    // so they load after the first paint rather than delaying it.
+    // Names, tiers and stock are enrichment: the list is already usable
+    // without them, so they load after the first paint rather than delaying it.
     await Future.wait(<Future<void>>[
       _loadSkuNames(offers),
+      _loadDetails(offers),
       _loadStock(offers),
     ]);
+  }
+
+  /// `GET /offers` omits `price_tiers` — only the detail endpoint returns them.
+  /// Without this the list would report "no price set" and "no RETAIL tier" for
+  /// every offer, including fully priced ones.
+  Future<void> _loadDetails(List<Offer> offers) async {
+    final detailed = <int, Offer>{};
+
+    const batchSize = 5;
+    for (var i = 0; i < offers.length; i += batchSize) {
+      final slice = offers.skip(i).take(batchSize);
+      await Future.wait(slice.map((offer) async {
+        final result = await _offerRepository.getOffer(offer.id);
+        if (result is DataSuccess<Offer>) detailed[offer.id] = result.value;
+      }));
+      if (isClosed) return;
+    }
+
+    final current = state;
+    if (current is! OffersLoadSuccess) return;
+    emit(
+      current.copyWith(
+        offers: current.offers
+            .map((offer) => detailed[offer.id] ?? offer)
+            .toList(growable: false),
+        tiersLoaded: true,
+      ),
+    );
   }
 
   Future<void> _loadSkuNames(List<Offer> offers) async {

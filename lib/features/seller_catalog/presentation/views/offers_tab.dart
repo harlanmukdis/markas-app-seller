@@ -109,6 +109,7 @@ class _OffersContent extends StatelessWidget {
                 offer: offer,
                 name: state.nameFor(offer),
                 stock: state.stock[offer.id],
+                tiersLoaded: state.tiersLoaded,
                 isBusy: state.busyOfferId == offer.id,
               ),
             ),
@@ -124,12 +125,14 @@ class _OfferCard extends StatelessWidget {
     required this.offer,
     required this.name,
     required this.stock,
+    required this.tiersLoaded,
     required this.isBusy,
   });
 
   final Offer offer;
   final String name;
   final double? stock;
+  final bool tiersLoaded;
   final bool isBusy;
 
   Future<void> _toggle(BuildContext context) async {
@@ -155,9 +158,10 @@ class _OfferCard extends StatelessWidget {
         : retail.map((tier) => tier.price).reduce((a, b) => a < b ? a : b);
 
     // Everything the client can already tell about the listing gates, so the
-    // store learns why it cannot go live before pressing the button.
+    // store learns why it cannot go live before pressing the button. Tier
+    // state is only knowable once the detail read has landed.
     final blockers = <String>[
-      if (!offer.hasRetailTier) 'belum ada tier RETAIL',
+      if (tiersLoaded && !offer.hasRetailTier) 'belum ada tier RETAIL',
       if (!offer.photosOk) 'foto belum memenuhi syarat (≥3 foto, ≥800×800)',
     ];
 
@@ -201,9 +205,9 @@ class _OfferCard extends StatelessWidget {
             children: <Widget>[
               _Meta(
                 icon: Icons.sell_outlined,
-                label: lowestRetail == null
-                    ? 'Harga belum diatur'
-                    : 'Mulai ${formatRupiah(lowestRetail)}',
+                label: lowestRetail != null
+                    ? 'Mulai ${formatRupiah(lowestRetail)}'
+                    : (tiersLoaded ? 'Harga belum diatur' : 'Harga …'),
               ),
               _Meta(
                 icon: Icons.inventory_outlined,

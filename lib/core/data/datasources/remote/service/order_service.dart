@@ -25,11 +25,18 @@ class OrderService extends BaseService {
     return SubOrder.fromJson(envelope.map);
   }
 
-  /// Flattens this store's sub-orders out of the order list, since the
-  /// "Pesanan Masuk" screen works in sub-orders, not orders (API doc 4).
+  /// The store's sub-orders — what the "Pesanan Masuk" screen actually shows.
+  ///
+  /// `GET /orders` does not return `sub_orders[]` for a seller. It returns one
+  /// flat row per sub-order, joining the parent order's columns alongside, so
+  /// each row is parsed directly as a [SubOrder]. Reading `sub_orders` from it
+  /// yields an empty list and a screen that looks like there are no orders.
   Future<List<SubOrder>> getSubOrders() async {
-    final orders = await getOrders();
-    return orders.expand((order) => order.subOrders).toList(growable: false);
+    final envelope = await getRequest(ApiEndpoints.orders);
+    return envelope
+        .listAt('orders')
+        .map(SubOrder.fromFlatOrderRow)
+        .toList(growable: false);
   }
 
   /// MENUNGGU_KONFIRMASI -> DIKONFIRMASI.

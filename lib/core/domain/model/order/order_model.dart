@@ -147,6 +147,19 @@ class SubOrder {
         shipments: asModelList(json['shipments'], Shipment.fromJson),
       );
 
+  /// Parses a row from `GET /orders`, which for a `SEL` token is **not** an
+  /// order with nested sub-orders but a flat join of the two.
+  ///
+  /// PHP keeps the first position but the last value for duplicate column
+  /// names, so `id`, `status`, `subtotal`, `shipping_total`, `tax_total`,
+  /// `created_at` and `updated_at` all hold the **sub-order's** values while
+  /// sitting among the order's fields. The parent order is reachable through
+  /// the separate `order_id` column, and `sub_orders[]` is absent entirely.
+  ///
+  /// The row carries no `items`, so a detail read is still needed to ship.
+  factory SubOrder.fromFlatOrderRow(Map<String, dynamic> json) =>
+      SubOrder.fromJson(json);
+
   bool get awaitingConfirmation =>
       status == SubOrderStatus.menungguKonfirmasi;
 

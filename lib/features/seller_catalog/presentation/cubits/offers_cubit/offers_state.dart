@@ -13,6 +13,7 @@ final class OffersLoadSuccess extends OffersState {
     required this.offers,
     this.skus = const <int, SkuMaster>{},
     this.stock = const <int, double>{},
+    this.tiersLoaded = false,
     this.busyOfferId,
   });
 
@@ -24,6 +25,12 @@ final class OffersLoadSuccess extends OffersState {
 
   /// Available quantity per offer id.
   final Map<int, double> stock;
+
+  /// True once each offer has been re-read from the detail endpoint, which is
+  /// the only place `price_tiers` comes from. Until then price and gate
+  /// information is unknown rather than absent, and must not be reported as
+  /// "no price set".
+  final bool tiersLoaded;
 
   final int? busyOfferId;
 
@@ -40,6 +47,7 @@ final class OffersLoadSuccess extends OffersState {
     List<Offer>? offers,
     Map<int, SkuMaster>? skus,
     Map<int, double>? stock,
+    bool? tiersLoaded,
     int? busyOfferId,
     bool clearBusy = false,
   }) =>
@@ -47,6 +55,7 @@ final class OffersLoadSuccess extends OffersState {
         offers: offers ?? this.offers,
         skus: skus ?? this.skus,
         stock: stock ?? this.stock,
+        tiersLoaded: tiersLoaded ?? this.tiersLoaded,
         busyOfferId: clearBusy ? null : (busyOfferId ?? this.busyOfferId),
       );
 }

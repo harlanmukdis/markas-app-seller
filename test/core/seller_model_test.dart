@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:navy_wear/core/domain/model/seller/activation_gates.dart';
 import 'package:navy_wear/core/domain/model/seller/bank_account.dart';
+import 'package:navy_wear/core/domain/model/order/order_model.dart';
 import 'package:navy_wear/core/domain/model/seller/seller_model.dart';
 
 /// Parsed against the exact `GET /sellers/{id}` payload printed in the API
@@ -105,6 +106,8 @@ void main() {
     });
   });
 
+  _flatOrderRowTests();
+
   group('BankAccount', () {
     test('accepts the create response, which uses bank_account_id', () {
       final account = BankAccount.fromJson(<String, dynamic>{
@@ -129,6 +132,65 @@ void main() {
 
       expect(account.maskedAccountNo, endsWith('7890'));
       expect(account.maskedAccountNo, isNot(contains('123456')));
+    });
+  });
+}
+
+/// `GET /orders` with a seller token returns a flat join of order and
+/// sub-order, not an order with nested sub-orders. Payload captured live.
+void _flatOrderRowTests() {
+  group('SubOrder.fromFlatOrderRow', () {
+    const Map<String, dynamic> row = <String, dynamic>{
+      'id': '1',
+      'order_no': 'ORD-260905-967F4C83',
+      'buyer_id': '13',
+      'status': 'MENUNGGU_KONFIRMASI',
+      'subtotal': '650000.00',
+      'shipping_total': '750000.00',
+      'grand_total': '1400000.00',
+      'payment_deadline': '2026-09-06 11:38:10',
+      'sub_order_no': 'SO-260905-6621F024',
+      'order_id': '1',
+      'seller_id': '4',
+      'seller_confirm_deadline': '2026-09-07 11:38:10',
+      'fleet_handover_cancel_at': '2026-09-10 11:38:10',
+      'total': '1400000.00',
+      'has_custom_item': '0',
+    };
+
+    test('reads the row as a sub-order, not as an order', () {
+      final subOrder = SubOrder.fromFlatOrderRow(row);
+
+      expect(subOrder.id, 1);
+      expect(subOrder.subOrderNo, 'SO-260905-6621F024');
+      expect(subOrder.orderId, 1);
+      expect(subOrder.awaitingConfirmation, isTrue);
+    });
+
+    test('exposes the confirmation deadline the row carries', () {
+      final subOrder = SubOrder.fromFlatOrderRow(row);
+
+      expect(subOrder.sellerConfirmDeadline, isNotNull);
+      expect(subOrder.activeDeadline, subOrder.sellerConfirmDeadline);
+    });
+
+    test('allows confirm and reject while awaiting confirmation', () {
+      final subOrder = SubOrder.fromFlatOrderRow(row);
+
+      expect(subOrder.canReject, isTrue);
+      expect(subOrder.canMarkReady, isFalse);
+      expect(subOrder.canCreateShipment, isFalse);
+    });
+
+    test('locks rejection for a confirmed sub-order with a custom item', () {
+      final locked = SubOrder.fromFlatOrderRow(<String, dynamic>{
+        ...row,
+        'status': 'DIKONFIRMASI',
+        'has_custom_item': '1',
+      });
+
+      expect(locked.canReject, isFalse);
+      expect(locked.canMarkReady, isTrue);
     });
   });
 }
