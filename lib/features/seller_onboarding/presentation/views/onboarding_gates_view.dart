@@ -52,6 +52,12 @@ class _OnboardingGatesBody extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // Material 2 takes AppBar icon colour from `primaryIconTheme`, which is
+        // white for this primary swatch — it is not derived from the bar's own
+        // background. A transparent bar over the white scaffold therefore
+        // renders the actions white-on-white and invisible. The kit's
+        // customAppBar sets its colours explicitly for exactly this reason.
+        foregroundColor: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
         title: Text('Aktivasi Toko', style: AppStyles.styleMedium18(context)),
         actions: <Widget>[
           IconButton(
