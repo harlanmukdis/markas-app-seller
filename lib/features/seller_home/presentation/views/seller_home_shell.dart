@@ -6,6 +6,7 @@ import '../../../../core/utils/constant.dart';
 import '../../../seller_catalog/presentation/views/offers_tab.dart';
 import '../../../seller_finance/presentation/views/finance_tab.dart';
 import '../../../seller_orders/presentation/views/orders_tab.dart';
+import '../../../seller_returns/presentation/views/returns_tab.dart';
 import 'dashboard_tab.dart';
 
 /// The store's main shell once activation is done.
@@ -29,6 +30,8 @@ class _SellerHomeShellState extends State<SellerHomeShell> {
     _ShellTab('Beranda', Icons.home_outlined, Icons.home_rounded),
     _ShellTab('Pesanan', Icons.receipt_long_outlined, Icons.receipt_long),
     _ShellTab('Produk', Icons.inventory_2_outlined, Icons.inventory_2),
+    _ShellTab('Purna jual', Icons.assignment_return_outlined,
+        Icons.assignment_return),
     _ShellTab('Keuangan', Icons.account_balance_wallet_outlined,
         Icons.account_balance_wallet),
   ];
@@ -45,6 +48,7 @@ class _SellerHomeShellState extends State<SellerHomeShell> {
             DashboardTab(),
             OrdersTab(),
             OffersTab(),
+            ReturnsTab(),
             FinanceTab(),
           ],
         ),

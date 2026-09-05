@@ -161,10 +161,21 @@ void _flatOrderRowTests() {
     test('reads the row as a sub-order, not as an order', () {
       final subOrder = SubOrder.fromFlatOrderRow(row);
 
-      expect(subOrder.id, 1);
       expect(subOrder.subOrderNo, 'SO-260905-6621F024');
       expect(subOrder.orderId, 1);
       expect(subOrder.awaitingConfirmation, isTrue);
+    });
+
+    test('flags its id as unreliable so actions resolve first', () {
+      // On this backend `id` always equals `order_id`, because every order
+      // carries exactly one sub-order — so which side of the join won is not
+      // observable. Acting on the wrong sub-order is unrecoverable, hence the
+      // flag rather than a guess.
+      expect(SubOrder.fromFlatOrderRow(row).idIsAmbiguous, isTrue);
+      expect(
+        SubOrder.fromJson(<String, dynamic>{'id': '9'}).idIsAmbiguous,
+        isFalse,
+      );
     });
 
     test('exposes the confirmation deadline the row carries', () {

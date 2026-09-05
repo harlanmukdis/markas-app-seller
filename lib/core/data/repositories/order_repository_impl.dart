@@ -26,6 +26,10 @@ class OrderRepositoryImpl with RepositoryGuard implements OrderRepository {
       guard(() => _service.getSubOrder(subOrderId));
 
   @override
+  Future<DataState<SubOrder>> resolveSubOrder(SubOrder listRow) =>
+      guard(() => _service.resolveSubOrder(listRow));
+
+  @override
   Future<DataState<String>> confirm(int subOrderId) =>
       guard(() => _service.confirm(subOrderId));
 

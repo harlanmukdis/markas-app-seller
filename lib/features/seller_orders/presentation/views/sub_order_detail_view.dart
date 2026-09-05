@@ -20,14 +20,25 @@ import '../cubits/sub_order_detail_cubit/sub_order_detail_cubit.dart';
 import 'widgets/deadline_chip.dart';
 
 class SubOrderDetailView extends StatelessWidget {
-  const SubOrderDetailView({super.key, required this.subOrderId});
+  const SubOrderDetailView({
+    super.key,
+    required this.orderId,
+    required this.subOrderNo,
+    required this.fallbackSubOrderId,
+  });
 
-  final int subOrderId;
+  final int? orderId;
+  final String? subOrderNo;
+  final int fallbackSubOrderId;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SubOrderDetailCubit>(
-      create: (_) => SubOrderDetailCubit(subOrderId)..load(),
+      create: (_) => SubOrderDetailCubit(
+        orderId: orderId,
+        subOrderNo: subOrderNo,
+        fallbackSubOrderId: fallbackSubOrderId,
+      )..load(),
       child: const _SubOrderDetailBody(),
     );
   }

@@ -1,4 +1,6 @@
 import '../../../../../config/network/api_endpoints.dart';
+import '../../../../../config/network/api_exception.dart';
+import '../../../../data_state.dart';
 import '../../../../domain/model/order/order_model.dart';
 import 'base_service.dart';
 
@@ -37,6 +39,38 @@ class OrderService extends BaseService {
         .listAt('orders')
         .map(SubOrder.fromFlatOrderRow)
         .toList(growable: false);
+  }
+
+  /// Finds the real sub-order behind a flat `GET /orders` row.
+  ///
+  /// The list row's `id` cannot be trusted (see [SubOrder.fromFlatOrderRow]),
+  /// so this reads the parent order — whose `sub_orders[]` carry unambiguous
+  /// ids — and matches on `sub_order_no`, which is unique. Acting on the wrong
+  /// sub-order would confirm or cancel somebody else's line.
+  Future<SubOrder> resolveSubOrder(SubOrder listRow) async {
+    if (!listRow.idIsAmbiguous) return listRow;
+
+    final orderId = listRow.orderId;
+    if (orderId == null) return listRow;
+
+    final order = await getOrder(orderId);
+    final subOrderNo = listRow.subOrderNo;
+
+    for (final candidate in order.subOrders) {
+      if (subOrderNo != null && candidate.subOrderNo == subOrderNo) {
+        return candidate;
+      }
+    }
+
+    // No number to match on: fall back to the only sub-order, if there is one.
+    // With several, guessing is worse than failing loudly.
+    if (order.subOrders.length == 1) return order.subOrders.single;
+
+    throw ApiException(
+      code: DataErrorCode.notFound,
+      message: 'Sub-pesanan ${subOrderNo ?? listRow.id} tidak ditemukan pada '
+          'order $orderId.',
+    );
   }
 
   /// MENUNGGU_KONFIRMASI -> DIKONFIRMASI.

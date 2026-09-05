@@ -51,8 +51,9 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
     pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
       transitionKey: state.pageKey,
       // Arguments travel untyped through `extra` and are cast, matching the
-      // kit's existing convention.
-      page: SubOrderDetailView(subOrderId: state.extra! as int),
+      // kit's existing convention. The parent order id and sub-order number
+      // are passed rather than the list row's id, which is not reliable.
+      page: _subOrderDetail(state.extra),
     ),
   ),
   _sellerRoute(SellerRoutes.kyc, const KycUploadView()),
@@ -61,6 +62,15 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.warehouse, const WarehouseView()),
   _sellerRoute(SellerRoutes.shippingRates, const ShippingRateView()),
 ];
+
+SubOrderDetailView _subOrderDetail(Object? extra) {
+  final args = extra is Map<String, dynamic> ? extra : const <String, dynamic>{};
+  return SubOrderDetailView(
+    orderId: args['order_id'] as int?,
+    subOrderNo: args['sub_order_no'] as String?,
+    fallbackSubOrderId: (args['fallback_id'] as int?) ?? 0,
+  );
+}
 
 GoRoute _sellerRoute(String path, Widget page) => GoRoute(
       path: path,

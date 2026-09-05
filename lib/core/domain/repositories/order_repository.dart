@@ -12,6 +12,10 @@ abstract class OrderRepository {
 
   Future<DataState<SubOrder>> getSubOrder(int subOrderId);
 
+  /// Resolves a flat `GET /orders` row to the sub-order it really refers to.
+  /// Call this before any action — the list row's id is not reliable.
+  Future<DataState<SubOrder>> resolveSubOrder(SubOrder listRow);
+
   Future<DataState<String>> confirm(int subOrderId);
 
   /// [reason] must be one of [RejectReason.all].
