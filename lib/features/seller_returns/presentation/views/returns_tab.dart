@@ -7,7 +7,6 @@ import '../../../../core/function/components.dart';
 import '../../../../core/utils/app_styles.dart';
 import '../../../../core/utils/constant.dart';
 import '../../../../core/utils/extensions.dart';
-import '../../../../core/utils/format_helper.dart';
 import '../../../../core/widgets/app_dropdown_field.dart';
 import '../../../../core/widgets/custom_buttons.dart';
 import '../../../../core/widgets/state_widgets.dart';
@@ -187,12 +186,10 @@ class _ReturnCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final deadline = entry.awaitingResponse
-        ? entry.deadlineTokoJawab
-        : (entry.awaitingInspection ? entry.deadlinePeriksa : null);
+    final deadline = entry.activeDeadline;
 
     return SectionCard(
-      title: 'Retur #${entry.id}'
+      title: '${entry.returnNo ?? 'Retur #${entry.id}'}'
           '${entry.shipmentId == null ? '' : ' · pengiriman ${entry.shipmentId}'}',
       trailing: Text(
         ReturnStatus.label(entry.status),
@@ -206,15 +203,22 @@ class _ReturnCard extends StatelessWidget {
         children: <Widget>[
           if (entry.reason != null)
             StatRow(label: 'Alasan', value: entry.reason!),
-          if (entry.refundAmount != null)
+          if (entry.qtyReturned > 0)
             StatRow(
-              label: 'Nilai refund',
-              value: formatRupiah(entry.refundAmount),
+              label: 'Jumlah diretur',
+              value: entry.qtyReturned.round().toString(),
             ),
-          if (entry.refundRoute != null)
+          if (entry.returnCourierType != null)
             StatRow(
-              label: 'Rute',
-              value: RefundRoute.label(entry.refundRoute),
+              label: 'Rute barang',
+              value: entry.needsPickup
+                  ? 'Dijemput toko'
+                  : entry.returnCourierType!,
+            ),
+          if (entry.evidencePhotos.isNotEmpty)
+            StatRow(
+              label: 'Foto bukti pembeli',
+              value: '${entry.evidencePhotos.length} foto',
             ),
           if (deadline != null) ...<Widget>[
             12.sbh,
@@ -226,10 +230,10 @@ class _ReturnCard extends StatelessWidget {
                   : 'diam = barang dianggap sesuai',
             ),
           ],
-          if (entry.needsPickup && entry.deadlineJemput != null) ...<Widget>[
+          if (entry.needsPickup && entry.pickupDeadline != null) ...<Widget>[
             8.sbh,
             DeadlineChip(
-              deadline: entry.deadlineJemput!,
+              deadline: entry.pickupDeadline!,
               label: 'Batas jemput barang',
               consequence: 'lewat = barang jadi milik pembeli',
             ),

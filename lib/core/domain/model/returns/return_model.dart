@@ -9,78 +9,104 @@ import '../../../utils/json_parse.dart';
 class ReturnModel {
   const ReturnModel({
     required this.id,
+    this.returnNo,
     this.shipmentId,
-    this.subOrderId,
     this.buyerId,
     this.status,
     this.reason,
-    this.reasonNote,
-    this.refundRoute,
-    this.returnMethod,
-    this.fault,
-    this.deadlineTokoJawab,
-    this.deadlinePeriksa,
-    this.deadlineJemput,
-    this.refundAmount,
+    this.qtyReturned = 0,
+    this.sellerResponseDeadline,
+    this.sellerRespondedAt,
+    this.sellerResponseNote,
+    this.sellerInspectDeadline,
+    this.returnCourierType,
+    this.pickupScheduledAt,
+    this.pickupDeadline,
+    this.buyerShipBackDeadline,
+    this.refundId,
     this.createdAt,
-    this.photos = const <String>[],
+    this.evidencePhotos = const <String>[],
   });
 
   final int id;
+  final String? returnNo;
   final int? shipmentId;
-  final int? subOrderId;
   final int? buyerId;
   final String? status;
   final String? reason;
-  final String? reasonNote;
+  final double qtyReturned;
 
-  /// If the store does not choose, the server does: when return shipping costs
-  /// more than the goods, it picks REFUND_TANPA_KEMBALI and the buyer keeps
-  /// them (RET-07).
-  final String? refundRoute;
+  /// 2×24h from delivery. **Silence means acceptance** (RET-04) — past this
+  /// the endpoint answers `409 ALREADY_AUTO_APPROVED`.
+  final DateTime? sellerResponseDeadline;
 
-  /// For DIKIRIM_BALIK the platform picks the carrier (RET-08):
-  /// LABEL_PLATFORM for normal goods, JEMPUT_TOKO otherwise — and a store that
-  /// misses the 3×24h pickup loses the goods and the refund (RET-12).
-  final String? returnMethod;
+  final DateTime? sellerRespondedAt;
+  final String? sellerResponseNote;
 
-  final String? fault;
-  final DateTime? deadlineTokoJawab;
-  final DateTime? deadlinePeriksa;
-  final DateTime? deadlineJemput;
-  final int? refundAmount;
+  /// 2×24h once the goods are back. Silence means "as described" and the
+  /// refund proceeds (RET-15).
+  final DateTime? sellerInspectDeadline;
+
+  /// How the goods come back. `JEMPUT_TOKO` means the store collects them
+  /// itself — and missing [pickupDeadline] hands the goods to the buyer
+  /// along with the refund (RET-12).
+  final String? returnCourierType;
+
+  final DateTime? pickupScheduledAt;
+  final DateTime? pickupDeadline;
+  final DateTime? buyerShipBackDeadline;
+  final int? refundId;
   final DateTime? createdAt;
-  final List<String> photos;
+
+  /// The buyer's unboxing photos. Sent as a JSON **string** holding plain URL
+  /// strings, not objects — unlike an offer's `photos_json`.
+  final List<String> evidencePhotos;
 
   factory ReturnModel.fromJson(Map<String, dynamic> json) => ReturnModel(
         id: asInt(json['id']),
+        returnNo: asStringOrNull(json['return_no']),
         shipmentId: asIntOrNull(json['shipment_id']),
-        subOrderId: asIntOrNull(json['sub_order_id']),
         buyerId: asIntOrNull(json['buyer_id']),
         status: asStringOrNull(json['status']),
         reason: asStringOrNull(json['reason']),
-        reasonNote: asStringOrNull(json['reason_note']),
-        refundRoute: asStringOrNull(json['refund_route']),
-        returnMethod: asStringOrNull(json['return_method']),
-        fault: asStringOrNull(json['fault']),
-        deadlineTokoJawab: asDateTime(json['deadline_toko_jawab']),
-        deadlinePeriksa: asDateTime(json['deadline_periksa']),
-        deadlineJemput: asDateTime(json['deadline_jemput']),
-        refundAmount: asIntOrNull(json['refund_amount']),
+        qtyReturned: asDouble(json['qty_returned']),
+        sellerResponseDeadline: asDateTime(json['seller_response_deadline']),
+        sellerRespondedAt: asDateTime(json['seller_responded_at']),
+        sellerResponseNote: asStringOrNull(json['seller_response_note']),
+        sellerInspectDeadline: asDateTime(json['seller_inspect_deadline']),
+        returnCourierType: asStringOrNull(json['return_courier_type']),
+        pickupScheduledAt: asDateTime(json['pickup_scheduled_at']),
+        pickupDeadline: asDateTime(json['pickup_deadline']),
+        buyerShipBackDeadline: asDateTime(json['buyer_ship_back_deadline']),
+        refundId: asIntOrNull(json['refund_id']),
         createdAt: asDateTime(json['created_at']),
-        photos: asDecodedJson(json['photos_json']) is List
-            ? (asDecodedJson(json['photos_json']) as List)
-                .map((e) => e is Map ? asString(e['url']) : e.toString())
-                .where((e) => e.isNotEmpty)
-                .toList(growable: false)
-            : const <String>[],
+        evidencePhotos: _photoUrls(json['evidence_photos_json']),
       );
+
+  /// Accepts both shapes seen on this backend: a bare list of URL strings and
+  /// a list of `{url: …}` objects.
+  static List<String> _photoUrls(dynamic value) {
+    final decoded = asDecodedJson(value);
+    if (decoded is! List) return const <String>[];
+    return decoded
+        .map((entry) => entry is Map ? asString(entry['url']) : entry.toString())
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+  }
 
   bool get awaitingResponse => status == ReturnStatus.diajukan;
 
   bool get awaitingInspection => status == ReturnStatus.diterimaToko;
 
-  bool get needsPickup => returnMethod == ReturnMethod.jemputToko;
+  /// The store has to collect the goods itself.
+  bool get needsPickup => returnCourierType == ReturnMethod.jemputToko;
+
+  /// The deadline currently running against the store, if any.
+  DateTime? get activeDeadline {
+    if (awaitingResponse) return sellerResponseDeadline;
+    if (awaitingInspection) return sellerInspectDeadline;
+    return null;
+  }
 }
 
 abstract class ReturnStatus {
