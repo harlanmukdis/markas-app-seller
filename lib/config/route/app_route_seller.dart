@@ -9,6 +9,7 @@ import '../../features/seller_onboarding/presentation/views/bank_account_view.da
 import '../../features/seller_onboarding/presentation/views/kyc_upload_view.dart';
 import '../../features/seller_onboarding/presentation/views/onboarding_gates_view.dart';
 import '../../features/seller_onboarding/presentation/views/shipping_rate_view.dart';
+import '../../features/seller_catalog/presentation/views/offer_detail_view.dart';
 import '../../features/seller_home/presentation/views/seller_home_shell.dart';
 import '../../features/seller_onboarding/presentation/views/warehouse_view.dart';
 import '../../features/seller_orders/presentation/views/sub_order_detail_view.dart';
@@ -28,6 +29,7 @@ abstract class SellerRoutes {
   static const String home = '/seller/home';
 
   static const String subOrderDetail = '/seller/orders/detail';
+  static const String offerDetail = '/seller/products/detail';
 
   /// The activation checklist. Reachable at any time, but only the *landing*
   /// page for a store that has not finished activating.
@@ -46,6 +48,13 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.register, const SellerRegisterView()),
   _sellerRoute(SellerRoutes.home, const SellerHomeShell()),
   _sellerRoute(SellerRoutes.onboarding, const OnboardingGatesView()),
+  GoRoute(
+    path: SellerRoutes.offerDetail,
+    pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
+      transitionKey: state.pageKey,
+      page: OfferDetailView(offerId: state.extra! as int),
+    ),
+  ),
   GoRoute(
     path: SellerRoutes.subOrderDetail,
     pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
