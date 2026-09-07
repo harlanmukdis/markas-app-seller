@@ -31,6 +31,7 @@ const String kLight = 'light';
 // Seller session (Markas API)
 const String kSellerId = 'sellerId';
 const String kUserRole = 'userRole';
+const String kActorType = 'actorType';
 const String kUserFullName = 'userFullName';
 const String kUserPhone = 'userPhone';
 

@@ -33,7 +33,7 @@ class KycDocument {
         fileUrl: asStringOrNull(json['file_url']),
         status: asStringOrNull(json['status']),
         rejectReason: asStringOrNull(json['reject_reason']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
       );
 }
 

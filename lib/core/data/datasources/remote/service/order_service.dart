@@ -1,6 +1,4 @@
 import '../../../../../config/network/api_endpoints.dart';
-import '../../../../../config/network/api_exception.dart';
-import '../../../../data_state.dart';
 import '../../../../domain/model/order/order_model.dart';
 import 'base_service.dart';
 
@@ -27,50 +25,50 @@ class OrderService extends BaseService {
     return SubOrder.fromJson(envelope.map);
   }
 
-  /// The store's sub-orders — what the "Pesanan Masuk" screen actually shows.
+  /// The store's sub-orders — what the "Pesanan Masuk" screen shows.
   ///
-  /// `GET /orders` does not return `sub_orders[]` for a seller. It returns one
-  /// flat row per sub-order, joining the parent order's columns alongside, so
-  /// each row is parsed directly as a [SubOrder]. Reading `sub_orders` from it
-  /// yields an empty list and a screen that looks like there are no orders.
-  Future<List<SubOrder>> getSubOrders() async {
-    final envelope = await getRequest(ApiEndpoints.orders);
-    return envelope
-        .listAt('orders')
-        .map(SubOrder.fromFlatOrderRow)
-        .toList(growable: false);
-  }
-
-  /// Finds the real sub-order behind a flat `GET /orders` row.
+  /// `GET /orders` returns **plain order rows**: no nested `sub_orders[]`, no
+  /// `sub_order_no`, no status or deadline for the store's own line, and no
+  /// status filter. (Before the v2.2 refactor it returned a flat order×
+  /// sub-order join; that is gone.) So each order has to be read individually
+  /// to reach the sub-order, which is the thing a store actually confirms,
+  /// rejects and ships.
   ///
-  /// The list row's `id` cannot be trusted (see [SubOrder.fromFlatOrderRow]),
-  /// so this reads the parent order — whose `sub_orders[]` carry unambiguous
-  /// ids — and matches on `sub_order_no`, which is unique. Acting on the wrong
-  /// sub-order would confirm or cancel somebody else's line.
-  Future<SubOrder> resolveSubOrder(SubOrder listRow) async {
-    if (!listRow.idIsAmbiguous) return listRow;
+  /// That is N+1 by construction and the reason to ask the backend for
+  /// `GET /sub-orders?status=` — this is the store's main work queue.
+  ///
+  /// Reads are chunked rather than fired all at once, and one failed order
+  /// does not lose the rest of the queue.
+  Future<List<SubOrder>> getSubOrders({int? sellerId}) async {
+    final orders = await getOrders();
+    final subOrders = <SubOrder>[];
 
-    final orderId = listRow.orderId;
-    if (orderId == null) return listRow;
+    const batchSize = 5;
+    for (var i = 0; i < orders.length; i += batchSize) {
+      final details = await Future.wait(
+        orders.skip(i).take(batchSize).map((order) async {
+          try {
+            return await getOrder(order.id);
+          } catch (_) {
+            return null;
+          }
+        }),
+      );
 
-    final order = await getOrder(orderId);
-    final subOrderNo = listRow.subOrderNo;
-
-    for (final candidate in order.subOrders) {
-      if (subOrderNo != null && candidate.subOrderNo == subOrderNo) {
-        return candidate;
+      for (final order in details) {
+        if (order == null) continue;
+        subOrders.addAll(
+          // An order may span several stores. The backend scopes this, but
+          // filtering here too means a widened response can never show one
+          // store another's line.
+          order.subOrders.where(
+            (subOrder) => sellerId == null || subOrder.sellerId == sellerId,
+          ),
+        );
       }
     }
 
-    // No number to match on: fall back to the only sub-order, if there is one.
-    // With several, guessing is worse than failing loudly.
-    if (order.subOrders.length == 1) return order.subOrders.single;
-
-    throw ApiException(
-      code: DataErrorCode.notFound,
-      message: 'Sub-pesanan ${subOrderNo ?? listRow.id} tidak ditemukan pada '
-          'order $orderId.',
-    );
+    return subOrders;
   }
 
   /// MENUNGGU_KONFIRMASI -> DIKONFIRMASI.

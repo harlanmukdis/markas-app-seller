@@ -30,7 +30,7 @@ class UserModel {
         email: asStringOrNull(json['email']),
         role: asStringOrNull(json['role']),
         status: asStringOrNull(json['status']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
         raw: json,
       );
 

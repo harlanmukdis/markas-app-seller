@@ -5,6 +5,7 @@ import '../../../../../core/data_state.dart';
 import '../../../../../core/domain/model/catalog/offer.dart';
 import '../../../../../core/domain/model/catalog/sku_master.dart';
 import '../../../../../core/domain/model/inventory/inventory.dart';
+import '../../../../../core/domain/model/review/review.dart';
 import '../../../../../core/domain/model/seller/warehouse.dart';
 import '../../../../../core/domain/repositories/catalog_repository.dart';
 import '../../../../../core/domain/repositories/inventory_repository.dart';
@@ -59,6 +60,7 @@ class OfferDetailCubit extends Cubit<OfferDetailState> {
       _inventoryRepository.getAvailable(offerId),
       _sellerRepository.getWarehouses(),
       _inventoryRepository.getLedger(offerId),
+      _offerRepository.getReviews(offerId),
       if (!offer.isFreeform && offer.skuId != null)
         _catalogRepository.getSkuMaster(offer.skuId!)
       else
@@ -77,7 +79,8 @@ class OfferDetailCubit extends Cubit<OfferDetailState> {
             _valueOrNull<List<Warehouse>>(results[2]) ?? const <Warehouse>[],
         ledger: _valueOrNull<List<InventoryLedgerEntry>>(results[3]) ??
             const <InventoryLedgerEntry>[],
-        sku: _valueOrNull<SkuMaster>(results[4]),
+        reviews: _valueOrNull<OfferReviews>(results[4]),
+        sku: _valueOrNull<SkuMaster>(results[5]),
       ),
     );
   }

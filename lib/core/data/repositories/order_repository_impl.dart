@@ -2,12 +2,14 @@ import '../../data_state.dart';
 import '../../domain/model/order/order_model.dart';
 import '../../domain/repositories/order_repository.dart';
 import '../datasources/remote/service/order_service.dart';
+import '../local/session_store.dart';
 import 'repository_guard.dart';
 
 class OrderRepositoryImpl with RepositoryGuard implements OrderRepository {
-  const OrderRepositoryImpl(this._service);
+  const OrderRepositoryImpl(this._service, this._sessionStore);
 
   final OrderService _service;
+  final SessionStore _sessionStore;
 
   @override
   Future<DataState<List<OrderModel>>> getOrders() =>
@@ -19,15 +21,11 @@ class OrderRepositoryImpl with RepositoryGuard implements OrderRepository {
 
   @override
   Future<DataState<List<SubOrder>>> getSubOrders() =>
-      guard(() => _service.getSubOrders());
+      guard(() => _service.getSubOrders(sellerId: _sessionStore.sellerId));
 
   @override
   Future<DataState<SubOrder>> getSubOrder(int subOrderId) =>
       guard(() => _service.getSubOrder(subOrderId));
-
-  @override
-  Future<DataState<SubOrder>> resolveSubOrder(SubOrder listRow) =>
-      guard(() => _service.resolveSubOrder(listRow));
 
   @override
   Future<DataState<String>> confirm(int subOrderId) =>

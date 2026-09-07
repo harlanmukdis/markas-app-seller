@@ -59,7 +59,7 @@ class InventoryLedgerEntry {
         refId: asStringOrNull(json['ref_id']),
         note: asStringOrNull(json['note']),
         actorType: asStringOrNull(json['actor_type']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
       );
 
   bool get isInbound => qtyPhysicalDelta > 0;

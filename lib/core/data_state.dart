@@ -64,6 +64,12 @@ class DataError {
 
   bool get isNoSellerContext => code == DataErrorCode.noSellerContext;
 
+  /// Either flavour of "you cannot do this", so callers do not have to know
+  /// which permission layer refused.
+  bool get isForbidden =>
+      code == DataErrorCode.forbidden ||
+      code == DataErrorCode.permissionDenied;
+
   /// `error.details.missing` on a 422, when present.
   List<String> get missingFields {
     final missing = details?['missing'];
@@ -83,6 +89,11 @@ abstract class DataErrorCode {
   static const String malformedJson = 'MALFORMED_JSON';
   static const String unauthenticated = 'UNAUTHENTICATED';
   static const String forbidden = 'FORBIDDEN';
+
+  /// From the v2.2 group+menu permission system. Distinct from [forbidden],
+  /// which means "not yours"; this means "your group is not allowed here".
+  /// Both are dead ends for the user, so the UI treats them the same.
+  static const String permissionDenied = 'PERMISSION_DENIED';
   static const String noSellerContext = 'NO_SELLER_CONTEXT';
   static const String notFound = 'NOT_FOUND';
   static const String methodNotAllowed = 'METHOD_NOT_ALLOWED';

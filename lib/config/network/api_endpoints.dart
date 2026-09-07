@@ -61,6 +61,10 @@ abstract class ApiEndpoints {
 
   static String offerGates(int id) => '/offers/$id/gates';
 
+  /// v2.2. A buyer-side feature the store still wants to read: rating drives
+  /// the buyer's `min_rating` filter and `sort=popular`.
+  static String offerReviews(int id) => '/offers/$id/reviews';
+
   static String offerActivate(int id) => '/offers/$id/activate';
 
   static String offerDeactivate(int id) => '/offers/$id/deactivate';

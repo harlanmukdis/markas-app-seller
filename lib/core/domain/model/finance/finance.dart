@@ -56,7 +56,7 @@ class LedgerEntry {
         balanceBucket: asStringOrNull(json['balance_bucket']),
         shipmentId: asIntOrNull(json['shipment_id']),
         note: asStringOrNull(json['note']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
       );
 
   bool get isCredit => amount >= 0;

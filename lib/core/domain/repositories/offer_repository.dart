@@ -1,5 +1,6 @@
 import '../../data_state.dart';
 import '../model/catalog/offer.dart';
+import '../model/review/review.dart';
 
 abstract class OfferRepository {
   Future<DataState<List<Offer>>> getOffers({String? status});
@@ -44,6 +45,8 @@ abstract class OfferRepository {
   );
 
   Future<DataState<OfferGates>> getGates(int offerId);
+
+  Future<DataState<OfferReviews>> getReviews(int offerId);
 
   Future<DataState<OfferGates>> activate(int offerId);
 

@@ -16,6 +16,7 @@ final class OfferDetailLoadSuccess extends OfferDetailState {
     this.available,
     this.warehouses = const <Warehouse>[],
     this.ledger = const <InventoryLedgerEntry>[],
+    this.reviews,
     this.isBusy = false,
   });
 
@@ -31,6 +32,11 @@ final class OfferDetailLoadSuccess extends OfferDetailState {
   final double? available;
   final List<Warehouse> warehouses;
   final List<InventoryLedgerEntry> ledger;
+
+  /// Buyer ratings on this listing. Read-only for a store, but it decides
+  /// whether the listing survives the buyer's `min_rating` filter.
+  final OfferReviews? reviews;
+
   final bool isBusy;
 
   String get displayName {
@@ -56,6 +62,7 @@ final class OfferDetailLoadSuccess extends OfferDetailState {
     double? available,
     List<Warehouse>? warehouses,
     List<InventoryLedgerEntry>? ledger,
+    OfferReviews? reviews,
     bool? isBusy,
   }) =>
       OfferDetailLoadSuccess(
@@ -65,6 +72,7 @@ final class OfferDetailLoadSuccess extends OfferDetailState {
         available: available ?? this.available,
         warehouses: warehouses ?? this.warehouses,
         ledger: ledger ?? this.ledger,
+        reviews: reviews ?? this.reviews,
         isBusy: isBusy ?? this.isBusy,
       );
 }

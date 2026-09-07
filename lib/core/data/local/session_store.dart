@@ -25,6 +25,9 @@ class SessionStore {
 
   String? get role => asStringOrNull(CachedHelper.getData(kUserRole));
 
+  /// `MERCHANT` for a store account (v2.2). Coarser than [role].
+  String? get actorType => asStringOrNull(CachedHelper.getData(kActorType));
+
   String? get fullName => asStringOrNull(CachedHelper.getData(kUserFullName));
 
   String? get phone => asStringOrNull(CachedHelper.getData(kUserPhone));
@@ -61,6 +64,11 @@ class SessionStore {
     if (role != null) {
       await CachedHelper.saveData(kUserRole, role);
     }
+
+    final actorType = session.actorType;
+    if (actorType != null) {
+      await CachedHelper.saveData(kActorType, actorType);
+    }
   }
 
   Future<void> saveAccessToken(String token) =>
@@ -77,6 +85,7 @@ class SessionStore {
     await CachedHelper.removeData(kSellerId);
     await CachedHelper.removeData(kUserId);
     await CachedHelper.removeData(kUserRole);
+    await CachedHelper.removeData(kActorType);
     await CachedHelper.removeData(kUserFullName);
     await CachedHelper.removeData(kUserPhone);
     await CachedHelper.removeData(kKycSubmittedDocTypes);

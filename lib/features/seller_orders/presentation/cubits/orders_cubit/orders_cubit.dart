@@ -49,44 +49,29 @@ class OrdersCubit extends Cubit<OrdersState> {
     emit(current.copyWith(filter: filter));
   }
 
-  Future<DataError?> confirm(SubOrder listRow) =>
-      _act(listRow, (id) => _orderRepository.confirm(id));
+  Future<DataError?> confirm(int subOrderId) =>
+      _act(subOrderId, () => _orderRepository.confirm(subOrderId));
 
   /// [reason] must come from [RejectReason.all]; costs the store 2 score points.
-  Future<DataError?> reject(SubOrder listRow, String reason) =>
-      _act(listRow, (id) => _orderRepository.reject(id, reason: reason));
+  Future<DataError?> reject(int subOrderId, String reason) =>
+      _act(subOrderId, () => _orderRepository.reject(subOrderId, reason: reason));
 
-  Future<DataError?> readyToShip(SubOrder listRow) =>
-      _act(listRow, (id) => _orderRepository.readyToShip(id));
+  Future<DataError?> readyToShip(int subOrderId) =>
+      _act(subOrderId, () => _orderRepository.readyToShip(subOrderId));
 
-  /// Resolves the row to its real sub-order **before** acting.
-  ///
-  /// The id on a `GET /orders` row may be the parent order's, and confirming
-  /// or rejecting the wrong sub-order is not recoverable — so the extra read
-  /// is worth it. Only the action path pays for it; listing does not.
+  /// Ids come from the nested `sub_orders[]` of each order, so they are
+  /// authoritative — no resolution step is needed. (Before v2.2 the list
+  /// endpoint returned a flat join whose `id` could not be trusted.)
   Future<DataError?> _act(
-    SubOrder listRow,
-    Future<DataState<String>> Function(int subOrderId) action,
+    int subOrderId,
+    Future<DataState<String>> Function() action,
   ) async {
     final current = state;
     if (current is OrdersLoadSuccess) {
-      emit(current.copyWith(busySubOrderId: listRow.id));
+      emit(current.copyWith(busySubOrderId: subOrderId));
     }
 
-    final resolved = await _orderRepository.resolveSubOrder(listRow);
-    if (isClosed) return null;
-
-    if (resolved is DataFailed<SubOrder>) {
-      if (current is OrdersLoadSuccess) emit(current.copyWith(clearBusy: true));
-      return resolved.failure;
-    }
-
-    final subOrderId = switch (resolved) {
-      DataSuccess<SubOrder>(:final value) => value.id,
-      _ => listRow.id,
-    };
-
-    final result = await action(subOrderId);
+    final result = await action();
     if (isClosed) return null;
 
     if (result is DataFailed<String>) {

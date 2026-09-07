@@ -4,6 +4,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../../../core/domain/model/catalog/offer.dart';
 import '../../../../core/domain/model/inventory/inventory.dart';
+import '../../../../core/domain/model/review/review.dart';
 import '../../../../core/domain/model/seller/warehouse.dart';
 import '../../../../core/domain/model/shipment/shipment.dart';
 import '../../../../core/function/components.dart';
@@ -119,6 +120,8 @@ class _Content extends StatelessWidget {
                   _PriceCard(state: state),
                   12.sbh,
                   _StockCard(state: state),
+                  12.sbh,
+                  _ReviewsCard(reviews: state.reviews),
                   if (offer.description != null) ...<Widget>[
                     12.sbh,
                     SectionCard(
@@ -636,6 +639,120 @@ class _ActivateButton extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Buyer ratings on this listing.
+///
+/// A store cannot answer or remove these, so this is deliberately read-only.
+/// It earns its place because rating is not cosmetic here: buyers filter by
+/// `min_rating` and sort by `popular`, so a low rating quietly removes the
+/// listing from results.
+class _ReviewsCard extends StatelessWidget {
+  const _ReviewsCard({required this.reviews});
+
+  final OfferReviews? reviews;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = reviews;
+
+    if (data == null) {
+      return SectionCard(
+        title: 'Ulasan pembeli',
+        child: Text(
+          'Memuat ulasan…',
+          style: AppStyles.styleRegular12(context)
+              .copyWith(color: kLightThirdColor),
+        ),
+      );
+    }
+
+    if (!data.hasReviews) {
+      return SectionCard(
+        title: 'Ulasan pembeli',
+        child: Text(
+          'Belum ada ulasan. Rating memengaruhi filter dan urutan pencarian '
+          'pembeli, jadi ulasan pertama berarti banyak.',
+          style: AppStyles.styleRegular12(context)
+              .copyWith(color: kLightThirdColor),
+        ),
+      );
+    }
+
+    return SectionCard(
+      title: 'Ulasan pembeli',
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const Icon(Icons.star_rounded, size: 16, color: kWarningColor),
+          4.sbw,
+          Text(
+            '${data.ratingLabel} · ${data.reviewCount} ulasan',
+            style: AppStyles.styleMedium12(context),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: data.items
+            .take(5)
+            .map((review) => _ReviewRow(review: review))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _ReviewRow extends StatelessWidget {
+  const _ReviewRow({required this.review});
+
+  final Review review;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              ...List<Widget>.generate(
+                5,
+                (index) => Icon(
+                  index < review.rating
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
+                  size: 14,
+                  color: kWarningColor,
+                ),
+              ),
+              8.sbw,
+              Expanded(
+                child: Text(
+                  review.buyerName ?? 'Pembeli',
+                  style: AppStyles.styleMedium12(context),
+                ),
+              ),
+              Text(
+                formatDate(review.createdAt),
+                style: AppStyles.styleRegular10(context)
+                    .copyWith(color: kLightThirdColor),
+              ),
+            ],
+          ),
+          if (review.comment != null) ...<Widget>[
+            4.sbh,
+            Text(
+              review.comment!,
+              style: AppStyles.styleRegular12(context)
+                  .copyWith(color: kLightThirdColor),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -77,7 +77,10 @@ void initializeRepository() {
   );
 
   injector.registerLazySingleton<OrderRepository>(
-    () => OrderRepositoryImpl(injector<OrderService>()),
+    () => OrderRepositoryImpl(
+      injector<OrderService>(),
+      injector<SessionStore>(),
+    ),
   );
 
   injector.registerLazySingleton<ShipmentRepository>(

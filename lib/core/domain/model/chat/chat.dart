@@ -31,7 +31,7 @@ class ChatThread {
         ),
         lastMessage: asStringOrNull(json['last_message']),
         unreadCount: asInt(json['unread_count']),
-        updatedAt: asDateTime(json['updated_at']),
+        updatedAt: asModifiedDate(json),
       );
 }
 
@@ -65,7 +65,7 @@ class ChatMessage {
         senderId: asIntOrNull(json['sender_id']),
         text: asStringOrNull(json['text']),
         attachmentUrl: asStringOrNull(json['attachment_url']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
       );
 
   bool get isFromSeller => senderType == 'SELLER';

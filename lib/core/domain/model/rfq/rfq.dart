@@ -53,7 +53,7 @@ class Rfq {
         deadlineTokoJawab: asDateTime(json['deadline_toko_jawab']),
         needTaxInvoice: asBool(json['need_tax_invoice']),
         deliveryAddress: asStringOrNull(json['delivery_address']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
         items: asModelList(json['items'], RfqItem.fromJson),
       );
 }
@@ -135,7 +135,7 @@ class RfqOffer {
       parentOfferId: asIntOrNull(json['parent_offer_id']),
       termsSkuId: asIntOrNull(terms['sku_id']),
       termsNote: asStringOrNull(terms['catatan'] ?? terms['note']),
-      createdAt: asDateTime(json['created_at']),
+      createdAt: asCreatedDate(json),
     );
   }
 

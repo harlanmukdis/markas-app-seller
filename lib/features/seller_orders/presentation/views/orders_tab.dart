@@ -145,7 +145,7 @@ class _SubOrderCard extends StatelessWidget {
   final bool isBusy;
 
   Future<void> _confirm(BuildContext context) async {
-    final error = await OrdersCubit.get(context).confirm(subOrder);
+    final error = await OrdersCubit.get(context).confirm(subOrder.id);
     if (!context.mounted) return;
     if (error != null) return showErrorSnackBar(context, error);
     showSuccessSnackBar(context, 'Pesanan dikonfirmasi.');
@@ -155,14 +155,14 @@ class _SubOrderCard extends StatelessWidget {
     final reason = await showRejectReasonSheet(context);
     if (reason == null || !context.mounted) return;
 
-    final error = await OrdersCubit.get(context).reject(subOrder, reason);
+    final error = await OrdersCubit.get(context).reject(subOrder.id, reason);
     if (!context.mounted) return;
     if (error != null) return showErrorSnackBar(context, error);
     showSuccessSnackBar(context, 'Pesanan ditolak. Skor toko berkurang 2.');
   }
 
   Future<void> _readyToShip(BuildContext context) async {
-    final error = await OrdersCubit.get(context).readyToShip(subOrder);
+    final error = await OrdersCubit.get(context).readyToShip(subOrder.id);
     if (!context.mounted) return;
     if (error != null) return showErrorSnackBar(context, error);
     showSuccessSnackBar(
@@ -273,15 +273,9 @@ class _SubOrderCard extends StatelessWidget {
               onConfirm: () => _confirm(context),
               onReject: () => _reject(context),
               onReadyToShip: () => _readyToShip(context),
-              // The detail screen resolves the real sub-order itself, so it
-              // is handed the parent order id, which is unambiguous.
               onOpenDetail: () => context.push(
                 SellerRoutes.subOrderDetail,
-                extra: <String, dynamic>{
-                  'order_id': subOrder.orderId,
-                  'sub_order_no': subOrder.subOrderNo,
-                  'fallback_id': subOrder.id,
-                },
+                extra: subOrder.id,
               ),
             ),
         ],

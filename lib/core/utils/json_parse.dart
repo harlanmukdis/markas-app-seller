@@ -121,3 +121,21 @@ List<Map<String, dynamic>> asEncodedMapList(dynamic value) =>
 
 /// [asMap] for a field that may arrive either decoded or as a JSON string.
 Map<String, dynamic> asEncodedMap(dynamic value) => asMap(asDecodedJson(value));
+
+/// Audit timestamps.
+///
+/// The v2.2 backend refactor renamed these across all 87 tables —
+/// `created_at` became `created_date` and `updated_at` became
+/// `modified_date` — and the old names are gone entirely, so reading them
+/// yields null rather than an error. Both names are accepted here so a
+/// rolled-back or mixed environment still parses, and so the rename lives in
+/// one place instead of at every call site.
+///
+/// **Semantic** timestamps were not renamed: `kyc_approved_at`,
+/// `hold_release_at`, `surat_jalan_issued_at` and every `*_deadline` keep
+/// their names and must not be routed through here.
+DateTime? asCreatedDate(Map<String, dynamic> json) =>
+    asDateTime(json['created_date'] ?? json['created_at']);
+
+DateTime? asModifiedDate(Map<String, dynamic> json) =>
+    asDateTime(json['modified_date'] ?? json['updated_at']);

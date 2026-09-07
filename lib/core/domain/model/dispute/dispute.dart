@@ -47,7 +47,7 @@ class Dispute {
         decision: asStringOrNull(json['decision']),
         decisionReason: asStringOrNull(json['decision_reason']),
         deadlineBukti: asDateTime(json['deadline_bukti']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
         evidence: asModelList(
           json['evidence'] ?? json['evidences'],
           DisputeEvidence.fromJson,
@@ -87,7 +87,7 @@ class DisputeEvidence {
         fileUrl: asStringOrNull(json['file_url']),
         textContent: asStringOrNull(json['text_content']),
         submittedByType: asStringOrNull(json['submitted_by_type']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
       );
 }
 
@@ -102,7 +102,7 @@ class DisputeHistoryEntry {
       DisputeHistoryEntry(
         status: asStringOrNull(json['status'] ?? json['to_status']),
         note: asStringOrNull(json['note']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
       );
 }
 

@@ -81,7 +81,7 @@ class Shipment {
         completedAt: asDateTime(json['completed_at']),
         podPhotoUrl: asStringOrNull(json['pod_photo_url']),
         podReceiverName: asStringOrNull(json['pod_receiver_name']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
         items: asModelList(
           json['shipment_items'] ?? json['items'],
           ShipmentItem.fromJson,

@@ -79,7 +79,7 @@ class ReturnModel {
         pickupDeadline: asDateTime(json['pickup_deadline']),
         buyerShipBackDeadline: asDateTime(json['buyer_ship_back_deadline']),
         refundId: asIntOrNull(json['refund_id']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
         evidencePhotos: _photoUrls(json['evidence_photos_json']),
       );
 

@@ -43,7 +43,7 @@ class SkuRequest {
         rejectReason: asStringOrNull(json['reject_reason']),
         deadline1x24: asDateTime(json['deadline_1x24']),
         deadline3x24: asDateTime(json['deadline_3x24']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
       );
 
   bool get canWithdraw => status == SkuRequestStatus.diajukan ||

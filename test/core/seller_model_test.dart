@@ -106,7 +106,7 @@ void main() {
     });
   });
 
-  _flatOrderRowTests();
+  _nestedSubOrderTests();
 
   group('BankAccount', () {
     test('accepts the create response, which uses bank_account_id', () {
@@ -136,57 +136,84 @@ void main() {
   });
 }
 
-/// `GET /orders` with a seller token returns a flat join of order and
-/// sub-order, not an order with nested sub-orders. Payload captured live.
-void _flatOrderRowTests() {
-  group('SubOrder.fromFlatOrderRow', () {
-    const Map<String, dynamic> row = <String, dynamic>{
-      'id': '1',
-      'order_no': 'ORD-260905-967F4C83',
-      'buyer_id': '13',
+/// Captured from `GET /orders/{id}` on the v2.2 backend. The store's line is
+/// reached only through the order's nested `sub_orders[]` — `GET /orders`
+/// returns plain order rows with no sub-order data at all, so the ids here are
+/// the authoritative ones.
+void _nestedSubOrderTests() {
+  group('SubOrder.fromJson (nested in an order)', () {
+    const Map<String, dynamic> nested = <String, dynamic>{
+      'id': '5',
+      'sub_order_no': 'SO-260907-F6BD6FAD',
+      'order_id': '5',
+      'seller_id': '1',
+      'status_id': '43',
       'status': 'MENUNGGU_KONFIRMASI',
-      'subtotal': '650000.00',
+      'seller_confirm_deadline': '2026-09-08 09:01:04',
+      'fleet_handover_warn_at': '2026-09-09 09:01:04',
+      'fleet_handover_cancel_at': '2026-09-11 09:01:04',
+      'subtotal': '190000.00',
       'shipping_total': '750000.00',
-      'grand_total': '1400000.00',
-      'payment_deadline': '2026-09-06 11:38:10',
-      'sub_order_no': 'SO-260905-6621F024',
-      'order_id': '1',
-      'seller_id': '4',
-      'seller_confirm_deadline': '2026-09-07 11:38:10',
-      'fleet_handover_cancel_at': '2026-09-10 11:38:10',
-      'total': '1400000.00',
+      'total': '940000.00',
       'has_custom_item': '0',
+      'created_date': '2026-09-07 14:01:04',
+      'modified_date': '2026-09-07 14:01:04',
+      'created_by': 'SYSTEM',
+      'items': <dynamic>[
+        <String, dynamic>{
+          'id': '5',
+          'sub_order_id': '5',
+          'offer_id': '69',
+          'item_name_snapshot': 'Bata Ringan AAC 7,5 cm',
+          'unit_name_snapshot': 'unit',
+          'qty': '20.0000',
+          'unit_price_snapshot': '9500.00',
+          'line_subtotal': '190000.00',
+          'weight_kg_snapshot': '144.000',
+          'handling_class_snapshot': 'NORMAL',
+        },
+      ],
+      'shipments': <dynamic>[],
     };
 
-    test('reads the row as a sub-order, not as an order', () {
-      final subOrder = SubOrder.fromFlatOrderRow(row);
+    test('reads ids, number and totals', () {
+      final subOrder = SubOrder.fromJson(nested);
 
-      expect(subOrder.subOrderNo, 'SO-260905-6621F024');
-      expect(subOrder.orderId, 1);
+      expect(subOrder.id, 5);
+      expect(subOrder.orderId, 5);
+      expect(subOrder.sellerId, 1);
+      expect(subOrder.subOrderNo, 'SO-260907-F6BD6FAD');
+      expect(subOrder.total, 940000);
+      expect(subOrder.items, hasLength(1));
+    });
+
+    test('keeps reading the string status, not the new numeric status_id', () {
+      // v2.2 added `status_id` alongside `status`. The string is the contract;
+      // the id is an internal master-table key.
+      final subOrder = SubOrder.fromJson(nested);
+
+      expect(subOrder.status, 'MENUNGGU_KONFIRMASI');
       expect(subOrder.awaitingConfirmation, isTrue);
     });
 
-    test('flags its id as unreliable so actions resolve first', () {
-      // On this backend `id` always equals `order_id`, because every order
-      // carries exactly one sub-order — so which side of the join won is not
-      // observable. Acting on the wrong sub-order is unrecoverable, hence the
-      // flag rather than a guess.
-      expect(SubOrder.fromFlatOrderRow(row).idIsAmbiguous, isTrue);
-      expect(
-        SubOrder.fromJson(<String, dynamic>{'id': '9'}).idIsAmbiguous,
-        isFalse,
-      );
+    test('reads created_date, since created_at no longer exists', () {
+      final subOrder = SubOrder.fromJson(nested);
+
+      expect(subOrder.createdAt, isNotNull);
+      expect(subOrder.createdAt!.day, 7);
+      expect(subOrder.createdAt!.hour, 14);
     });
 
-    test('exposes the confirmation deadline the row carries', () {
-      final subOrder = SubOrder.fromFlatOrderRow(row);
+    test('deadline fields were not renamed by the refactor', () {
+      final subOrder = SubOrder.fromJson(nested);
 
       expect(subOrder.sellerConfirmDeadline, isNotNull);
+      expect(subOrder.fleetHandoverCancelAt, isNotNull);
       expect(subOrder.activeDeadline, subOrder.sellerConfirmDeadline);
     });
 
     test('allows confirm and reject while awaiting confirmation', () {
-      final subOrder = SubOrder.fromFlatOrderRow(row);
+      final subOrder = SubOrder.fromJson(nested);
 
       expect(subOrder.canReject, isTrue);
       expect(subOrder.canMarkReady, isFalse);
@@ -194,14 +221,22 @@ void _flatOrderRowTests() {
     });
 
     test('locks rejection for a confirmed sub-order with a custom item', () {
-      final locked = SubOrder.fromFlatOrderRow(<String, dynamic>{
-        ...row,
+      final locked = SubOrder.fromJson(<String, dynamic>{
+        ...nested,
         'status': 'DIKONFIRMASI',
         'has_custom_item': '1',
       });
 
       expect(locked.canReject, isFalse);
       expect(locked.canMarkReady, isTrue);
+    });
+
+    test('reads the item quantity from its DECIMAL string', () {
+      final item = SubOrder.fromJson(nested).items.single;
+
+      expect(item.qty, 20);
+      expect(item.qtyLabel, '20');
+      expect(item.lineSubtotal, 190000);
     });
   });
 }

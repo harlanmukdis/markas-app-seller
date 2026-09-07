@@ -1,5 +1,6 @@
 import '../../../../../config/network/api_endpoints.dart';
 import '../../../../domain/model/catalog/offer.dart';
+import '../../../../domain/model/review/review.dart';
 import '../../../../utils/json_parse.dart';
 import 'base_service.dart';
 
@@ -136,6 +137,15 @@ class OfferService extends BaseService {
   Future<OfferGates> activate(int offerId) async {
     final envelope = await postRequest(ApiEndpoints.offerActivate(offerId));
     return OfferGates.fromJson(asMap(envelope.map['gates']));
+  }
+
+  /// Ratings and comments on one of the store's own listings.
+  Future<OfferReviews> getReviews(int offerId, {int? limit, int? offset}) async {
+    final envelope = await getRequest(
+      ApiEndpoints.offerReviews(offerId),
+      query: <String, dynamic>{'limit': limit, 'offset': offset},
+    );
+    return OfferReviews.fromJson(envelope.map);
   }
 
   Future<void> deactivate(int offerId) async {

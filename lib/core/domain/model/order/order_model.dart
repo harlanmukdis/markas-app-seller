@@ -60,7 +60,7 @@ class OrderModel {
         grandTotal: asInt(json['grand_total']),
         paymentDeadline: asDateTime(json['payment_deadline']),
         rfqContractId: asIntOrNull(json['rfq_contract_id']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
         subOrders: asModelList(json['sub_orders'], SubOrder.fromJson),
       );
 }
@@ -88,7 +88,6 @@ class SubOrder {
     this.createdAt,
     this.items = const <SubOrderItem>[],
     this.shipments = const <Shipment>[],
-    this.idIsAmbiguous = false,
   });
 
   final int id;
@@ -123,16 +122,7 @@ class SubOrder {
   final List<SubOrderItem> items;
   final List<Shipment> shipments;
 
-  /// True when this came from the flat `GET /orders` row, where [id] may be
-  /// the parent order's id rather than this sub-order's. Resolve through
-  /// [orderId] and [subOrderNo] before acting on it.
-  final bool idIsAmbiguous;
-
-  factory SubOrder.fromJson(
-    Map<String, dynamic> json, {
-    bool idIsAmbiguous = false,
-  }) =>
-      SubOrder(
+  factory SubOrder.fromJson(Map<String, dynamic> json) => SubOrder(
         id: asInt(json['id']),
         subOrderNo: asStringOrNull(json['sub_order_no']),
         orderId: asIntOrNull(json['order_id']),
@@ -152,30 +142,10 @@ class SubOrder {
         cancelReason: asStringOrNull(json['cancel_reason']),
         cancelledBy: asStringOrNull(json['cancelled_by']),
         hasCustomItem: asBool(json['has_custom_item']),
-        createdAt: asDateTime(json['created_at']),
+        createdAt: asCreatedDate(json),
         items: asModelList(json['items'], SubOrderItem.fromJson),
         shipments: asModelList(json['shipments'], Shipment.fromJson),
-        idIsAmbiguous: idIsAmbiguous,
       );
-
-  /// Parses a row from `GET /orders`, which for a `SEL` token is **not** an
-  /// order with nested `sub_orders[]` but a flat join of order and sub-order.
-  ///
-  /// **`id` on that row is not trustworthy.** Order and sub-order both have an
-  /// `id` column, and which one survives the join is not observable from the
-  /// data: in every row on this backend `id == order_id`, because each order
-  /// happens to carry exactly one sub-order. The backend's own feature map
-  /// calls these "order rows"; the payload looks like `SELECT o.*, so.*`.
-  /// Rather than bet on either reading, [idIsAmbiguous] is set and callers must
-  /// resolve the real sub-order through the parent order before acting —
-  /// confirming or rejecting the wrong row is not a recoverable mistake.
-  ///
-  /// [orderId] and [subOrderNo] *are* unambiguous: both exist only on the
-  /// sub-order side of the join.
-  ///
-  /// The row also carries no `items`, so a detail read is needed to ship.
-  factory SubOrder.fromFlatOrderRow(Map<String, dynamic> json) =>
-      SubOrder.fromJson(json, idIsAmbiguous: true);
 
   bool get awaitingConfirmation =>
       status == SubOrderStatus.menungguKonfirmasi;

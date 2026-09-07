@@ -1,5 +1,6 @@
 import '../../data_state.dart';
 import '../../domain/model/catalog/offer.dart';
+import '../../domain/model/review/review.dart';
 import '../../domain/repositories/offer_repository.dart';
 import '../datasources/remote/service/offer_service.dart';
 import 'repository_guard.dart';
@@ -89,6 +90,10 @@ class OfferRepositoryImpl with RepositoryGuard implements OfferRepository {
   @override
   Future<DataState<OfferGates>> getGates(int offerId) =>
       guard(() => _service.getGates(offerId));
+
+  @override
+  Future<DataState<OfferReviews>> getReviews(int offerId) =>
+      guard(() => _service.getReviews(offerId));
 
   @override
   Future<DataState<OfferGates>> activate(int offerId) =>
