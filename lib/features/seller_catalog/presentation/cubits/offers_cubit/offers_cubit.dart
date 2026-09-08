@@ -44,47 +44,13 @@ class OffersCubit extends Cubit<OffersState> {
     // without them, so they load after the first paint rather than delaying it.
     await Future.wait(<Future<void>>[
       _loadSkuNames(offers),
-      _loadDetails(offers),
+      _loadPrices(offers),
       _loadStock(offers),
     ]);
   }
 
-  /// `GET /offers` omits `price_tiers` — only the detail endpoint returns
-  /// them. Without this the grid would report "no price set" for every offer,
-  /// including fully priced ones.
-  ///
-  /// There is no bulk endpoint for tiers, so this is one read per offer. With
-  /// a 50-product catalogue that is 50 requests, which is why results are
-  /// emitted per batch: prices fill in as they arrive instead of the whole
-  /// grid staying blank until the last one lands. Worth asking the backend to
-  /// include tiers in the list response.
-  Future<void> _loadDetails(List<Offer> offers) async {
-    final detailed = <int, Offer>{};
-
-    const batchSize = 8;
-    for (var i = 0; i < offers.length; i += batchSize) {
-      final slice = offers.skip(i).take(batchSize);
-      await Future.wait(slice.map((offer) async {
-        final result = await _offerRepository.getOffer(offer.id);
-        if (result is DataSuccess<Offer>) detailed[offer.id] = result.value;
-      }));
-      if (isClosed) return;
-
-      final current = state;
-      if (current is! OffersLoadSuccess) return;
-      emit(
-        current.copyWith(
-          offers: current.offers
-              .map((offer) => detailed[offer.id] ?? offer)
-              .toList(growable: false),
-          // Only true once every offer has been read, so a card that has not
-          // arrived yet shows "Harga …" rather than "Harga belum diatur".
-          tiersLoaded: i + batchSize >= offers.length,
-        ),
-      );
-    }
-  }
-
+  /// Resolves the real product name behind each MASTER-path offer, in one
+  /// call (v2.4) rather than one per SKU.
   Future<void> _loadSkuNames(List<Offer> offers) async {
     final skuIds = offers
         .where((offer) => !offer.isFreeform && offer.skuId != null)
@@ -92,7 +58,7 @@ class OffersCubit extends Cubit<OffersState> {
         .toSet();
     if (skuIds.isEmpty) return;
 
-    final result = await _catalogRepository.getSkuMasterBatch(skuIds);
+    final result = await _catalogRepository.getSkuMasterBulk(skuIds);
     if (isClosed) return;
 
     final current = state;
@@ -100,6 +66,26 @@ class OffersCubit extends Cubit<OffersState> {
     if (result is DataSuccess<Map<int, SkuMaster>>) {
       emit(current.copyWith(skus: result.value));
     }
+  }
+
+  /// Cheapest RETAIL price for every offer, in **one** call (v2.4).
+  ///
+  /// `GET /offers` still omits `price_tiers`, but `GET /offers/prices?ids=`
+  /// now answers the only question the grid actually has. That replaces one
+  /// detail read per offer — 50 round trips on a 50-product catalogue — and
+  /// uses the same price definition as the buyer's price filter, so the number
+  /// a store sees is the number buyers filter on.
+  Future<void> _loadPrices(List<Offer> offers) async {
+    final result = await _offerRepository.getBulkPrices(
+      offers.map((offer) => offer.id),
+    );
+    if (isClosed) return;
+
+    final current = state;
+    if (current is! OffersLoadSuccess) return;
+    if (result is! DataSuccess<Map<int, int>>) return;
+
+    emit(current.copyWith(prices: result.value, pricesLoaded: true));
   }
 
   /// One report call for the whole catalogue rather than one availability

@@ -183,3 +183,52 @@ abstract class ConfigGroup {
   static const String pajak = 'PAJAK';
   static const String jasa = 'JASA';
 }
+
+/// `GET /commission-rates` (v2.4) — readable by a store, which is the point.
+///
+/// A store can see what will be deducted per category *before* it sets a
+/// price, rather than discovering it in the payout. Transparency about
+/// deductions is one of the few things the spec says keeps stores on the
+/// platform.
+class CommissionRate {
+  const CommissionRate({
+    required this.id,
+    this.categoryId,
+    this.categoryName,
+    this.ratePercent = 0,
+    this.capAmount,
+    this.effectiveFrom,
+    this.effectiveTo,
+  });
+
+  final int id;
+  final int? categoryId;
+  final String? categoryName;
+  final double ratePercent;
+
+  /// Commission is `MIN(bruto × rate, cap)`, so a large order is protected.
+  final int? capAmount;
+
+  final DateTime? effectiveFrom;
+  final DateTime? effectiveTo;
+
+  factory CommissionRate.fromJson(Map<String, dynamic> json) => CommissionRate(
+        id: asInt(json['id']),
+        categoryId: asIntOrNull(json['category_id']),
+        categoryName: asStringOrNull(json['category_name']),
+        ratePercent: asDouble(json['rate_percent']),
+        capAmount: asIntOrNull(json['cap_amount']),
+        effectiveFrom: asDateTime(json['effective_from']),
+        effectiveTo: asDateTime(json['effective_to']),
+      );
+
+  /// Currently in force — the backend keeps history, so a list can contain
+  /// rows that have already lapsed.
+  bool get isActive {
+    final until = effectiveTo;
+    return until == null || until.isAfter(DateTime.now());
+  }
+
+  String get rateLabel =>
+      '${ratePercent.toStringAsFixed(ratePercent == ratePercent.roundToDouble() ? 0 : 2).replaceAll('.', ',')}%';
+}

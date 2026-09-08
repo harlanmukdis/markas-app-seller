@@ -165,6 +165,8 @@ class _FinanceContentState extends State<_FinanceContent> {
                     onSubmit: _withdraw,
                   ),
                   12.sbh,
+                  _CommissionCard(rates: state.commissionRates),
+                  12.sbh,
                   SectionCard(
                     title: 'Mutasi saldo',
                     child: state.ledger.isEmpty
@@ -342,6 +344,57 @@ class _LedgerRow extends StatelessWidget {
             style: AppStyles.styleSemiBold12(context).copyWith(
               color: entry.isCredit ? kSuccessColor : kErrorColor,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What the platform takes, per category.
+///
+/// Shown before the ledger rather than after it: a store setting prices needs
+/// this in advance, and seeing the deduction only in the payout is what makes
+/// it feel arbitrary.
+class _CommissionCard extends StatelessWidget {
+  const _CommissionCard({required this.rates});
+
+  final List<CommissionRate> rates;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = rates.where((rate) => rate.isActive).toList();
+
+    if (active.isEmpty) {
+      return SectionCard(
+        title: 'Komisi platform',
+        child: Text(
+          'Tarif komisi belum tersedia.',
+          style: AppStyles.styleRegular12(context)
+              .copyWith(color: kLightThirdColor),
+        ),
+      );
+    }
+
+    return SectionCard(
+      title: 'Komisi platform per kategori',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          ...active.map(
+            (rate) => StatRow(
+              label: rate.categoryName ?? 'Kategori ${rate.categoryId}',
+              value: rate.capAmount == null
+                  ? rate.rateLabel
+                  : '${rate.rateLabel} · maks ${formatRupiah(rate.capAmount)}',
+            ),
+          ),
+          8.sbh,
+          Text(
+            'Komisi = nilai barang × tarif, dibatasi nilai maksimum. Ongkir '
+            'tidak dikenai komisi sama sekali.',
+            style: AppStyles.styleRegular10(context)
+                .copyWith(color: kLightThirdColor),
           ),
         ],
       ),

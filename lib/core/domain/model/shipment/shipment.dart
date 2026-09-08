@@ -8,6 +8,7 @@ import '../../../utils/json_parse.dart';
 class Shipment {
   const Shipment({
     required this.id,
+    this.shipmentNo,
     this.subOrderId,
     this.status,
     this.shippingMethod,
@@ -25,11 +26,17 @@ class Shipment {
     this.completedAt,
     this.podPhotoUrl,
     this.podReceiverName,
+    this.failureReasonCode,
+    this.packagingDepositAmount = 0,
+    this.packagingReturnedConfirmedAt,
+    this.storageFeeAccrued = 0,
+    this.returnedAt,
     this.createdAt,
     this.items = const <ShipmentItem>[],
   });
 
   final int id;
+  final String? shipmentNo;
   final int? subOrderId;
   final String? status;
   final String? shippingMethod;
@@ -58,11 +65,29 @@ class Shipment {
   final DateTime? completedAt;
   final String? podPhotoUrl;
   final String? podReceiverName;
+
+  /// One of [FailureReason.all], recorded on a failed delivery (FLD-03).
+  final String? failureReasonCode;
+
+  /// Deposit held from the buyer for pallets or packaging (FLD-07). The store
+  /// releases it once the packaging comes back — this is the buyer's money,
+  /// so it should not be quietly forgotten.
+  final int packagingDepositAmount;
+
+  final DateTime? packagingReturnedConfirmedAt;
+
+  /// Daily storage charged while goods sit in the warehouse after a failed
+  /// delivery (FLD-04).
+  final int storageFeeAccrued;
+
+  final DateTime? returnedAt;
+
   final DateTime? createdAt;
   final List<ShipmentItem> items;
 
   factory Shipment.fromJson(Map<String, dynamic> json) => Shipment(
         id: asInt(json['id']),
+        shipmentNo: asStringOrNull(json['shipment_no']),
         subOrderId: asIntOrNull(json['sub_order_id']),
         status: asStringOrNull(json['status']),
         shippingMethod: asStringOrNull(json['shipping_method']),
@@ -81,6 +106,12 @@ class Shipment {
         completedAt: asDateTime(json['completed_at']),
         podPhotoUrl: asStringOrNull(json['pod_photo_url']),
         podReceiverName: asStringOrNull(json['pod_receiver_name']),
+        failureReasonCode: asStringOrNull(json['failure_reason_code']),
+        packagingDepositAmount: asInt(json['packaging_deposit_amount']),
+        packagingReturnedConfirmedAt:
+            asDateTime(json['packaging_returned_confirmed_at']),
+        storageFeeAccrued: asInt(json['storage_fee_accrued']),
+        returnedAt: asDateTime(json['returned_at']),
         createdAt: asCreatedDate(json),
         items: asModelList(
           json['shipment_items'] ?? json['items'],
@@ -100,6 +131,90 @@ class Shipment {
   bool get canReturnToSeller => status == ShipmentStatus.gagalKirim;
 
   bool get isFrozen => status == ShipmentStatus.dibekukan;
+
+  /// Goods are back in the warehouse and can be put on sale again (FLD-04).
+  /// The server also enforces a waiting period and answers
+  /// `409 RESTOCK_WINDOW_NOT_REACHED` with how many days remain.
+  bool get canRestock => status == ShipmentStatus.balikKeToko;
+
+  bool get hasPackagingDeposit => packagingDepositAmount > 0;
+
+  bool get packagingDepositReleased => packagingReturnedConfirmedAt != null;
+
+  /// The store still owes the buyer this money back.
+  bool get canReleasePackagingDeposit =>
+      hasPackagingDeposit && !packagingDepositReleased;
+}
+
+/// Closed list of reasons a delivery failed (FLD-03). Free text is rejected
+/// with 422 — and [kendalaAksesLingkungan] in particular feeds the platform's
+/// operational analysis, which is why it is a code and not a note.
+abstract class FailureReason {
+  /// Blocked on arrival: unofficial levies, local labour disputes, residents
+  /// preventing unloading.
+  static const String kendalaAksesLingkungan = 'KENDALA_AKSES_LINGKUNGAN';
+
+  static const String alamatTidakDitemukan = 'ALAMAT_TIDAK_DITEMUKAN';
+  static const String buyerTidakAda = 'BUYER_TIDAK_ADA';
+  static const String barangRusakDiPerjalanan = 'BARANG_RUSAK_DI_PERJALANAN';
+  static const String lainnya = 'LAINNYA';
+
+  static const List<String> all = <String>[
+    kendalaAksesLingkungan,
+    alamatTidakDitemukan,
+    buyerTidakAda,
+    barangRusakDiPerjalanan,
+    lainnya,
+  ];
+
+  static String label(String? code) => switch (code) {
+        kendalaAksesLingkungan => 'Kendala akses lingkungan',
+        alamatTidakDitemukan => 'Alamat tidak ditemukan',
+        buyerTidakAda => 'Pembeli tidak ada di lokasi',
+        barangRusakDiPerjalanan => 'Barang rusak di perjalanan',
+        lainnya => 'Lainnya',
+        _ => code ?? '-',
+      };
+
+  static String? hint(String? code) => switch (code) {
+        kendalaAksesLingkungan =>
+          'Termasuk pungli, kuli liar, atau dihalangi warga. Dilaporkan ke '
+              'platform untuk ditindaklanjuti.',
+        _ => null,
+      };
+}
+
+/// One line of a POD declaring how much actually arrived (FLD-01).
+///
+/// For bulk materials — sand, split, stone — a shortfall inside the tolerance
+/// (default 5%, from `FLD.bulk_tolerance_pct`) is refunded proportionally and
+/// automatically. That protects the store: normal shrinkage becomes a recorded
+/// adjustment instead of a "short delivery" dispute.
+class PodItem {
+  const PodItem({required this.shipmentItemId, required this.actualQtyReceived});
+
+  final int shipmentItemId;
+  final double actualQtyReceived;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'shipment_item_id': shipmentItemId,
+        'actual_qty_received': actualQtyReceived,
+      };
+}
+
+/// `POST /shipments/{id}/pod` result.
+class PodResult {
+  const PodResult({this.bulkToleranceRefund});
+
+  /// Non-null when a bulk shortfall inside tolerance was refunded to the buyer
+  /// automatically. Worth showing — the payout will be lower than the order.
+  final int? bulkToleranceRefund;
+
+  factory PodResult.fromJson(Map<String, dynamic> json) => PodResult(
+        bulkToleranceRefund: asIntOrNull(json['bulk_tolerance_refund']),
+      );
+
+  bool get hadToleranceRefund => (bulkToleranceRefund ?? 0) > 0;
 }
 
 class ShipmentItem {

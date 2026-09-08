@@ -315,7 +315,7 @@ class _ShippingRateBodyState extends State<_ShippingRateBody> {
 
   String _fleetLabel(List<FleetType> fleetTypes, String code) {
     for (final fleetType in fleetTypes) {
-      if (fleetType.code == code) return fleetType.displayLabel;
+      if (fleetType.code == code) return fleetType.pickerLabel;
     }
     return code;
   }

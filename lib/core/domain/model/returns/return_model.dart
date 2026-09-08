@@ -187,6 +187,38 @@ abstract class InspectResult {
       };
 }
 
+/// Return reasons the backend forces to `fault: SELLER` (FLD-05, FLD-06).
+///
+/// Sending `fault: "BUYER"` for these is silently ignored, so the UI must not
+/// offer the choice — offering it and having it overruled reads as the
+/// platform cheating the store.
+abstract class SellerFaultReason {
+  /// Tile or granite from a different shading batch.
+  static const String shadingMismatch = 'SHADING_MISMATCH';
+
+  /// Outside the SNI dimensional tolerance.
+  static const String sniToleranceMismatch = 'SNI_TOLERANCE_MISMATCH';
+
+  static const List<String> all = <String>[
+    shadingMismatch,
+    sniToleranceMismatch,
+  ];
+
+  static bool isAlwaysSellerFault(String? reason) => all.contains(reason);
+
+  static String label(String? reason) => switch (reason) {
+        shadingMismatch => 'Beda shading / batch',
+        sniToleranceMismatch => 'Di luar toleransi SNI',
+        _ => reason ?? '-',
+      };
+
+  static String? explanation(String? reason) =>
+      isAlwaysSellerFault(reason)
+          ? 'Kategori ini 100% beban toko — pilihan "kesalahan pembeli" tidak '
+              'berlaku dan akan diabaikan server.'
+          : null;
+}
+
 abstract class FaultParty {
   static const String seller = 'SELLER';
   static const String buyer = 'BUYER';

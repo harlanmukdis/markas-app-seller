@@ -104,6 +104,30 @@ abstract class DataErrorCode {
   static const String gatesNotPassed = 'GATES_NOT_PASSED';
   static const String dbError = 'DB_ERROR';
 
+  // v2.4 field-constraint rules (Addendum 1.2).
+
+  /// Total weight exceeds the chosen vehicle's payload (OPS-01).
+  static const String fleetPayloadExceeded = 'FLEET_PAYLOAD_EXCEEDED';
+
+  /// Vehicle too large for the delivery address's declared access (FLD-02).
+  static const String fleetAccessBlocked = 'FLEET_ACCESS_BLOCKED';
+
+  /// Sample SKUs are capped at 2 pcs per transaction (ORD-16).
+  static const String sampleQtyExceeded = 'SAMPLE_QTY_EXCEEDED';
+
+  /// Returned goods cannot be restocked yet (FLD-04); the message says how
+  /// many days remain.
+  static const String restockWindowNotReached = 'RESTOCK_WINDOW_NOT_REACHED';
+
+  /// This shipment carried no packaging deposit (FLD-07).
+  static const String noPackagingDeposit = 'NO_PACKAGING_DEPOSIT';
+
+  static const String alreadyConfirmed = 'ALREADY_CONFIRMED';
+
+  /// The account was suspended — five chat filter violations will do it
+  /// (OPS-04), and a suspended account cannot log in.
+  static const String accountSuspended = 'ACCOUNT_SUSPENDED';
+
   /// Client-side only.
   static const String network = 'NETWORK_ERROR';
   static const String timeout = 'TIMEOUT';

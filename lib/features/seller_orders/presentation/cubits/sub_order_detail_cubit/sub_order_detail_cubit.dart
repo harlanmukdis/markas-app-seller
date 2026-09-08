@@ -100,19 +100,58 @@ class SubOrderDetailCubit extends Cubit<SubOrderDetailState> {
   Future<DataError?> shipShipment(int shipmentId) =>
       _act(() => _shipmentRepository.ship(shipmentId));
 
-  Future<DataError?> recordPod(
+  /// Returns the tolerance refund the server applied, if any, so the caller
+  /// can tell the store why the payout will be lower than the order.
+  Future<(DataError?, PodResult?)> recordPod(
     int shipmentId, {
     required String photoUrl,
     required String receiverName,
-  }) =>
-      _act(() => _shipmentRepository.recordPod(
+    List<PodItem> podItems = const <PodItem>[],
+  }) async {
+    final current = state;
+    if (current is SubOrderDetailLoadSuccess) {
+      emit(current.copyWith(isBusy: true));
+    }
+
+    final result = await _shipmentRepository.recordPod(
+      shipmentId,
+      photoUrl: photoUrl,
+      receiverName: receiverName,
+      podItems: podItems,
+    );
+
+    if (isClosed) return (null, null);
+
+    if (result is DataFailed<PodResult>) {
+      if (current is SubOrderDetailLoadSuccess) {
+        emit(current.copyWith(isBusy: false));
+      }
+      return (result.failure, null);
+    }
+
+    final pod = switch (result) {
+      DataSuccess<PodResult>(:final value) => value,
+      _ => null,
+    };
+
+    await load(showSpinner: false);
+    return (null, pod);
+  }
+
+  /// [reasonCode] comes from the closed list in [FailureReason].
+  Future<DataError?> failDelivery(int shipmentId, String reasonCode) =>
+      _act(() => _shipmentRepository.failDelivery(
             shipmentId,
-            photoUrl: photoUrl,
-            receiverName: receiverName,
+            reasonCode: reasonCode,
           ));
 
-  Future<DataError?> failDelivery(int shipmentId) =>
-      _act(() => _shipmentRepository.failDelivery(shipmentId));
+  /// Puts returned goods back on sale (FLD-04).
+  Future<DataError?> restock(int shipmentId) =>
+      _act(() => _shipmentRepository.restock(shipmentId));
+
+  /// Releases the buyer's packaging deposit (FLD-07).
+  Future<DataError?> confirmPackagingReturned(int shipmentId) =>
+      _act(() => _shipmentRepository.confirmPackagingReturned(shipmentId));
 
   Future<DataError?> _act(Future<DataState<Object>> Function() action) async {
     final current = state;

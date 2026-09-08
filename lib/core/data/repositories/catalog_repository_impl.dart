@@ -38,6 +38,12 @@ class CatalogRepositoryImpl with RepositoryGuard implements CatalogRepository {
       guard(() => _service.getSkuMasterBatch(skuIds));
 
   @override
+  Future<DataState<Map<int, SkuMaster>>> getSkuMasterBulk(
+    Iterable<int> skuIds,
+  ) =>
+      guard(() => _service.getSkuMasterBulk(skuIds));
+
+  @override
   Future<DataState<List<SkuRequest>>> getSkuRequests({String? status}) =>
       guard(() => _service.getSkuRequests(status: status));
 

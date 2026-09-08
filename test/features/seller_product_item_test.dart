@@ -37,7 +37,8 @@ void main() {
                 offer: offer,
                 name: 'Semen Tiga Roda 40 kg',
                 stock: 950,
-                tiersLoaded: true,
+                price: 63000,
+                priceLoaded: true,
                 onTap: onTap,
               ),
             ),
@@ -62,15 +63,17 @@ void main() {
     expect(taps, 1);
   });
 
-  testWidgets('shows the lowest RETAIL price, not the first tier',
+  testWidgets('shows the price from the bulk lookup',
       (tester) async {
     await pumpCard(tester, () {});
 
+    // `GET /offers` carries no price_tiers, so the grid's price comes from
+    // `GET /offers/prices?ids=` instead.
     expect(find.text('Rp 63.000'), findsOneWidget);
     expect(find.text('Rp 65.000'), findsNothing);
   });
 
-  testWidgets('says the price is loading rather than missing before tiers land',
+  testWidgets('says the price is loading rather than missing before it lands',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -82,7 +85,7 @@ void main() {
               // No tiers yet, and the detail read has not finished.
               offer: const Offer(id: 7, status: OfferStatus.draft),
               name: 'Belum dimuat',
-              tiersLoaded: false,
+              priceLoaded: false,
             ),
           ),
         ),
@@ -93,7 +96,7 @@ void main() {
     expect(find.text('Harga belum diatur'), findsNothing);
   });
 
-  testWidgets('reports a missing price once every tier has been read',
+  testWidgets('reports a missing price once the lookup has answered',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -104,7 +107,7 @@ void main() {
             child: SellerProductItem(
               offer: const Offer(id: 7, status: OfferStatus.draft),
               name: 'Tanpa harga',
-              tiersLoaded: true,
+              priceLoaded: true,
             ),
           ),
         ),

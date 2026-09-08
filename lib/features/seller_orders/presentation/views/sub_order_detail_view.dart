@@ -391,20 +391,42 @@ class _ShipmentCard extends StatelessWidget {
   }
 
   Future<void> _recordPod(BuildContext context) async {
-    final result = await showDialog<_PodInput>(
+    final input = await showDialog<_PodInput>(
       context: context,
       builder: (dialogContext) => const _PodDialog(),
     );
-    if (result == null || !context.mounted) return;
+    if (input == null || !context.mounted) return;
+
+    final (error, pod) = await SubOrderDetailCubit.get(context).recordPod(
+      shipment.id,
+      photoUrl: input.photoUrl,
+      receiverName: input.receiverName,
+    );
+    if (!context.mounted) return;
+    if (error != null) return showErrorSnackBar(context, error);
+
+    showSuccessSnackBar(
+      context,
+      pod?.hadToleranceRefund ?? false
+          // Say it plainly: the payout will not match the order, and the
+          // reason is a recorded adjustment rather than a mistake.
+          ? 'Bukti terima tersimpan. Selisih material curah dalam toleransi '
+              'dikembalikan otomatis ${formatRupiah(pod!.bulkToleranceRefund)}.'
+          : 'Bukti terima tersimpan. Pengiriman sampai.',
+    );
+  }
+
+  Future<void> _failDelivery(BuildContext context) async {
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (_) => const _FailureReasonDialog(),
+    );
+    if (reason == null || !context.mounted) return;
 
     await _run(
       context,
-      () => SubOrderDetailCubit.get(context).recordPod(
-        shipment.id,
-        photoUrl: result.photoUrl,
-        receiverName: result.receiverName,
-      ),
-      'Bukti terima tersimpan. Pengiriman sampai.',
+      () => SubOrderDetailCubit.get(context).failDelivery(shipment.id, reason),
+      'Percobaan kirim dicatat.',
     );
   }
 
@@ -445,6 +467,27 @@ class _ShipmentCard extends StatelessWidget {
               label: 'Percobaan kirim',
               value: '${shipment.deliveryAttemptCount} dari 3',
               valueColor: kWarningColor,
+            ),
+          if (shipment.failureReasonCode != null)
+            StatRow(
+              label: 'Alasan gagal',
+              value: FailureReason.label(shipment.failureReasonCode),
+              valueColor: kErrorColor,
+            ),
+          if (shipment.storageFeeAccrued > 0)
+            StatRow(
+              label: 'Biaya penyimpanan',
+              value: formatRupiah(shipment.storageFeeAccrued),
+              valueColor: kWarningColor,
+            ),
+          if (shipment.hasPackagingDeposit)
+            StatRow(
+              label: 'Deposit kemasan',
+              value: '${formatRupiah(shipment.packagingDepositAmount)}'
+                  '${shipment.packagingDepositReleased ? ' · sudah dikembalikan' : ' · ditahan'}',
+              valueColor: shipment.packagingDepositReleased
+                  ? kSuccessColor
+                  : kWarningColor,
             ),
           12.sbh,
           if (isBusy)
@@ -487,10 +530,25 @@ class _ShipmentCard extends StatelessWidget {
                   _SmallButton(
                     label: 'Gagal kirim',
                     color: kErrorColor,
+                    onPressed: () => _failDelivery(context),
+                  ),
+                if (shipment.canRestock)
+                  _SmallButton(
+                    label: 'Restock ke gudang',
                     onPressed: () => _run(
                       context,
-                      () => cubit.failDelivery(shipment.id),
-                      'Percobaan kirim dicatat.',
+                      () => cubit.restock(shipment.id),
+                      'Barang dikembalikan menjadi stok jual.',
+                    ),
+                  ),
+                if (shipment.canReleasePackagingDeposit)
+                  _SmallButton(
+                    label: 'Kemasan kembali',
+                    color: kSuccessColor,
+                    onPressed: () => _run(
+                      context,
+                      () => cubit.confirmPackagingReturned(shipment.id),
+                      'Deposit kemasan dikembalikan ke pembeli.',
                     ),
                   ),
               ],
@@ -610,6 +668,60 @@ class _PodDialogState extends State<_PodDialog> {
             );
           },
           child: const Text('Simpan'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Failure reasons are a closed list (FLD-03), so this is a picker, not a text
+/// box. `KENDALA_AKSES_LINGKUNGAN` gets an explanation because it is the one
+/// the platform acts on operationally, and stores otherwise file it as
+/// "LAINNYA".
+class _FailureReasonDialog extends StatelessWidget {
+  const _FailureReasonDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: isAppDarkMode() ? kDarkColor : kWhiteColor,
+      title: Text('Alasan gagal kirim',
+          style: AppStyles.styleSemiBold16(context)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            'Percobaan ketiga membuat pengiriman berstatus GAGAL_KIRIM dan '
+            'barang harus dibawa kembali ke gudang.',
+            style: AppStyles.styleRegular12(context)
+                .copyWith(color: kLightThirdColor),
+          ),
+          12.sbh,
+          ...FailureReason.all.map((code) {
+            final hint = FailureReason.hint(code);
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                FailureReason.label(code),
+                style: AppStyles.styleMedium14(context),
+              ),
+              subtitle: hint == null
+                  ? null
+                  : Text(
+                      hint,
+                      style: AppStyles.styleRegular10(context)
+                          .copyWith(color: kLightThirdColor),
+                    ),
+              onTap: () => Navigator.of(context).pop(code),
+            );
+          }),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Batal'),
         ),
       ],
     );

@@ -67,6 +67,15 @@ class FinanceService extends BaseService {
     return envelope.listAt('tax_invoices');
   }
 
+  /// Commission per category (v2.4). A store may read these.
+  Future<List<CommissionRate>> getCommissionRates() async {
+    final envelope = await getRequest(ApiEndpoints.commissionRates);
+    return envelope
+        .listAt('commission_rates')
+        .map(CommissionRate.fromJson)
+        .toList(growable: false);
+  }
+
   /// Live platform parameters, so thresholds like the withdrawal minimum are
   /// not hardcoded in the app.
   Future<List<ConfigParameter>> getConfigParameters({String? group}) async {

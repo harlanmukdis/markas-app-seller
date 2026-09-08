@@ -23,14 +23,23 @@ abstract class ShipmentRepository {
 
   Future<DataState<bool>> ship(int shipmentId);
 
-  Future<DataState<bool>> recordPod(
+  Future<DataState<PodResult>> recordPod(
     int shipmentId, {
     required String photoUrl,
     required String receiverName,
     String? signatureUrl,
+    List<PodItem> podItems,
   });
 
-  Future<DataState<int>> failDelivery(int shipmentId);
+  /// [reasonCode] must be one of [FailureReason.all].
+  Future<DataState<int>> failDelivery(
+    int shipmentId, {
+    required String reasonCode,
+  });
 
   Future<DataState<bool>> returnToSeller(int shipmentId);
+
+  Future<DataState<bool>> restock(int shipmentId);
+
+  Future<DataState<bool>> confirmPackagingReturned(int shipmentId);
 }

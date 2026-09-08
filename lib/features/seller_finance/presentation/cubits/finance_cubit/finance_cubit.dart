@@ -28,6 +28,7 @@ class FinanceCubit extends Cubit<FinanceState> {
       _financeRepository.getLedger(),
       _sellerRepository.getBankAccounts(),
       _financeRepository.getConfigParameters(group: ConfigGroup.pencairan),
+      _financeRepository.getCommissionRates(),
     ]);
 
     if (isClosed) return;
@@ -57,6 +58,8 @@ class FinanceCubit extends Cubit<FinanceState> {
         minimumWithdrawal: _minimumWithdrawal(
           _listOf(results[3] as DataState<List<ConfigParameter>>),
         ),
+        commissionRates:
+            _listOf(results[4] as DataState<List<CommissionRate>>),
       ),
     );
   }

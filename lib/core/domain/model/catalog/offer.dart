@@ -22,6 +22,8 @@ class Offer {
     this.rejectReason,
     this.description,
     this.priceTiers = const <PriceTier>[],
+    this.isSample = false,
+    this.sampleOfOfferId,
   });
 
   final int id;
@@ -48,6 +50,13 @@ class Offer {
   final String? description;
   final List<PriceTier> priceTiers;
 
+  /// A sample variant (ORD-16). Buyers may order at most 2 pcs of these per
+  /// transaction — the server rejects more with `422 SAMPLE_QTY_EXCEEDED`.
+  final bool isSample;
+
+  /// The full-size listing this is a sample of.
+  final int? sampleOfOfferId;
+
   factory Offer.fromJson(Map<String, dynamic> json) => Offer(
         id: asInt(json['id']),
         sellerId: asIntOrNull(json['seller_id']),
@@ -70,6 +79,8 @@ class Offer {
         rejectReason: asStringOrNull(json['reject_reason']),
         description: asStringOrNull(json['description']),
         priceTiers: asModelList(json['price_tiers'], PriceTier.fromJson),
+        isSample: asBool(json['is_sample']),
+        sampleOfOfferId: asIntOrNull(json['sample_of_offer_id']),
       );
 
   bool get isActive => status == OfferStatus.active;

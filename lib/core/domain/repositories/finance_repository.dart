@@ -22,4 +22,6 @@ abstract class FinanceRepository {
   });
 
   Future<DataState<List<ConfigParameter>>> getConfigParameters({String? group});
+
+  Future<DataState<List<CommissionRate>>> getCommissionRates();
 }

@@ -151,7 +151,11 @@ class _ReturnCard extends StatelessWidget {
   Future<void> _respond(BuildContext context, String decision) async {
     final options = await showDialog<_RespondChoice>(
       context: context,
-      builder: (_) => _RespondDialog(decision: decision),
+      builder: (_) => _RespondDialog(
+        decision: decision,
+        alwaysSellerFault:
+            SellerFaultReason.isAlwaysSellerFault(entry.reason),
+      ),
     );
     if (options == null || !context.mounted) return;
 
@@ -202,7 +206,15 @@ class _ReturnCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           if (entry.reason != null)
-            StatRow(label: 'Alasan', value: entry.reason!),
+            StatRow(
+              label: 'Alasan',
+              value: SellerFaultReason.isAlwaysSellerFault(entry.reason)
+                  ? SellerFaultReason.label(entry.reason)
+                  : entry.reason!,
+              valueColor: SellerFaultReason.isAlwaysSellerFault(entry.reason)
+                  ? kWarningColor
+                  : null,
+            ),
           if (entry.qtyReturned > 0)
             StatRow(
               label: 'Jumlah diretur',
@@ -369,9 +381,16 @@ class _RespondChoice {
 }
 
 class _RespondDialog extends StatefulWidget {
-  const _RespondDialog({required this.decision});
+  const _RespondDialog({
+    required this.decision,
+    required this.alwaysSellerFault,
+  });
 
   final String decision;
+
+  /// Shading and SNI-tolerance returns are charged to the store whatever the
+  /// app sends, so the fault picker is replaced with a plain statement.
+  final bool alwaysSellerFault;
 
   @override
   State<_RespondDialog> createState() => _RespondDialogState();
@@ -410,14 +429,21 @@ class _RespondDialogState extends State<_RespondDialog> {
             onChanged: (value) => setState(() => _refundRoute = value),
           ),
           16.sbh,
-          AppDropdownField<String>(
-            label: 'Pihak yang salah (opsional)',
-            hint: 'Tidak ditentukan',
-            value: _fault,
-            items: FaultParty.all,
-            itemLabel: FaultParty.label,
-            onChanged: (value) => setState(() => _fault = value),
-          ),
+          if (widget.alwaysSellerFault)
+            Text(
+              SellerFaultReason.explanation(SellerFaultReason.shadingMismatch)!,
+              style: AppStyles.styleRegular12(context)
+                  .copyWith(color: kWarningColor),
+            )
+          else
+            AppDropdownField<String>(
+              label: 'Pihak yang salah (opsional)',
+              hint: 'Tidak ditentukan',
+              value: _fault,
+              items: FaultParty.all,
+              itemLabel: FaultParty.label,
+              onChanged: (value) => setState(() => _fault = value),
+            ),
         ],
       ),
       actions: <Widget>[

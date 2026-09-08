@@ -116,7 +116,8 @@ class _OffersGrid extends StatelessWidget {
                   offer: offer,
                   name: state.nameFor(offer),
                   stock: state.stock[offer.id],
-                  tiersLoaded: state.tiersLoaded,
+                  price: state.prices[offer.id],
+                  priceLoaded: state.pricesLoaded,
                   onTap: () async {
                     await context.push(
                       SellerRoutes.offerDetail,

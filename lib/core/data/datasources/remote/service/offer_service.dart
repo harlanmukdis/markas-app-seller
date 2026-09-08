@@ -19,6 +19,30 @@ class OfferService extends BaseService {
         .toList(growable: false);
   }
 
+  /// Cheapest RETAIL price for many offers in **one** call (v2.4).
+  ///
+  /// Replaces reading each offer's detail just to find its price: `GET /offers`
+  /// omits `price_tiers`, so a 50-product catalogue previously cost 50 extra
+  /// round trips to fill in the grid.
+  Future<Map<int, int>> getBulkPrices(Iterable<int> offerIds) async {
+    final ids = offerIds.toSet().toList();
+    if (ids.isEmpty) return const <int, int>{};
+
+    final envelope = await getRequest(
+      ApiEndpoints.offerPrices,
+      query: <String, dynamic>{'ids': ids.join(',')},
+    );
+
+    // Keyed by offer id as a string, values already whole rupiah.
+    final prices = <int, int>{};
+    envelope.map.forEach((key, value) {
+      final offerId = asIntOrNull(key);
+      final price = asIntOrNull(value);
+      if (offerId != null && price != null) prices[offerId] = price;
+    });
+    return prices;
+  }
+
   Future<Offer> getOffer(int offerId) async {
     final envelope = await getRequest(ApiEndpoints.offer(offerId));
     return Offer.fromJson(envelope.map);

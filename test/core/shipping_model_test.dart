@@ -9,8 +9,8 @@ import 'package:navy_wear/features/seller_onboarding/presentation/cubits/shippin
 void main() {
   group('FleetType.fromJson', () {
     test('reads capacity_kg_desc, which is prose and not a number', () {
-      // The API doc implies a numeric capacity; the server actually sends
-      // "± 5 ton". Parsing it as a double silently yielded null.
+      // The API doc implies a numeric capacity; before v2.4 the server only
+      // sent "± 5 ton". Parsing that as a double silently yielded null.
       final fleetType = FleetType.fromJson(<String, dynamic>{
         'code': 'CDD',
         'name': 'Colt Diesel Double',
@@ -18,8 +18,8 @@ void main() {
       });
 
       expect(fleetType.code, 'CDD');
-      expect(fleetType.capacityDescription, '± 5 ton');
-      expect(fleetType.displayLabel, 'Colt Diesel Double (± 5 ton)');
+      expect(fleetType.capacityKgDesc, '± 5 ton');
+      expect(fleetType.pickerLabel, 'Colt Diesel Double (± 5 ton)');
     });
 
     test('drops the capacity from the label when absent', () {
@@ -28,7 +28,71 @@ void main() {
         'name': 'Sepeda Motor',
       });
 
-      expect(fleetType.displayLabel, 'Sepeda Motor');
+      expect(fleetType.pickerLabel, 'Sepeda Motor');
+    });
+
+    test('reads the real payload and rank added in v2.4', () {
+      // Captured live: these arrive as DECIMAL strings.
+      final fleetType = FleetType.fromJson(<String, dynamic>{
+        'code': 'CDD',
+        'name': 'Colt Diesel Double',
+        'capacity_kg_desc': '± 5 ton',
+        'max_payload_kg': '5000.00',
+        'size_rank': '4',
+      });
+
+      expect(fleetType.maxPayloadKg, 5000);
+      expect(fleetType.sizeRank, 4);
+      // The real number replaces the prose once it is available.
+      expect(fleetType.pickerLabel, 'Colt Diesel Double (maks 5 ton)');
+    });
+
+    test('answers whether a load fits, and by how much', () {
+      final cdd = FleetType.fromJson(<String, dynamic>{
+        'code': 'CDD',
+        'name': 'Colt Diesel Double',
+        'max_payload_kg': '5000.00',
+      });
+
+      expect(cdd.canCarry(2000), isTrue);
+      expect(cdd.canCarry(5000), isTrue);
+      expect(cdd.canCarry(5001), isFalse);
+      expect(cdd.remainingCapacity(2000), 3000);
+    });
+
+    test('carries anything when the backend sends no payload limit', () {
+      // Pre-v2.4 shape. Refusing every load would be worse than not checking.
+      final unknown = FleetType.fromJson(<String, dynamic>{
+        'code': 'CDE',
+        'name': 'Colt Diesel Engkel',
+      });
+
+      expect(unknown.canCarry(99999), isTrue);
+      expect(unknown.remainingCapacity(10), isNull);
+    });
+
+    test('formats sub-tonne payloads in kilograms', () {
+      final motor = FleetType.fromJson(<String, dynamic>{
+        'code': 'MOTOR',
+        'name': 'Sepeda Motor',
+        'max_payload_kg': '20.00',
+      });
+
+      expect(motor.pickerLabel, 'Sepeda Motor (maks 20 kg)');
+    });
+  });
+
+  group('AddressAccessType', () {
+    test('maps declared access to the largest vehicle rank it admits', () {
+      expect(AddressAccessType.maxSizeRank('GANG_SEMPIT_LT_2M'), 1);
+      expect(AddressAccessType.maxSizeRank('PICKUP_ONLY'), 2);
+      expect(AddressAccessType.maxSizeRank('CDD_OK'), 4);
+    });
+
+    test('an undeclared address means no restriction', () {
+      // No address endpoint accepts access_type yet, so this is the live case.
+      expect(AddressAccessType.maxSizeRank(null), isNull);
+      expect(AddressAccessType.label(null), 'Tanpa batasan');
     });
   });
 

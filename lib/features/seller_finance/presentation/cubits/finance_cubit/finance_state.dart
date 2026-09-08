@@ -14,6 +14,7 @@ final class FinanceLoadSuccess extends FinanceState {
     this.ledger = const <LedgerEntry>[],
     this.bankAccounts = const <BankAccount>[],
     this.minimumWithdrawal,
+    this.commissionRates = const <CommissionRate>[],
     this.isBusy = false,
   });
 
@@ -24,6 +25,10 @@ final class FinanceLoadSuccess extends FinanceState {
   /// Read from `/config/parameters` rather than hardcoded, so the app shows
   /// the threshold that is actually in force.
   final int? minimumWithdrawal;
+
+  /// What the platform deducts per category. Shown so a store can price with
+  /// its eyes open instead of reconciling after the fact.
+  final List<CommissionRate> commissionRates;
 
   final bool isBusy;
 
@@ -38,6 +43,7 @@ final class FinanceLoadSuccess extends FinanceState {
     List<LedgerEntry>? ledger,
     List<BankAccount>? bankAccounts,
     int? minimumWithdrawal,
+    List<CommissionRate>? commissionRates,
     bool? isBusy,
   }) =>
       FinanceLoadSuccess(
@@ -45,6 +51,7 @@ final class FinanceLoadSuccess extends FinanceState {
         ledger: ledger ?? this.ledger,
         bankAccounts: bankAccounts ?? this.bankAccounts,
         minimumWithdrawal: minimumWithdrawal ?? this.minimumWithdrawal,
+        commissionRates: commissionRates ?? this.commissionRates,
         isBusy: isBusy ?? this.isBusy,
       );
 }

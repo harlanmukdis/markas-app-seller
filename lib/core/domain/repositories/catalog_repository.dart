@@ -17,6 +17,11 @@ abstract class CatalogRepository {
     Iterable<int> skuIds,
   );
 
+  /// Names, units and weights for many SKUs in one call.
+  Future<DataState<Map<int, SkuMaster>>> getSkuMasterBulk(
+    Iterable<int> skuIds,
+  );
+
   Future<DataState<List<SkuRequest>>> getSkuRequests({String? status});
 
   /// Succeeds with either [SkuRequestCreated] or [SkuRequestSimilarFound] —

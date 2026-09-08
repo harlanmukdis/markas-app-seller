@@ -19,23 +19,33 @@ class SellerProductItem extends StatelessWidget {
     required this.offer,
     required this.name,
     this.stock,
-    this.tiersLoaded = false,
+    this.price,
+    this.priceLoaded = false,
     this.onTap,
   });
 
   final Offer offer;
   final String name;
   final double? stock;
-  final bool tiersLoaded;
+
+  /// Cheapest RETAIL price, from the bulk lookup rather than the offer's own
+  /// tiers — the list endpoint does not return those.
+  final int? price;
+
+  final bool priceLoaded;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final isDark = isAppDarkMode();
+
+    // Falls back to the offer's own tiers when they happen to be loaded, as
+    // they are on the detail screen.
     final retail = offer.retailTiers;
-    final lowest = retail.isEmpty
+    final lowestTier = retail.isEmpty
         ? null
         : retail.reduce((a, b) => a.price <= b.price ? a : b);
+    final lowestPrice = price ?? lowestTier?.price;
 
     return GestureDetector(
       onTap: onTap,
@@ -135,19 +145,20 @@ class SellerProductItem extends StatelessWidget {
             children: <Widget>[
               Flexible(
                 child: Text(
-                  lowest != null
-                      ? formatRupiah(lowest.price)
-                      : (tiersLoaded ? 'Harga belum diatur' : 'Harga …'),
+                  lowestPrice != null
+                      ? formatRupiah(lowestPrice)
+                      : (priceLoaded ? 'Harga belum diatur' : 'Harga …'),
                   overflow: TextOverflow.ellipsis,
                   style: AppStyles.styleSemiBold14(context).copyWith(
-                    color: lowest == null && tiersLoaded ? kWarningColor : null,
+                    color:
+                        lowestPrice == null && priceLoaded ? kWarningColor : null,
                   ),
                 ),
               ),
-              if (lowest?.strikethroughPrice != null) ...<Widget>[
+              if (lowestTier?.strikethroughPrice != null) ...<Widget>[
                 const SizedBox(width: 8),
                 Text(
-                  formatRupiah(lowest!.strikethroughPrice),
+                  formatRupiah(lowestTier!.strikethroughPrice),
                   style: AppStyles.styleMedium10(context).copyWith(
                     decoration: TextDecoration.lineThrough,
                     color: isDark ? kDarkPrimaryColor : kLightPrimaryColor,

@@ -58,29 +58,44 @@ class ShipmentRepositoryImpl
       });
 
   @override
-  Future<DataState<bool>> recordPod(
+  Future<DataState<PodResult>> recordPod(
     int shipmentId, {
     required String photoUrl,
     required String receiverName,
     String? signatureUrl,
+    List<PodItem> podItems = const <PodItem>[],
   }) =>
-      guard(() async {
-        await _service.recordPod(
-          shipmentId,
-          photoUrl: photoUrl,
-          receiverName: receiverName,
-          signatureUrl: signatureUrl,
-        );
-        return true;
-      });
+      guard(() => _service.recordPod(
+            shipmentId,
+            photoUrl: photoUrl,
+            receiverName: receiverName,
+            signatureUrl: signatureUrl,
+            podItems: podItems,
+          ));
 
   @override
-  Future<DataState<int>> failDelivery(int shipmentId) =>
-      guard(() => _service.failDelivery(shipmentId));
+  Future<DataState<int>> failDelivery(
+    int shipmentId, {
+    required String reasonCode,
+  }) =>
+      guard(() => _service.failDelivery(shipmentId, reasonCode: reasonCode));
 
   @override
   Future<DataState<bool>> returnToSeller(int shipmentId) => guard(() async {
         await _service.returnToSeller(shipmentId);
+        return true;
+      });
+
+  @override
+  Future<DataState<bool>> restock(int shipmentId) => guard(() async {
+        await _service.restock(shipmentId);
+        return true;
+      });
+
+  @override
+  Future<DataState<bool>> confirmPackagingReturned(int shipmentId) =>
+      guard(() async {
+        await _service.confirmPackagingReturned(shipmentId);
         return true;
       });
 }

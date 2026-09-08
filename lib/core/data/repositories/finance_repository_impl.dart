@@ -51,4 +51,8 @@ class FinanceRepositoryImpl with RepositoryGuard implements FinanceRepository {
     String? group,
   }) =>
       guard(() => _service.getConfigParameters(group: group));
+
+  @override
+  Future<DataState<List<CommissionRate>>> getCommissionRates() =>
+      guard(() => _service.getCommissionRates());
 }

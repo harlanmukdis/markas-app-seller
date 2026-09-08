@@ -68,27 +68,59 @@ class ShipmentService extends BaseService {
 
   /// Without POD a delivery may not be called complete (SHP-08), so the photo
   /// and receiver name are required here rather than optional.
-  Future<void> recordPod(
+  ///
+  /// [podItems] is the v2.4 addition: declaring what actually arrived per line
+  /// lets the server settle a bulk-material shortfall inside tolerance as an
+  /// automatic proportional refund (FLD-01) instead of leaving it to become a
+  /// "short delivery" dispute.
+  Future<PodResult> recordPod(
     int shipmentId, {
     required String photoUrl,
     required String receiverName,
     String? signatureUrl,
+    List<PodItem> podItems = const <PodItem>[],
   }) async {
-    await postRequest(
+    final envelope = await postRequest(
       ApiEndpoints.shipmentPod(shipmentId),
       body: <String, dynamic>{
         'photo_url': photoUrl,
         'receiver_name': receiverName,
         'signature_url': signatureUrl,
+        if (podItems.isNotEmpty)
+          'pod_items': podItems.map((item) => item.toJson()).toList(),
       },
     );
+    return PodResult.fromJson(envelope.map);
   }
 
   /// On the third attempt the shipment becomes GAGAL_KIRIM.
-  Future<int> failDelivery(int shipmentId) async {
-    final envelope =
-        await postRequest(ApiEndpoints.shipmentFailDelivery(shipmentId));
+  ///
+  /// [reasonCode] must come from [FailureReason.all] (FLD-03); anything else
+  /// is rejected with 422.
+  Future<int> failDelivery(int shipmentId, {required String reasonCode}) async {
+    final envelope = await postRequest(
+      ApiEndpoints.shipmentFailDelivery(shipmentId),
+      body: <String, dynamic>{'reason_code': reasonCode},
+    );
     return asInt(envelope.map['delivery_attempt_count']);
+  }
+
+  /// Puts goods that came back into sellable stock (FLD-04).
+  ///
+  /// Fails with `409 RESTOCK_WINDOW_NOT_REACHED` until enough days have
+  /// passed; the server's message says how many remain.
+  Future<void> restock(int shipmentId) async {
+    await postRequest(ApiEndpoints.shipmentRestock(shipmentId));
+  }
+
+  /// Releases the packaging/pallet deposit back to the buyer (FLD-07).
+  ///
+  /// `409 NO_PACKAGING_DEPOSIT` when this shipment carried none, and
+  /// `409 ALREADY_CONFIRMED` when it was already released.
+  Future<void> confirmPackagingReturned(int shipmentId) async {
+    await postRequest(
+      ApiEndpoints.shipmentConfirmPackagingReturned(shipmentId),
+    );
   }
 
   Future<void> returnToSeller(int shipmentId) async {

@@ -55,6 +55,10 @@ abstract class ApiEndpoints {
   // Offers
   static const String offers = '/offers';
 
+  /// v2.4 bulk lookup: cheapest RETAIL price per offer, keyed by offer id.
+  /// Uses the same price definition as the buyer's price filter and facets.
+  static const String offerPrices = '/offers/prices';
+
   static String offer(int id) => '/offers/$id';
 
   static String offerPriceTiers(int id) => '/offers/$id/price_tiers';
@@ -103,6 +107,13 @@ abstract class ApiEndpoints {
 
   static String shipmentReturnToSeller(int id) =>
       '/shipments/$id/return_to_seller';
+
+  /// v2.4: put goods that came back into sellable stock again (FLD-04).
+  static String shipmentRestock(int id) => '/shipments/$id/restock';
+
+  /// v2.4: release the packaging/pallet deposit held from the buyer (FLD-07).
+  static String shipmentConfirmPackagingReturned(int id) =>
+      '/shipments/$id/confirm_packaging_returned';
 
   // Finance
   static const String financeBalance = '/finance/balance';
@@ -159,6 +170,10 @@ abstract class ApiEndpoints {
   static const String reportFinanceSummary = '/reports/finance_summary';
   static const String reportSellerPerformance = '/reports/seller_performance';
   static const String reportPph22 = '/reports/pph22';
+
+  // Commission (v2.4) — readable by a store, which is the point: it can see
+  // what will be deducted before setting a price.
+  static const String commissionRates = '/commission-rates';
 
   // Config
   static const String configParameters = '/config/parameters';

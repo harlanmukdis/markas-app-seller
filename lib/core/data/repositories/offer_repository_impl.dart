@@ -19,6 +19,10 @@ class OfferRepositoryImpl with RepositoryGuard implements OfferRepository {
       guard(() => _service.getOffer(offerId));
 
   @override
+  Future<DataState<Map<int, int>>> getBulkPrices(Iterable<int> offerIds) =>
+      guard(() => _service.getBulkPrices(offerIds));
+
+  @override
   Future<DataState<int>> createMasterOffer({
     required int categoryId,
     required int skuId,

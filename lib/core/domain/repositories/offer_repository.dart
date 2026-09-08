@@ -7,6 +7,9 @@ abstract class OfferRepository {
 
   Future<DataState<Offer>> getOffer(int offerId);
 
+  /// Cheapest RETAIL price per offer, in one call.
+  Future<DataState<Map<int, int>>> getBulkPrices(Iterable<int> offerIds);
+
   Future<DataState<int>> createMasterOffer({
     required int categoryId,
     required int skuId,

@@ -13,7 +13,8 @@ final class OffersLoadSuccess extends OffersState {
     required this.offers,
     this.skus = const <int, SkuMaster>{},
     this.stock = const <int, double>{},
-    this.tiersLoaded = false,
+    this.prices = const <int, int>{},
+    this.pricesLoaded = false,
     this.busyOfferId,
   });
 
@@ -26,11 +27,14 @@ final class OffersLoadSuccess extends OffersState {
   /// Available quantity per offer id.
   final Map<int, double> stock;
 
-  /// True once each offer has been re-read from the detail endpoint, which is
-  /// the only place `price_tiers` comes from. Until then price and gate
-  /// information is unknown rather than absent, and must not be reported as
-  /// "no price set".
-  final bool tiersLoaded;
+  /// Cheapest RETAIL price per offer id, from the v2.4 bulk endpoint. The
+  /// list response still has no `price_tiers`, so without this the grid has
+  /// no price to show.
+  final Map<int, int> prices;
+
+  /// Until the bulk price call lands, a missing price is unknown rather than
+  /// absent, and must not be reported as "no price set".
+  final bool pricesLoaded;
 
   final int? busyOfferId;
 
@@ -47,7 +51,8 @@ final class OffersLoadSuccess extends OffersState {
     List<Offer>? offers,
     Map<int, SkuMaster>? skus,
     Map<int, double>? stock,
-    bool? tiersLoaded,
+    Map<int, int>? prices,
+    bool? pricesLoaded,
     int? busyOfferId,
     bool clearBusy = false,
   }) =>
@@ -55,7 +60,8 @@ final class OffersLoadSuccess extends OffersState {
         offers: offers ?? this.offers,
         skus: skus ?? this.skus,
         stock: stock ?? this.stock,
-        tiersLoaded: tiersLoaded ?? this.tiersLoaded,
+        prices: prices ?? this.prices,
+        pricesLoaded: pricesLoaded ?? this.pricesLoaded,
         busyOfferId: clearBusy ? null : (busyOfferId ?? this.busyOfferId),
       );
 }

@@ -2,6 +2,7 @@ import '../../../../../config/network/api_endpoints.dart';
 import '../../../../domain/model/catalog/category.dart';
 import '../../../../domain/model/catalog/sku_master.dart';
 import '../../../../domain/model/catalog/sku_request.dart';
+import '../../../../utils/json_parse.dart';
 import 'base_service.dart';
 
 /// Categories, master SKUs, and SKU requests.
@@ -77,6 +78,32 @@ class CatalogService extends BaseService {
             (id) => MapEntry<int, SkuMaster>(id, _skuCache[id]!),
           ),
     );
+  }
+
+  /// Names, units and weights for many master SKUs in **one** call (v2.4).
+  ///
+  /// Returns a partial [SkuMaster] — `{id, name, base_unit, weight_kg}` only —
+  /// which is exactly what a product list needs. The weight is also what the
+  /// shipment form uses to check a load against a vehicle's payload before
+  /// submitting. Results feed the same per-id cache as [getSkuMaster].
+  Future<Map<int, SkuMaster>> getSkuMasterBulk(Iterable<int> skuIds) async {
+    final ids = skuIds.toSet().toList();
+    if (ids.isEmpty) return const <int, SkuMaster>{};
+
+    final envelope = await getRequest(
+      ApiEndpoints.skuMaster,
+      query: <String, dynamic>{'ids': ids.join(',')},
+    );
+
+    final result = <int, SkuMaster>{};
+    envelope.map.forEach((key, value) {
+      if (value is! Map) return;
+      final sku = SkuMaster.fromJson(asMap(value));
+      result[sku.id] = sku;
+      // Partial, so it must not overwrite a full detail already cached.
+      _skuCache.putIfAbsent(sku.id, () => sku);
+    });
+    return result;
   }
 
   Future<List<SkuRequest>> getSkuRequests({String? status}) async {
