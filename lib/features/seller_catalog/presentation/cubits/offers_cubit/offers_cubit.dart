@@ -92,8 +92,13 @@ class OffersCubit extends Cubit<OffersState> {
   /// request per offer — with 50 products that was 50 round trips for a number
   /// shown on every card.
   ///
-  /// An offer can hold stock in several warehouses, so rows are summed per
-  /// offer.
+  /// The report only contains offers that have stock rows, so an offer missing
+  /// from it has **no** stock, not unknown stock. Verified against
+  /// `GET /inventory/available`, which answers 0 for exactly those offers.
+  /// Leaving them blank made every freshly created product read "Stok …"
+  /// forever.
+  ///
+  /// An offer can hold stock in several warehouses, so rows are summed.
   Future<void> _loadStock(List<Offer> offers) async {
     final result = await _reportRepository.getStock();
     if (isClosed) return;
@@ -102,16 +107,21 @@ class OffersCubit extends Cubit<OffersState> {
     if (current is! OffersLoadSuccess) return;
 
     if (result is! DataSuccess<List<StockReportRow>>) {
-      // Leave stock unknown rather than showing every product as zero.
+      // The read itself failed — leave stock unknown rather than claiming
+      // every product is out of stock.
       return;
     }
 
-    final stock = <int, double>{};
+    final reported = <int, double>{};
     for (final row in result.value) {
       final offerId = row.offerId;
       if (offerId == null) continue;
-      stock[offerId] = (stock[offerId] ?? 0) + row.available;
+      reported[offerId] = (reported[offerId] ?? 0) + row.available;
     }
+
+    final stock = <int, double>{
+      for (final offer in offers) offer.id: reported[offer.id] ?? 0,
+    };
 
     emit(current.copyWith(stock: stock));
   }

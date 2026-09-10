@@ -47,6 +47,16 @@ final class OffersLoadSuccess extends OffersState {
 
   int get activeCount => offers.where((offer) => offer.isActive).length;
 
+  /// `GET /offers` for a `SEL` token is hard-capped at 50 rows with no
+  /// pagination — `page`, `per_page`, `limit` and `offset` are all ignored.
+  /// Verified against a store owning 124 offers: only 50 came back and the
+  /// other 74 were unreachable. Landing exactly on the cap almost certainly
+  /// means the catalogue is truncated, and silently showing a store two
+  /// fifths of its products is worse than saying so.
+  static const int sellerListCap = 50;
+
+  bool get isProbablyTruncated => offers.length >= sellerListCap;
+
   OffersLoadSuccess copyWith({
     List<Offer>? offers,
     Map<int, SkuMaster>? skus,

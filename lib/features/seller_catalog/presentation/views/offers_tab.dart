@@ -84,16 +84,26 @@ class _OffersGrid extends StatelessWidget {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Expanded(
-                  child: Text(
-                    '${state.activeCount} dari ${state.offers.length} produk '
-                    'tayang',
-                    style: AppStyles.styleRegular12(context)
-                        .copyWith(color: kLightThirdColor),
-                  ),
+                Text(
+                  '${state.activeCount} dari ${state.offers.length} produk '
+                  'tayang',
+                  style: AppStyles.styleRegular12(context)
+                      .copyWith(color: kLightThirdColor),
                 ),
+                if (state.isProbablyTruncated) ...<Widget>[
+                  4.sbh,
+                  Text(
+                    'Server membatasi daftar produk toko di '
+                    '${OffersLoadSuccess.sellerListCap} baris dan belum '
+                    'menyediakan paginasi, jadi produk lain milik toko ini '
+                    'kemungkinan tidak tampil di sini.',
+                    style: AppStyles.styleRegular10(context)
+                        .copyWith(color: kWarningColor),
+                  ),
+                ],
               ],
             ),
           ),

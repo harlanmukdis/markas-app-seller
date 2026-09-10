@@ -3,9 +3,12 @@ import 'package:navy_wear/core/domain/model/catalog/offer.dart';
 import 'package:navy_wear/core/domain/model/finance/finance.dart';
 import 'package:navy_wear/core/domain/model/returns/return_model.dart';
 import 'package:navy_wear/core/domain/model/shipment/shipment.dart';
+import 'package:navy_wear/features/seller_catalog/presentation/cubits/offers_cubit/offers_cubit.dart';
 
 /// Addendum 1.2 (v2.4). Payloads captured from the running backend.
 void main() {
+  _sellerCatalogueCapTests();
+
   group('Shipment (v2.4 fields)', () {
     // Captured from GET /shipments.
     const payload = <String, dynamic>{
@@ -174,6 +177,36 @@ void main() {
         'effective_to': '2026-01-31',
       });
       expect(lapsed.isActive, isFalse);
+    });
+  });
+}
+
+/// `GET /offers` for a `SEL` token is capped at 50 rows with no pagination.
+/// Verified against a store owning 124 offers: only ids 101–150 came back, and
+/// `page`, `per_page`, `limit` and `offset` were all ignored.
+void _sellerCatalogueCapTests() {
+  group('seller catalogue cap', () {
+    test('a full page is treated as probably truncated', () {
+      final full = OffersLoadSuccess(
+        offers: List<Offer>.generate(
+          50,
+          (index) => Offer(id: 101 + index, status: OfferStatus.active),
+        ),
+      );
+
+      expect(full.isProbablyTruncated, isTrue);
+      expect(full.activeCount, 50);
+    });
+
+    test('a short list is complete', () {
+      final short = OffersLoadSuccess(
+        offers: List<Offer>.generate(
+          12,
+          (index) => Offer(id: index + 1, status: OfferStatus.active),
+        ),
+      );
+
+      expect(short.isProbablyTruncated, isFalse);
     });
   });
 }
