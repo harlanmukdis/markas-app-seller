@@ -8,6 +8,15 @@ abstract class Validators {
         return null;
       };
 
+  /// Explicitly opts a field out of validation.
+  ///
+  /// [CustomTextFormField] falls back to a required-field validator whose
+  /// message is in Arabic, and any such field inside a `Form` blocks
+  /// submission when left empty. Optional fields and helper inputs — a search
+  /// box, a URL box whose value is consumed by a button — must pass this, or
+  /// the form silently refuses to submit with a message nobody can read.
+  static String? optional(String? value) => null;
+
   static String? phone(String? value) {
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) return 'Nomor HP wajib diisi';

@@ -117,6 +117,26 @@ class OfferDetailCubit extends Cubit<OfferDetailState> {
             reason: reason,
           ));
 
+  /// Partial update — the service drops null fields, so an omitted argument
+  /// is left alone rather than cleared. Weight and dimensions are absent on
+  /// purpose: on a MASTER offer they belong to the platform SKU, and letting a
+  /// store shrink them would just move the shipping cost onto the driver.
+  Future<DataError?> updateOffer({
+    double? minOrderQty,
+    String? handlingClass,
+    List<OfferPhoto>? photos,
+    String? description,
+    String? freeformName,
+  }) =>
+      _act(() => _offerRepository.updateOffer(
+            offerId,
+            minOrderQty: minOrderQty,
+            handlingClass: handlingClass,
+            photos: photos,
+            description: description,
+            freeformName: freeformName,
+          ));
+
   /// Replaces the entire tier list — the endpoint deletes what is there first,
   /// so callers must pass every tier they want to keep.
   Future<DataError?> replacePriceTiers(List<PriceTier> tiers) =>

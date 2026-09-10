@@ -26,39 +26,54 @@ class OffersTab extends StatelessWidget {
 class _OffersBody extends StatelessWidget {
   const _OffersBody();
 
+  Future<void> _create(BuildContext context) async {
+    await context.push(SellerRoutes.offerCreate);
+    if (!context.mounted) return;
+    await OffersCubit.get(context).load(showSpinner: false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text('Produk', style: AppStyles.styleMedium18(context)),
-              ),
-              IconButton(
-                tooltip: 'Muat ulang',
-                color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
-                icon: const Icon(Icons.refresh_rounded),
-                onPressed: () => OffersCubit.get(context).load(),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: BlocBuilder<OffersCubit, OffersState>(
-            builder: (context, state) => switch (state) {
-              OffersLoadInProgress() => const LoadingIndicatorView(),
-              OffersLoadFailure(:final error) => ErrorStateView(
-                  error: error,
-                  onRetry: () => OffersCubit.get(context).load(),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _create(context),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Tambah produk'),
+      ),
+      body: Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child:
+                      Text('Produk', style: AppStyles.styleMedium18(context)),
                 ),
-              OffersLoadSuccess() => _OffersGrid(state: state),
-            },
+                IconButton(
+                  tooltip: 'Muat ulang',
+                  color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
+                  icon: const Icon(Icons.refresh_rounded),
+                  onPressed: () => OffersCubit.get(context).load(),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          Expanded(
+            child: BlocBuilder<OffersCubit, OffersState>(
+              builder: (context, state) => switch (state) {
+                OffersLoadInProgress() => const LoadingIndicatorView(),
+                OffersLoadFailure(:final error) => ErrorStateView(
+                    error: error,
+                    onRetry: () => OffersCubit.get(context).load(),
+                  ),
+                OffersLoadSuccess() => _OffersGrid(state: state),
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

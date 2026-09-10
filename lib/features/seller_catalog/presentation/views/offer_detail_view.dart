@@ -20,6 +20,8 @@ import '../../../../core/widgets/custom_text_form_field.dart';
 import '../../../../core/widgets/state_widgets.dart';
 import '../../../seller_home/presentation/views/widgets/section_card.dart';
 import '../cubits/offer_detail_cubit/offer_detail_cubit.dart';
+import 'widgets/photo_editor.dart';
+import 'widgets/price_tier_editor.dart';
 import 'widgets/seller_product_item.dart';
 
 /// Detail for one of the store's own listings.
@@ -86,7 +88,18 @@ class _Content extends StatelessWidget {
                 children: <Widget>[
                   24.sbh,
                   _PhotoCarousel(photos: offer.photos),
-                  16.sbh,
+                  8.sbh,
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton.icon(
+                      onPressed: state.isBusy
+                          ? null
+                          : () => _editPhotos(context, state),
+                      icon: const Icon(Icons.photo_library_outlined, size: 18),
+                      label: const Text('Ubah foto'),
+                    ),
+                  ),
+                  8.sbh,
                   Text(
                     state.displayName,
                     style: AppStyles.styleMedium16(context),
@@ -122,16 +135,25 @@ class _Content extends StatelessWidget {
                   _StockCard(state: state),
                   12.sbh,
                   _ReviewsCard(reviews: state.reviews),
-                  if (offer.description != null) ...<Widget>[
-                    12.sbh,
-                    SectionCard(
-                      title: 'Deskripsi',
-                      child: Text(
-                        offer.description!,
-                        style: AppStyles.styleRegular12(context),
+                  12.sbh,
+                  SectionCard(
+                    title: 'Deskripsi',
+                    trailing: _EditAction(
+                      onPressed: state.isBusy
+                          ? null
+                          : () => _editDescription(context, state),
+                    ),
+                    child: Text(
+                      offer.description?.trim().isNotEmpty ?? false
+                          ? offer.description!
+                          : 'Belum ada deskripsi.',
+                      style: AppStyles.styleRegular12(context).copyWith(
+                        color: offer.description?.trim().isNotEmpty ?? false
+                            ? null
+                            : kLightThirdColor,
                       ),
                     ),
-                  ],
+                  ),
                   24.sbh,
                   _ActivateButton(state: state),
                   32.sbh,
@@ -273,8 +295,8 @@ class _GatesCard extends StatelessWidget {
       accent: gates.allPassed ? null : kWarningColor,
       trailing: Text(
         '${rows.where((row) => row.$2).length} dari 4',
-        style: AppStyles.styleMedium12(context)
-            .copyWith(color: kLightThirdColor),
+        style:
+            AppStyles.styleMedium12(context).copyWith(color: kLightThirdColor),
       ),
       child: Column(
         children: rows
@@ -319,6 +341,9 @@ class _SpecCard extends StatelessWidget {
 
     return SectionCard(
       title: 'Spesifikasi',
+      trailing: _EditAction(
+        onPressed: state.isBusy ? null : () => _editSelling(context, state),
+      ),
       child: Column(
         children: <Widget>[
           StatRow(
@@ -381,6 +406,9 @@ class _PriceCard extends StatelessWidget {
 
     return SectionCard(
       title: 'Harga bertingkat',
+      trailing: _EditAction(
+        onPressed: state.isBusy ? null : () => _editPrices(context, state),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -496,8 +524,7 @@ class _StockCardState extends State<_StockCard> {
                         setState(() => _warehouse = warehouse),
                   ),
                   12.sbh,
-                  Text('Jumlah masuk',
-                      style: AppStyles.styleMedium14(context)),
+                  Text('Jumlah masuk', style: AppStyles.styleMedium14(context)),
                   8.sbh,
                   CustomTextFormField(
                     controller: _qtyController,
@@ -529,8 +556,7 @@ class _StockCardState extends State<_StockCard> {
           ],
           if (state.ledger.isNotEmpty) ...<Widget>[
             16.sbh,
-            Text('Riwayat pergerakan',
-                style: AppStyles.styleMedium14(context)),
+            Text('Riwayat pergerakan', style: AppStyles.styleMedium14(context)),
             8.sbh,
             ...state.ledger.take(6).map((entry) => _LedgerRow(entry: entry)),
           ],
@@ -752,6 +778,396 @@ class _ReviewRow extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// The "Ubah" affordance every editable card carries, so they read as one
+/// control rather than four different buttons.
+class _EditAction extends StatelessWidget {
+  const _EditAction({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: const Text('Ubah'),
+    );
+  }
+}
+
+/// Every editor is a bottom sheet over the detail screen rather than a
+/// separate route: the store is comparing what it types against the gates and
+/// stock already on screen.
+Future<T?> _showEditSheet<T>(
+  BuildContext context,
+  Widget Function(BuildContext) builder,
+) {
+  return showModalBottomSheet<T>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: isAppDarkMode() ? kDarkColor : kWhiteColor,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: builder,
+  );
+}
+
+Future<void> _editPhotos(
+  BuildContext context,
+  OfferDetailLoadSuccess state,
+) async {
+  final cubit = OfferDetailCubit.get(context);
+  final photos = await _showEditSheet<List<OfferPhoto>>(
+    context,
+    (_) => _PhotoSheet(initial: state.offer.photos),
+  );
+  if (photos == null || !context.mounted) return;
+
+  final error = await cubit.updateOffer(photos: photos);
+  if (!context.mounted) return;
+  if (error != null) {
+    showErrorSnackBar(context, error);
+    return;
+  }
+  showSuccessSnackBar(context, 'Foto diperbarui.');
+}
+
+Future<void> _editPrices(
+  BuildContext context,
+  OfferDetailLoadSuccess state,
+) async {
+  final cubit = OfferDetailCubit.get(context);
+  final sent = await _showEditSheet<List<PriceTier>>(
+    context,
+    (_) => _PriceSheet(initial: state.offer.priceTiers),
+  );
+  if (sent == null || !context.mounted) return;
+
+  final error = await cubit.replacePriceTiers(sent);
+  if (!context.mounted) return;
+  if (error != null) {
+    showErrorSnackBar(context, error);
+    return;
+  }
+
+  // A strikethrough price the store cannot prove is dropped without any
+  // error, so the only way it learns is by comparing what came back.
+  final latest = cubit.state;
+  final dropped = latest is OfferDetailLoadSuccess &&
+      sent.any((tier) => tier.strikethroughPrice != null) &&
+      latest.offer.priceTiers.every((tier) => tier.strikethroughPrice == null);
+
+  showSuccessSnackBar(
+    context,
+    dropped
+        ? 'Harga disimpan, tapi harga coret dibuang server karena harga '
+            'itu belum bertahan 14 hari di riwayat.'
+        : 'Harga diperbarui.',
+  );
+}
+
+Future<void> _editDescription(
+  BuildContext context,
+  OfferDetailLoadSuccess state,
+) async {
+  final cubit = OfferDetailCubit.get(context);
+  final description = await _showEditSheet<String>(
+    context,
+    (_) => _DescriptionSheet(initial: state.offer.description ?? ''),
+  );
+  if (description == null || !context.mounted) return;
+
+  final error = await cubit.updateOffer(description: description);
+  if (!context.mounted) return;
+  if (error != null) {
+    showErrorSnackBar(context, error);
+    return;
+  }
+  showSuccessSnackBar(context, 'Deskripsi diperbarui.');
+}
+
+Future<void> _editSelling(
+  BuildContext context,
+  OfferDetailLoadSuccess state,
+) async {
+  final cubit = OfferDetailCubit.get(context);
+  final result = await _showEditSheet<_SellingEdit>(
+    context,
+    (_) => _SellingSheet(offer: state.offer),
+  );
+  if (result == null || !context.mounted) return;
+
+  final error = await cubit.updateOffer(
+    minOrderQty: result.minOrderQty,
+    handlingClass: result.handlingClass,
+    freeformName: result.freeformName,
+  );
+  if (!context.mounted) return;
+  if (error != null) {
+    showErrorSnackBar(context, error);
+    return;
+  }
+  showSuccessSnackBar(context, 'Spesifikasi diperbarui.');
+}
+
+/// Shared chrome for the editor sheets: a title, a scrollable body that keeps
+/// clear of the keyboard, and one save button.
+class _SheetScaffold extends StatelessWidget {
+  const _SheetScaffold({
+    required this.title,
+    required this.child,
+    required this.onSave,
+  });
+
+  final String title;
+  final Widget child;
+  final VoidCallback? onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * .85,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Text(title, style: AppStyles.styleSemiBold16(context)),
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: child,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                child: FilledButton(
+                  onPressed: onSave,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: const Text('Simpan'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoSheet extends StatefulWidget {
+  const _PhotoSheet({required this.initial});
+
+  final List<OfferPhoto> initial;
+
+  @override
+  State<_PhotoSheet> createState() => _PhotoSheetState();
+}
+
+class _PhotoSheetState extends State<_PhotoSheet> {
+  late List<OfferPhoto> _photos = <OfferPhoto>[...widget.initial];
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetScaffold(
+      title: 'Ubah foto',
+      onSave: () => Navigator.of(context).pop(_photos),
+      child: PhotoEditor(
+        photos: _photos,
+        onChanged: (photos) => setState(() => _photos = photos),
+      ),
+    );
+  }
+}
+
+class _PriceSheet extends StatefulWidget {
+  const _PriceSheet({required this.initial});
+
+  final List<PriceTier> initial;
+
+  @override
+  State<_PriceSheet> createState() => _PriceSheetState();
+}
+
+class _PriceSheetState extends State<_PriceSheet> {
+  late List<PriceTier> _tiers = <PriceTier>[...widget.initial];
+
+  @override
+  Widget build(BuildContext context) {
+    // The endpoint refuses a list with no RETAIL tier, so block the save here
+    // rather than let the store find out through a 422.
+    final canSave = _tiers.any((tier) => tier.isRetail);
+
+    return _SheetScaffold(
+      title: 'Ubah harga',
+      onSave: canSave ? () => Navigator.of(context).pop(_tiers) : null,
+      child: PriceTierEditor(
+        tiers: _tiers,
+        onChanged: (tiers) => setState(() => _tiers = tiers),
+      ),
+    );
+  }
+}
+
+class _DescriptionSheet extends StatefulWidget {
+  const _DescriptionSheet({required this.initial});
+
+  final String initial;
+
+  @override
+  State<_DescriptionSheet> createState() => _DescriptionSheetState();
+}
+
+class _DescriptionSheetState extends State<_DescriptionSheet> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initial);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetScaffold(
+      title: 'Ubah deskripsi',
+      onSave: () => Navigator.of(context).pop(_controller.text.trim()),
+      child: CustomTextFormField(
+        controller: _controller,
+        labelText: 'Deskripsi',
+        maxLines: 6,
+        textInputAction: TextInputAction.newline,
+        // No Form wraps this sheet today, but the default validator would
+        // block one the moment somebody adds it.
+        validator: Validators.optional,
+      ),
+    );
+  }
+}
+
+/// What the specification sheet can actually change. Weight and dimensions are
+/// deliberately absent for a MASTER offer — they belong to the platform SKU.
+class _SellingEdit {
+  const _SellingEdit({
+    required this.minOrderQty,
+    this.handlingClass,
+    this.freeformName,
+  });
+
+  final double minOrderQty;
+  final String? handlingClass;
+  final String? freeformName;
+}
+
+class _SellingSheet extends StatefulWidget {
+  const _SellingSheet({required this.offer});
+
+  final Offer offer;
+
+  @override
+  State<_SellingSheet> createState() => _SellingSheetState();
+}
+
+class _SellingSheetState extends State<_SellingSheet> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late final TextEditingController _moqController = TextEditingController(
+    text: widget.offer.minOrderQty.round().toString(),
+  );
+  late final TextEditingController _nameController = TextEditingController(
+    text: widget.offer.freeformName ?? '',
+  );
+  late String? _handlingClass = widget.offer.handlingClass;
+
+  @override
+  void dispose() {
+    _moqController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.of(context).pop(
+      _SellingEdit(
+        minOrderQty: double.parse(_moqController.text.trim()),
+        handlingClass: _handlingClass,
+        freeformName:
+            widget.offer.isFreeform ? _nameController.text.trim() : null,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetScaffold(
+      title: 'Ubah spesifikasi',
+      onSave: _save,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            if (widget.offer.isFreeform) ...<Widget>[
+              CustomTextFormField(
+                controller: _nameController,
+                labelText: 'Nama produk',
+                validator: Validators.required('Nama produk'),
+              ),
+              12.sbh,
+            ],
+            CustomTextFormField(
+              controller: _moqController,
+              labelText: 'Minimal pembelian',
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                final parsed = double.tryParse((value ?? '').trim());
+                if (parsed == null || parsed <= 0) return 'Minimal 1';
+                return null;
+              },
+            ),
+            12.sbh,
+            AppDropdownField<String>(
+              label: 'Kelas penanganan',
+              value: _handlingClass,
+              items: HandlingClass.all,
+              itemLabel: HandlingClass.label,
+              hint: 'Ikuti bawaan SKU',
+              onChanged: (value) => setState(() => _handlingClass = value),
+            ),
+            12.sbh,
+            Text(
+              widget.offer.isFreeform
+                  ? 'Berat dan dimensi produk bebas belum bisa diubah lewat '
+                      'endpoint ini — buat produk baru kalau salah.'
+                  : 'Berat dan dimensi mengikuti SKU master dan dikunci '
+                      'platform.',
+              style: AppStyles.styleRegular10(context)
+                  .copyWith(color: kLightThirdColor),
+            ),
+          ],
+        ),
       ),
     );
   }
