@@ -99,8 +99,7 @@ class Shipment {
         scheduledDate: asDateTime(json['scheduled_date']),
         batchId: asIntOrNull(json['batch_id']),
         deliveryAttemptCount: asInt(json['delivery_attempt_count']),
-        handlingClassSnapshot:
-            asStringOrNull(json['handling_class_snapshot']),
+        handlingClassSnapshot: asStringOrNull(json['handling_class_snapshot']),
         holdDays: asIntOrNull(json['hold_days']),
         holdReleaseAt: asDateTime(json['hold_release_at']),
         completedAt: asDateTime(json['completed_at']),
@@ -191,7 +190,8 @@ abstract class FailureReason {
 /// automatically. That protects the store: normal shrinkage becomes a recorded
 /// adjustment instead of a "short delivery" dispute.
 class PodItem {
-  const PodItem({required this.shipmentItemId, required this.actualQtyReceived});
+  const PodItem(
+      {required this.shipmentItemId, required this.actualQtyReceived});
 
   final int shipmentItemId;
   final double actualQtyReceived;
@@ -224,6 +224,7 @@ class ShipmentItem {
     this.subOrderItemId,
     this.qty = 0,
     this.itemNameSnapshot,
+    this.actualQtyReceived,
   });
 
   final int id;
@@ -232,13 +233,24 @@ class ShipmentItem {
   final double qty;
   final String? itemNameSnapshot;
 
+  /// What the buyer signed for, once POD has been recorded. Null before that.
+  ///
+  /// For bulk material a shortfall inside the tolerance window is refunded
+  /// proportionally by the server rather than treated as a failed delivery,
+  /// so this is the number that explains a payout smaller than the order.
+  final double? actualQtyReceived;
+
   factory ShipmentItem.fromJson(Map<String, dynamic> json) => ShipmentItem(
         id: asInt(json['id']),
         shipmentId: asIntOrNull(json['shipment_id']),
         subOrderItemId: asIntOrNull(json['sub_order_item_id']),
         qty: asDouble(json['qty']),
         itemNameSnapshot: asStringOrNull(json['item_name_snapshot']),
+        actualQtyReceived: asDoubleOrNull(json['actual_qty_received']),
       );
+
+  bool get hasShortfall =>
+      actualQtyReceived != null && actualQtyReceived! < qty;
 }
 
 abstract class ShipmentStatus {

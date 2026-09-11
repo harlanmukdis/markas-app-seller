@@ -58,18 +58,40 @@ class SubOrderDetailCubit extends Cubit<SubOrderDetailState> {
       _ => const <Shipment>[],
     };
 
-    emit(
-      SubOrderDetailLoadSuccess(
-        subOrder: subOrder,
-        // The shipments endpoint is not filtered by sub-order, so narrow it
-        // here; fall back to whatever the sub-order itself carried.
-        shipments: allShipments
-                .where((shipment) => shipment.subOrderId == subOrderId)
-                .toList()
-                .let((filtered) =>
-                    filtered.isEmpty ? subOrder.shipments : filtered),
-      ),
+    // The shipments endpoint is not filtered by sub-order, so narrow it here;
+    // fall back to whatever the sub-order itself carried.
+    final mine = allShipments
+        .where((shipment) => shipment.subOrderId == subOrderId)
+        .toList()
+        .let((filtered) => filtered.isEmpty ? subOrder.shipments : filtered);
+
+    emit(SubOrderDetailLoadSuccess(subOrder: subOrder, shipments: mine));
+
+    // `GET /shipments` omits `items[]` entirely, so without re-reading each
+    // shipment the screen believes nothing has been shipped yet — and offers
+    // to ship the same goods a second time. Only the detail carries the lines.
+    final detailed = await _withItems(mine);
+    if (isClosed) return;
+    final current = state;
+    if (current is! SubOrderDetailLoadSuccess) return;
+    emit(current.copyWith(shipments: detailed));
+  }
+
+  Future<List<Shipment>> _withItems(List<Shipment> shipments) async {
+    final needed = shipments.where((s) => s.items.isEmpty).toList();
+    if (needed.isEmpty) return shipments;
+
+    final fetched = await Future.wait(
+      needed.map((s) => _shipmentRepository.getShipment(s.id)),
     );
+
+    final byId = <int, Shipment>{
+      for (final result in fetched)
+        if (result is DataSuccess<Shipment>) result.value.id: result.value,
+    };
+    return <Shipment>[
+      for (final shipment in shipments) byId[shipment.id] ?? shipment,
+    ];
   }
 
   Future<DataError?> readyToShip() =>

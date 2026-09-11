@@ -351,8 +351,8 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = color ??
-        (isAppDarkMode() ? kDarkPrimaryColor : kLightPrimaryColor);
+    final accent =
+        color ?? (isAppDarkMode() ? kDarkPrimaryColor : kLightPrimaryColor);
 
     return CustomButton(
       width: 150,
@@ -363,9 +363,10 @@ class _ActionButton extends StatelessWidget {
       borderColor: outlined ? accent : Colors.transparent,
       txtColor: outlined ? accent : kWhiteColor,
       borderRadius: BorderRadius.circular(12),
-      child: Text(label, style: AppStyles.styleMedium12(context).copyWith(
-        color: outlined ? accent : kWhiteColor,
-      )),
+      child: Text(label,
+          style: AppStyles.styleMedium12(context).copyWith(
+            color: outlined ? accent : kWhiteColor,
+          )),
     );
   }
 }

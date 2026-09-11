@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../config/route/app_route_seller.dart';
 
 import '../../../../core/data_state.dart';
 import '../../../../core/domain/model/order/order_model.dart';
@@ -121,7 +124,6 @@ class _Content extends StatelessWidget {
                   ),
                 ],
                 12.sbh,
-
                 if (subOrder.canMarkReady)
                   SectionCard(
                     accent: kWarningColor,
@@ -164,12 +166,10 @@ class _Content extends StatelessWidget {
                       ],
                     ),
                   ),
-
                 if (subOrder.canCreateShipment && state.hasUnshippedItems) ...[
                   12.sbh,
                   _CreateShipmentCard(state: state),
                 ],
-
                 12.sbh,
                 Text('Pengiriman', style: AppStyles.styleSemiBold16(context)),
                 8.sbh,
@@ -222,8 +222,7 @@ class _CreateShipmentCardState extends State<_CreateShipmentCard> {
         text: widget.state.remainingFor(item).round().toString(),
       );
     }
-    _costController.text =
-        widget.state.subOrder.shippingTotal.toString();
+    _costController.text = widget.state.subOrder.shippingTotal.toString();
   }
 
   @override
@@ -307,8 +306,7 @@ class _CreateShipmentCardState extends State<_CreateShipmentCard> {
                         filled: true,
                         hintText: '0',
                         validator: (value) {
-                          final qty =
-                              double.tryParse(value?.trim() ?? '') ?? 0;
+                          final qty = double.tryParse(value?.trim() ?? '') ?? 0;
                           if (qty < 0) return 'Tidak boleh negatif';
                           if (qty > remaining) {
                             return 'Maks ${remaining.round()}';
@@ -390,30 +388,16 @@ class _ShipmentCard extends StatelessWidget {
     showSuccessSnackBar(context, successMessage);
   }
 
+  /// POD happens at the drop-off point, so it opens its own screen — and that
+  /// screen is the only place the per-line received quantities can be
+  /// declared, which is what a later "kurang kirim" dispute turns on.
   Future<void> _recordPod(BuildContext context) async {
-    final input = await showDialog<_PodInput>(
-      context: context,
-      builder: (dialogContext) => const _PodDialog(),
+    final saved = await context.push<bool>(
+      SellerRoutes.pod,
+      extra: shipment.id,
     );
-    if (input == null || !context.mounted) return;
-
-    final (error, pod) = await SubOrderDetailCubit.get(context).recordPod(
-      shipment.id,
-      photoUrl: input.photoUrl,
-      receiverName: input.receiverName,
-    );
-    if (!context.mounted) return;
-    if (error != null) return showErrorSnackBar(context, error);
-
-    showSuccessSnackBar(
-      context,
-      pod?.hadToleranceRefund ?? false
-          // Say it plainly: the payout will not match the order, and the
-          // reason is a recorded adjustment rather than a mistake.
-          ? 'Bukti terima tersimpan. Selisih material curah dalam toleransi '
-              'dikembalikan otomatis ${formatRupiah(pod!.bulkToleranceRefund)}.'
-          : 'Bukti terima tersimpan. Pengiriman sampai.',
-    );
+    if (saved != true || !context.mounted) return;
+    await SubOrderDetailCubit.get(context).load(showSpinner: false);
   }
 
   Future<void> _failDelivery(BuildContext context) async {
@@ -438,8 +422,8 @@ class _ShipmentCard extends StatelessWidget {
       title: 'Pengiriman #${shipment.id}',
       trailing: Text(
         ShipmentStatus.label(shipment.status),
-        style: AppStyles.styleMedium12(context)
-            .copyWith(color: kLightThirdColor),
+        style:
+            AppStyles.styleMedium12(context).copyWith(color: kLightThirdColor),
       ),
       padding: 16.pa,
       child: Column(
@@ -589,91 +573,6 @@ class _SmallButton extends StatelessWidget {
   }
 }
 
-class _PodInput {
-  const _PodInput({required this.photoUrl, required this.receiverName});
-
-  final String photoUrl;
-  final String receiverName;
-}
-
-/// POD is mandatory before a delivery counts as arrived (SHP-08), so both
-/// fields are required. The photo is a URL because this API never receives
-/// files — the app must upload it elsewhere first.
-class _PodDialog extends StatefulWidget {
-  const _PodDialog();
-
-  @override
-  State<_PodDialog> createState() => _PodDialogState();
-}
-
-class _PodDialogState extends State<_PodDialog> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _photoController = TextEditingController();
-  final TextEditingController _receiverController = TextEditingController();
-
-  @override
-  void dispose() {
-    _photoController.dispose();
-    _receiverController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: isAppDarkMode() ? kDarkColor : kWhiteColor,
-      title: Text('Bukti terima', style: AppStyles.styleSemiBold16(context)),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              'Foto dan nama penerima wajib. Tanpa bukti terima, pengiriman '
-              'tidak boleh dinyatakan sampai.',
-              style: AppStyles.styleRegular12(context)
-                  .copyWith(color: kLightThirdColor),
-            ),
-            16.sbh,
-            CustomTextFormField(
-              controller: _photoController,
-              hintText: 'https://storage.contoh/pod.jpg',
-              filled: true,
-              validator: Validators.fileUrl,
-            ),
-            12.sbh,
-            CustomTextFormField(
-              controller: _receiverController,
-              hintText: 'Nama penerima',
-              filled: true,
-              validator: Validators.required('Nama penerima'),
-            ),
-          ],
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Batal'),
-        ),
-        TextButton(
-          onPressed: () {
-            if (!_formKey.currentState!.validate()) return;
-            Navigator.of(context).pop(
-              _PodInput(
-                photoUrl: _photoController.text.trim(),
-                receiverName: _receiverController.text.trim(),
-              ),
-            );
-          },
-          child: const Text('Simpan'),
-        ),
-      ],
-    );
-  }
-}
-
 /// Failure reasons are a closed list (FLD-03), so this is a picker, not a text
 /// box. `KENDALA_AKSES_LINGKUNGAN` gets an explanation because it is the one
 /// the platform acts on operationally, and stores otherwise file it as
@@ -685,8 +584,8 @@ class _FailureReasonDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: isAppDarkMode() ? kDarkColor : kWhiteColor,
-      title: Text('Alasan gagal kirim',
-          style: AppStyles.styleSemiBold16(context)),
+      title:
+          Text('Alasan gagal kirim', style: AppStyles.styleSemiBold16(context)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

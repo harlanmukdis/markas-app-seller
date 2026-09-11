@@ -13,6 +13,7 @@ import '../../features/seller_catalog/presentation/views/offer_detail_view.dart'
 import '../../features/seller_catalog/presentation/views/offer_form_view.dart';
 import '../../features/seller_home/presentation/views/seller_home_shell.dart';
 import '../../features/seller_onboarding/presentation/views/warehouse_view.dart';
+import '../../features/seller_orders/presentation/views/pod_view.dart';
 import '../../features/seller_orders/presentation/views/sub_order_detail_view.dart';
 import '../../features/seller_shell/presentation/views/seller_bootstrap_view.dart';
 
@@ -30,6 +31,10 @@ abstract class SellerRoutes {
   static const String home = '/seller/home';
 
   static const String subOrderDetail = '/seller/orders/detail';
+
+  /// Recorded away from the shop, so it gets its own screen rather than a
+  /// dialog over the order.
+  static const String pod = '/seller/shipments/pod';
   static const String offerDetail = '/seller/products/detail';
   static const String offerCreate = '/seller/products/new';
 
@@ -56,6 +61,13 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
     pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
       transitionKey: state.pageKey,
       page: OfferDetailView(offerId: state.extra! as int),
+    ),
+  ),
+  GoRoute(
+    path: SellerRoutes.pod,
+    pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
+      transitionKey: state.pageKey,
+      page: PodView(shipmentId: state.extra! as int),
     ),
   ),
   GoRoute(

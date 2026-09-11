@@ -50,7 +50,8 @@ final class OrdersLoadSuccess extends OrdersState {
       OrdersLoadSuccess(
         subOrders: subOrders ?? this.subOrders,
         filter: filter ?? this.filter,
-        busySubOrderId: clearBusy ? null : (busySubOrderId ?? this.busySubOrderId),
+        busySubOrderId:
+            clearBusy ? null : (busySubOrderId ?? this.busySubOrderId),
       );
 }
 

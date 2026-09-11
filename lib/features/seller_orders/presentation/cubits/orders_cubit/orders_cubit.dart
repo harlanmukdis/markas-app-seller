@@ -53,8 +53,8 @@ class OrdersCubit extends Cubit<OrdersState> {
       _act(subOrderId, () => _orderRepository.confirm(subOrderId));
 
   /// [reason] must come from [RejectReason.all]; costs the store 2 score points.
-  Future<DataError?> reject(int subOrderId, String reason) =>
-      _act(subOrderId, () => _orderRepository.reject(subOrderId, reason: reason));
+  Future<DataError?> reject(int subOrderId, String reason) => _act(
+      subOrderId, () => _orderRepository.reject(subOrderId, reason: reason));
 
   Future<DataError?> readyToShip(int subOrderId) =>
       _act(subOrderId, () => _orderRepository.readyToShip(subOrderId));

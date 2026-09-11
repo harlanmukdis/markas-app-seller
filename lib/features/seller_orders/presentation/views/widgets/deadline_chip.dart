@@ -63,8 +63,8 @@ class DeadlineChip extends StatelessWidget {
           Text(
             '${formatDateTime(deadline)}'
             '${consequence == null ? '' : ' · $consequence'}',
-            style:
-                AppStyles.styleRegular10(context).copyWith(color: kLightThirdColor),
+            style: AppStyles.styleRegular10(context)
+                .copyWith(color: kLightThirdColor),
           ),
         ],
       ),
