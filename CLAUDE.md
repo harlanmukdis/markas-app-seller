@@ -11,10 +11,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Flutter e-commerce **seller app**, duplicated from `markas-app-member` on 2026-09-05 and rebranded. Both projects descend from the same purchased UI kit, so the sample code under `lib/features/` is identical in the two trees.
 
-- Directory: `markas-app-seller` (sibling of `markas-app-member` on the Desktop)
+- Directory: `marketplace-app-seller` (renamed from `markas-app-seller` on 2026-09-13, when the backend was replaced)
 - Dart package name (`pubspec.yaml`): **`navy_wear`** — absolute imports are `package:navy_wear/...`. Renaming this breaks every absolute import plus `test/widget_test.dart`. **Deliberately left identical to `markas-app-member`** so a widget or cubit can be copied between member and seller without rewriting imports. Do not rename it in only one of the two projects.
-- Product name / bundle id: **Markas Seller** / `com.markas.seller` (Android `namespace` + `applicationId`, iOS + macOS `PRODUCT_BUNDLE_IDENTIFIER`), and `MaterialApp.title`. The member app keeps its own id, so both can be installed on one device.
-- Android `MainActivity.kt` lives at `android/app/src/main/kotlin/com/markas/seller/` and declares `package com.markas.seller` — this must stay in sync with the gradle `namespace`, because `AndroidManifest.xml` refers to the activity as the relative `.MainActivity`.
+- Product name / bundle id: **Marketplace Seller** / `com.marketplace.seller` (Android `namespace` + `applicationId`, iOS + macOS `PRODUCT_BUNDLE_IDENTIFIER`), and `MaterialApp.title`. The member app keeps its own id, so both can be installed on one device.
+- Android `MainActivity.kt` lives at `android/app/src/main/kotlin/com/marketplace/seller/` and declares `package com.marketplace.seller` — this must stay in sync with the gradle `namespace`, because `AndroidManifest.xml` refers to the activity as the relative `.MainActivity`.
 
 ---
 
@@ -289,6 +289,6 @@ Traps documented in the API reference that must be handled when those land — e
 ## Follow-ups when starting a new project from this base
 
 - **Firebase**: this repo has no Firebase at all today. If it is adopted (or if this project is duplicated from one that has it), run `flutterfire configure` rather than inheriting another project's `firebase.json`, `lib/firebase_options.dart`, and platform config files — a copied config points at the origin project.
-- **App identifier**: already done for this project — Android `applicationId`/`namespace`, iOS/macOS `PRODUCT_BUNDLE_IDENTIFIER`, `android:label`, `CFBundleDisplayName`, `MaterialApp.title` and the desktop/web names all say `com.markas.seller` / "Markas Seller". `name:` in `pubspec.yaml` is intentionally still `navy_wear` — see Project identity.
+- **App identifier**: already done for this project — Android `applicationId`/`namespace`, iOS/macOS `PRODUCT_BUNDLE_IDENTIFIER`, `android:label`, `CFBundleDisplayName`, `MaterialApp.title` and the desktop/web names all say `com.marketplace.seller` / "Marketplace Seller". `name:` in `pubspec.yaml` is intentionally still `navy_wear` — see Project identity.
 - **In-app brand text is still "Shopapay"** and was deliberately left alone during the rebrand, because the strings live in `lib/l10n/*.arb` and changing them requires regenerating `lib/generated/` (`dart run intl_utils:generate`, which needs `dart pub global activate intl_utils` first — it is not a declared dev_dependency). What remains: the `appName` and `aboutShopapay` keys in `intl_en.arb` / `intl_ar.arb`, the `AppImages.Shopapay` constant in [app_images.dart](lib/core/utils/app_images.dart), and its use in `about_app_view.dart`, `profile_view.dart`, `settings_view.dart` and `splash_screen.dart`. Never hand-edit `lib/generated/`.
 - **Missing assets**: see *Known rough edges*. The directories now exist so the build succeeds, but the files themselves are still absent.

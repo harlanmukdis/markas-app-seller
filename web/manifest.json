@@ -1,6 +1,6 @@
 {
-  "name": "Markas Seller",
-  "short_name": "Markas Seller",
+  "name": "Marketplace Seller",
+  "short_name": "Marketplace Seller",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#hexcode",

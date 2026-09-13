@@ -1,4 +1,4 @@
-# Markas Seller
+# Marketplace Seller
 
 ## Overview
 

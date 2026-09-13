@@ -55,7 +55,7 @@ class _SellerBootstrapViewState extends State<SellerBootstrapView> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text('Markas Seller', style: AppStyles.styleSemiBold24(context)),
+            Text('Marketplace Seller', style: AppStyles.styleSemiBold24(context)),
             24.sbh,
             CircularProgressIndicator(
               color: isAppDarkMode() ? kDarkPrimaryColor : kLightPrimaryColor,

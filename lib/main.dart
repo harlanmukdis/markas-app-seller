@@ -65,7 +65,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp.router(
         builder: DevicePreview.appBuilder,
         debugShowCheckedModeBanner: false,
-        title: 'Markas Seller',
+        title: 'Marketplace Seller',
         theme:
             CachedHelper.getData(kAppTheme) == kDark ? darkTheme : lightTheme,
         locale: Locale(CachedHelper.getData(kAppLanguage)),
