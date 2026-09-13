@@ -1,56 +1,102 @@
 import '../../../../../config/network/api_endpoints.dart';
 import '../../../../domain/model/auth/auth_session.dart';
-import '../../../../domain/model/auth/user_model.dart';
-import '../../../../domain/model/enums.dart';
+import '../../../../domain/model/user/app_user.dart';
 import 'base_service.dart';
 
 class AuthService extends BaseService {
   const AuthService(super.dio);
 
-  /// Creates a store account.
+  /// Creates the account. Every account starts as a **buyer**; it becomes a
+  /// seller by creating a store.
   ///
-  /// The store is born `DRAFT` with `trial_started_at` set. A `seller_type`
-  /// outside TOKO/DISTRIBUTOR is silently coerced to TOKO by the backend, so
-  /// the picker only offers those two.
-  ///
-  /// Returns **no refresh token** (API doc 1.4) — the caller is expected to
-  /// follow up with [login] if it wants a long-lived session.
-  Future<AuthSession> register({
-    required String phone,
+  /// No token comes back and the account cannot log in until its email is
+  /// verified — but a dev build returns the verification token inline, which
+  /// is what makes the signup flow completable without a mailbox.
+  Future<RegistrationResult> register({
+    required String email,
     required String password,
     required String fullName,
-    required String tokoName,
-    String sellerType = SellerType.toko,
-    String? email,
+    String? phone,
   }) async {
     final envelope = await postRequest(
       ApiEndpoints.register,
       body: <String, dynamic>{
-        'phone': phone,
+        'email': email,
         'password': password,
         'full_name': fullName,
-        'role': UserRole.seller,
-        'toko_name': tokoName,
-        'seller_type': sellerType,
-        'email': email,
+        'phone': phone,
       },
     );
-    return AuthSession.fromJson(envelope.map);
+    return RegistrationResult.fromJson(envelope.map);
   }
 
+  Future<void> verifyEmail(String token) async {
+    await postRequest(
+      ApiEndpoints.verifyEmail,
+      body: <String, dynamic>{'token': token},
+    );
+  }
+
+  Future<void> resendVerification(String email) async {
+    await postRequest(
+      ApiEndpoints.resendVerification,
+      body: <String, dynamic>{'email': email},
+    );
+  }
+
+  /// Identity is by **email**, not phone — the previous backend's login field.
   Future<AuthSession> login({
-    required String phone,
+    required String email,
     required String password,
   }) async {
     final envelope = await postRequest(
       ApiEndpoints.login,
-      body: <String, dynamic>{'phone': phone, 'password': password},
+      body: <String, dynamic>{'email': email, 'password': password},
     );
     return AuthSession.fromJson(envelope.map);
   }
 
-  Future<UserModel> me() async {
+  /// Revokes the refresh token server-side. Without this a "logout" only
+  /// forgets the tokens locally and they stay valid for 30 days.
+  Future<void> logout(String refreshToken) async {
+    await postRequest(
+      ApiEndpoints.logout,
+      body: <String, dynamic>{'refresh_token': refreshToken},
+    );
+  }
+
+  Future<void> forgotPassword(String email) async {
+    await postRequest(
+      ApiEndpoints.forgotPassword,
+      body: <String, dynamic>{'email': email},
+    );
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    await postRequest(
+      ApiEndpoints.resetPassword,
+      body: <String, dynamic>{'token': token, 'new_password': newPassword},
+    );
+  }
+
+  /// The only source of identity: who this is, which roles they hold, and
+  /// which stores they own. The session response carries none of it.
+  Future<AppUser> me() async {
     final envelope = await getRequest(ApiEndpoints.me);
-    return UserModel.fromJson(envelope.map);
+    return AppUser.fromJson(envelope.map);
+  }
+
+  Future<AppUser> updateProfile({String? fullName, String? avatarUrl}) async {
+    final envelope = await patchRequest(
+      ApiEndpoints.me,
+      body: <String, dynamic>{
+        'full_name': fullName,
+        'avatar_url': avatarUrl,
+      },
+    );
+    return AppUser.fromJson(envelope.map);
   }
 }

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/data_state.dart';
 import '../../../../../core/domain/model/auth/auth_session.dart';
-import '../../../../../core/domain/model/enums.dart';
 import '../../../../../core/domain/repositories/auth_repository.dart';
 import '../../../../../di/injector.dart';
 
@@ -24,35 +23,11 @@ class SellerAuthCubit extends Cubit<SellerAuthState> {
   bool get isBusy => state is SellerAuthInProgress;
 
   Future<DataError?> login({
-    required String phone,
+    required String email,
     required String password,
   }) async {
     emit(const SellerAuthInProgress());
-    final result = await _authRepository.login(phone: phone, password: password);
-    return _settle(result);
-  }
-
-  Future<DataError?> register({
-    required String phone,
-    required String password,
-    required String fullName,
-    required String tokoName,
-    String sellerType = SellerType.toko,
-    String? email,
-  }) async {
-    emit(const SellerAuthInProgress());
-    final result = await _authRepository.register(
-      phone: phone,
-      password: password,
-      fullName: fullName,
-      tokoName: tokoName,
-      sellerType: sellerType,
-      email: email,
-    );
-    return _settle(result);
-  }
-
-  DataError? _settle(DataState<AuthSession> result) {
+    final result = await _authRepository.login(email: email, password: password);
     if (isClosed) return null;
 
     switch (result) {
@@ -62,13 +37,63 @@ class SellerAuthCubit extends Cubit<SellerAuthState> {
       case DataFailed<AuthSession>(:final failure):
         emit(const SellerAuthIdle());
         return failure;
-      case DataLoading<AuthSession>():
-      case DataEmpty<AuthSession>():
+      default:
         emit(const SellerAuthIdle());
         return const DataError(
           code: DataErrorCode.unexpected,
           message: 'Server tidak mengembalikan sesi.',
         );
     }
+  }
+
+  /// Registration does not produce a session: the account must verify its
+  /// email first. A dev build returns the verification token inline, so this
+  /// completes the whole chain — register, verify, log in — in one step rather
+  /// than stranding the user at a mailbox that does not exist.
+  Future<DataError?> register({
+    required String email,
+    required String password,
+    required String fullName,
+    String? phone,
+  }) async {
+    emit(const SellerAuthInProgress());
+
+    final registered = await _authRepository.register(
+      email: email,
+      password: password,
+      fullName: fullName,
+      phone: phone,
+    );
+    if (isClosed) return null;
+
+    if (registered is DataFailed<RegistrationResult>) {
+      emit(const SellerAuthIdle());
+      return registered.failure;
+    }
+    if (registered is! DataSuccess<RegistrationResult>) {
+      emit(const SellerAuthIdle());
+      return const DataError(
+        code: DataErrorCode.unexpected,
+        message: 'Server tidak mengembalikan akun yang dibuat.',
+      );
+    }
+
+    final token = registered.value.devVerificationToken;
+    if (token == null || token.isEmpty) {
+      emit(const SellerAuthIdle());
+      return const DataError(
+        code: 'EMAIL_VERIFICATION_REQUIRED',
+        message: 'Akun dibuat. Cek email untuk tautan verifikasi, lalu masuk.',
+      );
+    }
+
+    final verified = await _authRepository.verifyEmail(token);
+    if (isClosed) return null;
+    if (verified is DataFailed<bool>) {
+      emit(const SellerAuthIdle());
+      return verified.failure;
+    }
+
+    return login(email: email, password: password);
   }
 }

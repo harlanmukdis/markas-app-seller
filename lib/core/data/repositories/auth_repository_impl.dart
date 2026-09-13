@@ -1,89 +1,121 @@
-import '../../../config/network/api_exception.dart';
 import '../../data_state.dart';
 import '../../domain/model/auth/auth_session.dart';
-import '../../domain/model/auth/user_model.dart';
-import '../../domain/model/enums.dart';
+import '../../domain/model/user/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/remote/service/auth_service.dart';
 import '../local/session_store.dart';
 import 'repository_guard.dart';
 
 class AuthRepositoryImpl with RepositoryGuard implements AuthRepository {
-  const AuthRepositoryImpl(this._authService, this._sessionStore);
+  const AuthRepositoryImpl(this._service, this._session);
 
-  final AuthService _authService;
-  final SessionStore _sessionStore;
-
-  @override
-  bool get isLoggedIn => _sessionStore.isLoggedIn;
+  final AuthService _service;
+  final SessionStore _session;
 
   @override
-  int? get sellerId => _sessionStore.sellerId;
-
-  @override
-  Future<DataState<AuthSession>> register({
-    required String phone,
+  Future<DataState<RegistrationResult>> register({
+    required String email,
     required String password,
     required String fullName,
-    required String tokoName,
-    String sellerType = SellerType.toko,
-    String? email,
+    String? phone,
   }) =>
-      guard(() async {
-        final registered = await _authService.register(
-          phone: phone,
-          password: password,
-          fullName: fullName,
-          tokoName: tokoName,
-          sellerType: sellerType,
-          email: email,
-        );
-        await _sessionStore.save(registered);
-        await _sessionStore.saveProfile(fullName: fullName, phone: phone);
-
-        // `register` hands back only a 2-hour access token. Logging straight in
-        // is the documented way to obtain a refresh token (API doc 1.4);
-        // without it the store is silently signed out two hours later with no
-        // way to renew.
-        try {
-          final session = await _authService.login(
-            phone: phone,
+      guard(() => _service.register(
+            email: email,
             password: password,
-          );
-          await _sessionStore.save(session);
-          return session;
-        } on ApiException {
-          // Registration itself succeeded — do not fail the flow over this.
-          // The session just cannot outlive its access token.
-          return registered;
-        }
+            fullName: fullName,
+            phone: phone,
+          ));
+
+  @override
+  Future<DataState<bool>> verifyEmail(String token) => guard(() async {
+        await _service.verifyEmail(token);
+        return true;
+      });
+
+  @override
+  Future<DataState<bool>> resendVerification(String email) => guard(() async {
+        await _service.resendVerification(email);
+        return true;
       });
 
   @override
   Future<DataState<AuthSession>> login({
-    required String phone,
+    required String email,
     required String password,
   }) =>
       guard(() async {
-        final session = await _authService.login(
-          phone: phone,
-          password: password,
-        );
-        await _sessionStore.save(session);
-        await _sessionStore.saveProfile(phone: phone);
+        final session = await _service.login(email: email, password: password);
+        await _session.save(session);
+
+        // The tokens carry no identity, so the profile is fetched immediately
+        // and cached — otherwise every screen would have to ask who it is.
+        try {
+          final user = await _service.me();
+          await _session.saveProfile(
+            userId: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone,
+          );
+          // Owning exactly one store makes the choice for the user; owning
+          // several is a question the shell has to ask.
+          if (user.stores.length == 1) {
+            await _session.saveActiveStore(user.stores.single.id);
+          }
+        } catch (_) {
+          // A failed profile read must not undo a successful login.
+        }
+
         return session;
       });
 
   @override
-  Future<DataState<UserModel>> me() => guard(() async {
-        final user = await _authService.me();
-        await _sessionStore.saveProfile(
+  Future<DataState<AppUser>> me() => guard(() async {
+        final user = await _service.me();
+        await _session.saveProfile(
+          userId: user.id,
           fullName: user.fullName,
+          email: user.email,
           phone: user.phone,
         );
         return user;
       });
 
   @override
-  Future<void> logout() => _sessionStore.clear();
+  Future<DataState<bool>> forgotPassword(String email) => guard(() async {
+        await _service.forgotPassword(email);
+        return true;
+      });
+
+  @override
+  Future<DataState<bool>> resetPassword({
+    required String token,
+    required String newPassword,
+  }) =>
+      guard(() async {
+        await _service.resetPassword(token: token, newPassword: newPassword);
+        return true;
+      });
+
+  @override
+  Future<void> logout() async {
+    final refresh = _session.refreshToken;
+    if (refresh != null && refresh.isNotEmpty) {
+      // Best effort: a server that refuses the revoke must not trap the user
+      // in a session they have asked to leave.
+      try {
+        await _service.logout(refresh);
+      } catch (_) {}
+    }
+    await _session.clear();
+  }
+
+  @override
+  bool get isLoggedIn => _session.isLoggedIn;
+
+  @override
+  int? get activeStoreId => _session.activeStoreId;
+
+  @override
+  Future<void> setActiveStore(int storeId) => _session.saveActiveStore(storeId);
 }

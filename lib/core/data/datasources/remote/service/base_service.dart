@@ -17,29 +17,58 @@ abstract class BaseService {
   Future<ApiEnvelope> getRequest(
     String path, {
     Map<String, dynamic>? query,
+    Map<String, dynamic>? headers,
   }) =>
-      _send(() => dio.get<dynamic>(path, queryParameters: _clean(query)));
+      _send(() => dio.get<dynamic>(
+            path,
+            queryParameters: _clean(query),
+            options: _options(headers),
+          ));
 
+  /// [body] is cleaned of nulls and sent as JSON. [data] is passed through
+  /// untouched, which is how a `FormData` upload gets past the cleaner.
   Future<ApiEnvelope> postRequest(
     String path, {
     Map<String, dynamic>? body,
+    Object? data,
+    Map<String, dynamic>? headers,
   }) =>
-      _send(() => dio.post<dynamic>(path, data: _clean(body)));
+      _send(() => dio.post<dynamic>(
+            path,
+            data: data ?? _clean(body),
+            options: _options(headers),
+          ));
 
   Future<ApiEnvelope> putRequest(
     String path, {
     Map<String, dynamic>? body,
+    Map<String, dynamic>? headers,
   }) =>
-      _send(() => dio.put<dynamic>(path, data: _clean(body)));
+      _send(() => dio.put<dynamic>(
+            path,
+            data: _clean(body),
+            options: _options(headers),
+          ));
 
   Future<ApiEnvelope> patchRequest(
     String path, {
     Map<String, dynamic>? body,
+    Map<String, dynamic>? headers,
   }) =>
-      _send(() => dio.patch<dynamic>(path, data: _clean(body)));
+      _send(() => dio.patch<dynamic>(
+            path,
+            data: _clean(body),
+            options: _options(headers),
+          ));
 
-  Future<ApiEnvelope> deleteRequest(String path) =>
-      _send(() => dio.delete<dynamic>(path));
+  Future<ApiEnvelope> deleteRequest(
+    String path, {
+    Map<String, dynamic>? headers,
+  }) =>
+      _send(() => dio.delete<dynamic>(path, options: _options(headers)));
+
+  Options? _options(Map<String, dynamic>? headers) =>
+      headers == null ? null : Options(headers: headers);
 
   Future<ApiEnvelope> _send(
     Future<Response<dynamic>> Function() call,

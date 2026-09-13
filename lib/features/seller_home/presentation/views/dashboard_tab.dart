@@ -3,34 +3,25 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../config/route/app_route_seller.dart';
-import '../../../../core/domain/model/enums.dart';
-import '../../../../core/domain/model/report/reports.dart';
+import '../../../../core/domain/model/store/store.dart';
 import '../../../../core/domain/repositories/auth_repository.dart';
 import '../../../../core/function/components.dart';
 import '../../../../core/utils/app_styles.dart';
 import '../../../../core/utils/constant.dart';
 import '../../../../core/utils/extensions.dart';
-import '../../../../core/utils/format_helper.dart';
 import '../../../../core/widgets/state_widgets.dart';
 import '../../../../di/injector.dart';
-import '../../../seller_onboarding/presentation/views/widgets/gate_tile.dart';
-import '../cubits/dashboard_cubit/dashboard_cubit.dart';
+import '../../../seller_store/presentation/cubits/store_cubit/store_cubit.dart';
 import 'widgets/section_card.dart';
 
+/// The store's home.
+///
+/// There is no summary endpoint on this backend either, so this is assembled
+/// from the store row plus, as each domain lands, its own call. Right now it
+/// shows what the account actually has: which shop is active, whether it can
+/// sell yet, and how to reach the rest.
 class DashboardTab extends StatelessWidget {
   const DashboardTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider<DashboardCubit>(
-      create: (_) => DashboardCubit()..load(),
-      child: const _DashboardBody(),
-    );
-  }
-}
-
-class _DashboardBody extends StatelessWidget {
-  const _DashboardBody();
 
   Future<void> _logout(BuildContext context) async {
     await injector<AuthRepository>().logout();
@@ -42,77 +33,65 @@ class _DashboardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        _Header(onLogout: () => _logout(context)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Text('Beranda', style: AppStyles.styleMedium18(context)),
+              ),
+              IconButton(
+                tooltip: 'Muat ulang',
+                color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
+                icon: const Icon(Icons.refresh_rounded),
+                onPressed: () => StoreCubit.get(context).load(),
+              ),
+              IconButton(
+                tooltip: 'Keluar',
+                color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
+                icon: const Icon(Icons.logout_rounded),
+                onPressed: () => _logout(context),
+              ),
+            ],
+          ),
+        ),
         Expanded(
-          child: BlocBuilder<DashboardCubit, DashboardState>(
+          child: BlocBuilder<StoreCubit, StoreState>(
             builder: (context, state) => switch (state) {
-              DashboardLoadInProgress() =>
-                const LoadingIndicatorView(message: 'Memuat data toko…'),
-              DashboardLoadFailure(:final error) => ErrorStateView(
+              StoreLoadInProgress() => const LoadingIndicatorView(),
+              StoreLoadFailure(:final error) => ErrorStateView(
                   error: error,
-                  onRetry: () => DashboardCubit.get(context).load(),
+                  onRetry: () => StoreCubit.get(context).load(),
                 ),
-              DashboardLoadSuccess() => _Content(state: state),
+              StoreLoadSuccess() => _content(context, state),
             },
           ),
         ),
       ],
     );
   }
-}
 
-class _Header extends StatelessWidget {
-  const _Header({required this.onLogout});
-
-  final VoidCallback onLogout;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Text('Beranda', style: AppStyles.styleMedium18(context)),
-          ),
-          IconButton(
-            tooltip: 'Muat ulang',
-            // Colour set explicitly: under Material 2 an icon on a transparent
-            // surface takes primaryIconTheme (white) and disappears.
-            color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => DashboardCubit.get(context).load(),
-          ),
-          IconButton(
-            tooltip: 'Keluar',
-            color: isAppDarkMode() ? kDarkSecondColor : kLightSecondColor,
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: onLogout,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Content extends StatelessWidget {
-  const _Content({required this.state});
-
-  final DashboardLoadSuccess state;
-
-  @override
-  Widget build(BuildContext context) {
-    final seller = state.seller;
-    final performance = state.performance;
+  Widget _content(BuildContext context, StoreLoadSuccess state) {
+    final store = state.activeStore;
+    if (store == null) {
+      return EmptyStateView(
+        icon: Icons.storefront_outlined,
+        message: 'Belum ada toko yang dipilih.',
+        action: FilledButton(
+          onPressed: () => context.push(SellerRoutes.storePicker),
+          child: const Text('Pilih toko'),
+        ),
+      );
+    }
 
     return RefreshIndicator(
-      onRefresh: () => DashboardCubit.get(context).load(showSpinner: false),
+      onRefresh: () => StoreCubit.get(context).load(),
       child: ListView(
         padding: 20.pa,
         children: <Widget>[
           Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
+              constraints: const BoxConstraints(maxWidth: 640),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -120,188 +99,61 @@ class _Content extends StatelessWidget {
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          seller.name,
-                          style: AppStyles.styleSemiBold24(context),
+                          store.name,
+                          style: AppStyles.styleSemiBold18(context),
                         ),
                       ),
-                      8.sbw,
-                      StatusBadge(
-                        label: SellerStatus.label(seller.status),
-                        color: sellerStatusColor(seller.status),
-                      ),
+                      _StatusPill(status: store.status),
                     ],
                   ),
-                  8.sbh,
+                  4.sbh,
                   Text(
-                    '${SellerType.label(seller.sellerType)} · '
-                    'Skor ${seller.score.toStringAsFixed(0)} · '
-                    '${seller.pkpStatus ?? 'NON_PKP'}',
+                    StoreType.label(store.type),
                     style: AppStyles.styleRegular12(context)
                         .copyWith(color: kLightThirdColor),
                   ),
-                  20.sbh,
-
-                  // Activation is only surfaced when something is still open —
-                  // a fully verified store should not be shown a checklist it
-                  // has already finished.
-                  if (state.needsActivation) ...<Widget>[
-                    SectionCard(
-                      accent: kWarningColor,
-                      onTap: () => context.push(SellerRoutes.onboarding),
-                      child: Row(
-                        children: <Widget>[
-                          const Icon(Icons.pending_actions_rounded,
-                              color: kWarningColor),
-                          12.sbw,
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  'Aktivasi belum selesai',
-                                  style: AppStyles.styleSemiBold14(context),
-                                ),
-                                4.sbh,
-                                Text(
-                                  '${seller.activationGates.passedCount} dari 4 '
-                                  'gerbang lolos. Toko belum bisa berjualan.',
-                                  style: AppStyles.styleRegular12(context)
-                                      .copyWith(color: kLightThirdColor),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.arrow_forward_ios_rounded,
-                              size: 14, color: kLightThirdColor),
-                        ],
-                      ),
+                  16.sbh,
+                  if (!store.isActive) const _NotYetSellingCard(),
+                  if (!store.isActive) 12.sbh,
+                  SectionCard(
+                    title: 'Toko',
+                    child: Column(
+                      children: <Widget>[
+                        StatRow(
+                          label: 'Alamat toko',
+                          value:
+                              store.publicSlug.isEmpty ? '-' : store.publicSlug,
+                        ),
+                        StatRow(
+                          label: 'Rating',
+                          value: store.ratingCount == 0
+                              ? 'Belum ada ulasan'
+                              : '${store.ratingAvg.toStringAsFixed(1)} '
+                                  '(${store.ratingCount})',
+                        ),
+                      ],
                     ),
+                  ),
+                  if (state.stores.length > 1) ...<Widget>[
                     12.sbh,
-                  ],
-
-                  if (state.pendingSubOrders > 0) ...<Widget>[
                     SectionCard(
-                      accent: kErrorColor,
+                      onTap: () => context.push(SellerRoutes.storePicker),
                       child: Row(
                         children: <Widget>[
-                          const Icon(Icons.notifications_active_rounded,
-                              color: kErrorColor),
+                          const Icon(Icons.swap_horiz_rounded, size: 18),
                           12.sbw,
                           Expanded(
                             child: Text(
-                              '${state.pendingSubOrders} pesanan menunggu '
-                              'konfirmasi. Lewat batas 1×24 jam kerja pesanan '
-                              'batal otomatis dan skor turun 3.',
-                              style: AppStyles.styleMedium12(context),
+                              'Pindah toko (${state.stores.length} toko)',
+                              style: AppStyles.styleRegular14(context),
                             ),
                           ),
+                          const Icon(Icons.chevron_right, size: 18),
                         ],
                       ),
                     ),
-                    12.sbh,
                   ],
-
-                  SectionCard(
-                    title: 'Saldo',
-                    child: Column(
-                      children: <Widget>[
-                        StatRow(
-                          label: 'Bisa ditarik',
-                          value: formatRupiah(state.balance?.available),
-                          emphasis: true,
-                          valueColor: kSuccessColor,
-                        ),
-                        StatRow(
-                          label: 'Masih ditahan',
-                          value: formatRupiah(state.balance?.held),
-                        ),
-                        4.sbh,
-                        Text(
-                          'Dana cair per pengiriman, bukan per pesanan. '
-                          'Ongkir 100% milik toko.',
-                          style: AppStyles.styleRegular10(context)
-                              .copyWith(color: kLightThirdColor),
-                        ),
-                      ],
-                    ),
-                  ),
-                  12.sbh,
-
-                  SectionCard(
-                    title: 'Kinerja toko',
-                    child: Column(
-                      children: <Widget>[
-                        StatRow(
-                          label: 'Total sub-pesanan',
-                          value: '${performance?.totalSubOrders ?? 0}',
-                        ),
-                        StatRow(
-                          label: 'Konfirmasi tepat waktu',
-                          value: SellerPerformance.percentLabel(
-                            performance?.slaConfirmationRate,
-                          ),
-                        ),
-                        StatRow(
-                          label: 'Rasio pembatalan',
-                          value: SellerPerformance.percentLabel(
-                            performance?.cancellationRatio,
-                          ),
-                          valueColor: _ratioColor(performance?.cancellationRatio),
-                        ),
-                        StatRow(
-                          label: 'Rasio kalah sengketa',
-                          value: SellerPerformance.percentLabel(
-                            performance?.disputeLossRatio,
-                          ),
-                          valueColor: _ratioColor(performance?.disputeLossRatio),
-                        ),
-                        if (state.responseRate?.responseRate != null)
-                          StatRow(
-                            label: 'Tingkat balasan chat',
-                            value: SellerPerformance.percentLabel(
-                              state.responseRate!.responseRate,
-                            ),
-                          ),
-                        4.sbh,
-                        Text(
-                          'Rasio pembatalan dan kalah sengketa yang tinggi '
-                          'memasukkan toko ke daftar tinjauan Admin Ops.',
-                          style: AppStyles.styleRegular10(context)
-                              .copyWith(color: kLightThirdColor),
-                        ),
-                      ],
-                    ),
-                  ),
-                  12.sbh,
-
-                  SectionCard(
-                    title: 'Pengaturan toko',
-                    child: Column(
-                      children: <Widget>[
-                        _LinkRow(
-                          icon: Icons.verified_outlined,
-                          label: 'Status aktivasi',
-                          onTap: () => context.push(SellerRoutes.onboarding),
-                        ),
-                        _LinkRow(
-                          icon: Icons.local_shipping_outlined,
-                          label: 'Tarif ongkir',
-                          onTap: () => context.push(SellerRoutes.shippingRates),
-                        ),
-                        _LinkRow(
-                          icon: Icons.warehouse_outlined,
-                          label: 'Gudang',
-                          onTap: () => context.push(SellerRoutes.warehouse),
-                        ),
-                        _LinkRow(
-                          icon: Icons.account_balance_outlined,
-                          label: 'Rekening pencairan',
-                          onTap: () => context.push(SellerRoutes.bankAccount),
-                        ),
-                      ],
-                    ),
-                  ),
-                  24.sbh,
+                  32.sbh,
                 ],
               ),
             ),
@@ -310,46 +162,58 @@ class _Content extends StatelessWidget {
       ),
     );
   }
-
-  /// Anything above 10% is worth flagging rather than reporting flatly.
-  static Color? _ratioColor(double? ratio) {
-    if (ratio == null) return null;
-    final percent = ratio <= 1 ? ratio * 100 : ratio;
-    if (percent >= 20) return kErrorColor;
-    if (percent >= 10) return kWarningColor;
-    return null;
-  }
 }
 
-class _LinkRow extends StatelessWidget {
-  const _LinkRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.status});
 
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
+  final String? status;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: <Widget>[
-            Icon(icon, size: 18, color: kLightThirdColor),
-            12.sbw,
-            Expanded(
-              child: Text(label, style: AppStyles.styleMedium14(context)),
+    final isActive = status == StoreStatus.active;
+    final color = isActive ? kSuccessColor : kWarningColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        StoreStatus.label(status),
+        style: AppStyles.styleRegular12(context).copyWith(color: color),
+      ),
+    );
+  }
+}
+
+/// A store opens `inactive` and cannot sell until it is verified.
+class _NotYetSellingCard extends StatelessWidget {
+  const _NotYetSellingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: 16.pa,
+      decoration: BoxDecoration(
+        color: kWarningColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.info_outline_rounded,
+              size: 18, color: kWarningColor),
+          8.sbw,
+          Expanded(
+            child: Text(
+              'Toko belum aktif, jadi belum bisa berjualan dan profilnya belum '
+              'bisa dibuka pembeli. Ajukan verifikasi untuk mengaktifkannya.',
+              style: AppStyles.styleRegular12(context),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded,
-                size: 12, color: kLightThirdColor),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -5,12 +5,15 @@ import '../../core/domain/model/auth/auth_session.dart';
 import '../../core/utils/json_parse.dart';
 import 'api_endpoints.dart';
 
-/// Attaches the bearer token and transparently refreshes it once on a 401.
+/// Attaches the bearer token and the active store, and transparently refreshes
+/// the token once on a 401.
 ///
 /// Extends [QueuedInterceptor] rather than [Interceptor] so requests are
 /// handled one at a time. That is what stops a screen firing four parallel
 /// calls with an expired token from starting four refreshes and racing each
-/// other to overwrite the stored token.
+/// other to overwrite the stored token — and it matters more here than it did
+/// before, because the access token lives fifteen minutes, so a long session
+/// refreshes many times.
 class AuthInterceptor extends QueuedInterceptor {
   AuthInterceptor({
     required this.sessionStore,
@@ -34,9 +37,16 @@ class AuthInterceptor extends QueuedInterceptor {
     ApiEndpoints.register,
     ApiEndpoints.login,
     ApiEndpoints.refresh,
+    ApiEndpoints.verifyEmail,
+    ApiEndpoints.resendVerification,
+    ApiEndpoints.forgotPassword,
+    ApiEndpoints.resetPassword,
   };
 
   static const String _retriedFlag = 'auth_interceptor_retried';
+
+  /// Identifies which of the account's stores a seller-side call is acting as.
+  static const String _storeHeader = 'X-Store-Id';
 
   @override
   void onRequest(
@@ -47,6 +57,16 @@ class AuthInterceptor extends QueuedInterceptor {
       final token = sessionStore.accessToken;
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // Store-scoped endpoints are validated against this header as well as
+      // the path, so sending it everywhere costs nothing and forgetting it on
+      // one call produces a 403 that looks like a permission bug. A caller
+      // that set it explicitly wins — switching stores has to be possible
+      // without touching the stored session.
+      final storeId = sessionStore.activeStoreId;
+      if (storeId != null && !options.headers.containsKey(_storeHeader)) {
+        options.headers[_storeHeader] = '$storeId';
       }
     }
     handler.next(options);
@@ -94,10 +114,9 @@ class AuthInterceptor extends QueuedInterceptor {
 
   /// Returns the new access token, or null if the refresh failed.
   ///
-  /// The API doc specifies the response of `POST /auth/refresh` but not its
-  /// request. `{"refresh_token": ...}` in the JSON body was verified against
-  /// the running backend, which answers with a fresh access token (and no
-  /// `seller_id`, which is why [SessionStore.save] leaves that field alone).
+  /// `POST /auth/refresh` takes `{"refresh_token": ...}` and answers with a
+  /// fresh access token. It may omit the refresh token, which is why
+  /// [SessionStore.save] never clears a field it did not receive.
   Future<String?> _refreshAccessToken() async {
     try {
       final response = await refreshDio.post<dynamic>(

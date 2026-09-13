@@ -45,7 +45,7 @@ There is **no `build_runner` step in this repo** — no `freezed`, `json_seriali
 Point the app at a different backend without editing code:
 
 ```bash
-flutter run -d chrome --dart-define=API_BASE_URL=http://localhost/markas/api/v1
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000/api/v1
 flutter run -d chrome --dart-define=LOG_HTTP=false      # silence the request log
 ```
 
@@ -56,75 +56,42 @@ flutter run -d chrome --dart-define=LOG_HTTP=false      # silence the request lo
 **Two architectures coexist in `lib/` right now, on purpose.**
 
 - The **UI kit** (`lib/features/auth`, `home`, `my_cart`, `favorites`, `trending`, `onboarding`, `profile`, `spalsh`, `notifications&messages`, `shared`) still has no backend. `HomePageCubit.productsTShirt` and friends are hardcoded lists. Nothing about it changed.
-- The **seller app** (`lib/config`, `lib/core/data`, `lib/core/domain`, `lib/di`, `lib/features/seller_*`) talks to the real Markas Bangunan API and follows the Part 2 layering. New seller work goes here.
+- The **seller app** (`lib/config`, `lib/core/data`, `lib/core/domain`, `lib/di`, `lib/features/seller_*`) talks to the marketplace API and follows the Part 2 layering. New seller work goes here.
 
 When the two conflict, follow the seller-app conventions for anything touching the API, and the kit's conventions for anything touching its screens. Do not retrofit one onto the other file by file.
 
-### Seller API integration
+### Marketplace API integration
 
-Backend: CodeIgniter 3 + MySQL + JWT at `http://localhost/markas/api/v1` (**port 80, not 8080**), branch `wip-harlan`. The contract lives in [BRIEF-FE-SELLER.md](docs/BRIEF-FE-SELLER.md) — read it before touching anything in `lib/core/data`. It supersedes the older `API-SELLER-APP.md` / `SELLER-APP-FEATURE-MAP.md` / `PROMPT-PENYESUAIAN-*` notes, which were written before the v2.2 refactor and are wrong about field names. **Lampiran A of that file records where the brief itself disagrees with the running server** — those corrections were measured, not assumed.
+Backend: CodeIgniter 3 + MySQL + JWT at **`http://localhost:8000/api/v1`**. The contract lives in `~/Desktop/Harlan/marketplace-api` — `docs/03-api-documentation.md` for the endpoint map and `postman/Marketplace-API.postman_collection.json` for real request bodies, which is the more reliable of the two.
 
-**v2.2 renamed the audit columns across all 87 tables and dropped the old names**: `created_at` -> `created_date`, `updated_at` -> `modified_date`. Never read the old names — use `asCreatedDate(json)` / `asModifiedDate(json)` from [json_parse.dart](lib/core/utils/json_parse.dart), which accept both so the rename lives in one place. **Semantic timestamps were not renamed**: `kyc_approved_at`, `trial_started_at`, `hold_release_at`, `surat_jalan_issued_at`, `seller_response_deadline` and every `*_deadline` keep their names and must not go through those helpers.
+**This replaced a completely different backend on 2026-09-13.** The app previously talked to Markas Bangunan, a building-material marketplace with one store per account. Everything domain-specific to that — SKU master, price tiers, zone/fleet shipping tariffs, proof of delivery, returns and disputes, the four activation gates — was deleted rather than adapted, because none of it has a counterpart here. Git history before that date is the reference if any of it is ever needed.
 
-v2.2 also added `status_id` (a numeric key into a master status table) alongside `status`. **Keep reading `status`** — the string values are unchanged and are the contract. And `actor_type` (`MEMBER`/`MERCHANT`/`ADMIN`) now comes back from login; it is coarser than `role`, which is still what decides what an account can do.
+What changed conceptually, and why it touches everything:
 
-**Target platform is Flutter web in Chrome.** Never import `dart:io` in shared code. The dev server and the API sit on different ports, so every call is cross-origin; the backend answers preflight `OPTIONS` with 204 and open CORS headers, which is the only reason this works. A failed request on web cannot distinguish "server down" from "CORS blocked" — `ApiException` says both in one message rather than guessing.
+- **An account is not a store.** Every account registers as a buyer and becomes a seller by opening a store, and it can own several. `SessionStore.activeStoreId` is a UI choice, not an identity — losing it logs nobody out, it just means the app has to ask which store to open. `StoreCubit` is provided **above the router** in `main.dart` for exactly this reason: go_router reuses the home page, so a cubit owned by that page would never reload and a newly created store would stay invisible.
+- **`X-Store-Id` accompanies the bearer token** on every store-scoped call. `AuthInterceptor` adds it from the stored active store unless the caller set it explicitly. Forgetting it produces a 403 that reads like a permission bug.
+- **The session response carries no identity at all** — no user id, no role, no store. `GET /me` is the only source of all three, so `AuthRepositoryImpl.login` follows a successful login with a profile read and caches it.
+- **The access token lives 15 minutes** (`expires_in: 900`), not two hours. Refresh is routine rather than rare, which is why `AuthInterceptor` stays a `QueuedInterceptor`.
+- **Registration does not log you in.** It creates the account and returns `dev_verification_token` in a dev build; the email has to be verified before login works. `SellerAuthCubit.register` chains register → verify → login so the flow completes without a mailbox.
+- **There is a file upload endpoint** — `POST /media/upload`, multipart with a single `file` part. The previous backend had none, which blocked every document and photo feature.
 
-Layering, bottom up:
+Rules that carry over unchanged, because they were never about that backend:
 
-```
-lib/config/env/app_config.dart          # base URL via String.fromEnvironment
-lib/config/network/                     # dio_client, auth_interceptor, api_envelope,
-                                        #   api_exception, api_endpoints
-lib/config/route/app_route_seller.dart  # SellerRoutes + appRouterSeller
-lib/core/data_state.dart                # DataState<T> + DataError + DataErrorCode
-lib/core/data/local/session_store.dart  # token / seller_id / role, over CachedHelper
-lib/core/data/datasources/remote/service/   # *Service — owns Dio, throws ApiException
-lib/core/data/repositories/                 # *RepositoryImpl — never throws
-lib/core/domain/model/                      # hand-written models
-lib/core/domain/repositories/               # abstract interfaces cubits depend on
-lib/di/                                     # injector, injector_service, injector_repository
-lib/features/seller_auth/ + seller_onboarding/ + seller_shell/
-```
+- **Never cast a JSON value directly.** This backend also hands MySQL columns to `json_encode`, so `"id": "2"`, `"rating_avg": "0.00"` and `"email_verified": "0"` are normal. Every model reads through `lib/core/utils/json_parse.dart`; `test/core/json_parse_test.dart` pins the behaviour.
+- **Services throw, repositories don't.** `RepositoryGuard.guard` turns an `ApiException` into `DataFailed`, and an empty collection into `DataEmpty`.
+- **Cubits pull repositories with `injector<XRepository>()`** and expose `static XCubit get(context)`. Action methods return `DataError?` rather than emitting an error state, so a form keeps what was typed.
+- **Adding an endpoint** means: path constant in `api_endpoints.dart` -> method on a `*Service` -> method on the abstract repository -> implementation via `guard` -> registration in `injector_service.dart` / `injector_repository.dart`, **in that dependency order**.
 
-Rules that are load-bearing:
+**Where the docs and the server disagree, the server wins.** Found by testing against the running backend:
 
-- **Never cast a JSON value directly.** The backend hands MySQL columns to `json_encode`, so `"id": "1"`, `"score": "100.00"` and `"is_official_store": "0"` are normal — and `DECIMAL` columns arrive with their scale attached, so a rupiah amount reads `"750000.00"`. `int.tryParse("750000.00")` fails outright; `asInt` only works because it falls through to a double parse and rounds. Every model reads through `lib/core/utils/json_parse.dart` (`asInt`, `asDouble`, `asBool`, `asStringOrNull`, `asDateTime`, `asMapList`). `test/core/json_parse_test.dart` pins this behaviour.
-- **Timestamps are server wall clock with no timezone.** `asDateTime` parses them as local and does not convert — converting would shift every displayed deadline.
-- **Models are hand-written, not `freezed`.** Chosen deliberately over Part 2's codegen so editing a model does not require a `build_runner` round trip, and so the tolerant parsing above needs no custom `JsonConverter`. Cubit states are hand-written sealed classes, which give the same exhaustive `switch` as a freezed union.
-- **`seller_id` is never sent to the server.** The backend reads it from the JWT claim and rejects a mismatched path segment with 403. `SessionStore.sellerId` exists only to build URLs; `SellerRepositoryImpl` throws `NO_SELLER_CONTEXT` locally when it is missing so the UI has one code path for "this account is not a store".
-- **Services throw, repositories don't.** A `*Service` catches `DioException` and rethrows `ApiException`; `RepositoryGuard.guard` turns that into `DataFailed(DataError)`. An empty collection becomes `DataEmpty`, which cubits must treat as an empty list, not a failure.
-- **`PERMISSION_DENIED` (403) is a second flavour of refusal**, from v2.2's group+menu permission system, distinct from `FORBIDDEN` ("not yours"). Branch on `DataError.isForbidden`, which covers both, rather than comparing codes.
-- **Surface `error.code` and `error.details` to the user.** For `GATES_NOT_PASSED` and `VALIDATION_ERROR` the details block is the only statement of which gate or field failed. `ErrorStateView` and `showErrorSnackBar` already render both.
-- **Cubits pull repositories with `injector<XRepository>()`**, not constructor injection, and expose `static XCubit get(context)` like the kit's cubits. Action methods (`login`, `add`, `create`, `signAgreement`) **return `DataError?`** rather than emitting an error state — the view shows a snackbar and keeps the typed form intact.
-- **Token refresh is automatic.** `AuthInterceptor` is a `QueuedInterceptor`, so parallel 401s produce one refresh, not four. `POST /auth/register` returns no refresh token, so `AuthRepositoryImpl.register` logs in immediately afterwards to get one. The refresh request body is `{"refresh_token": ...}` — undocumented, but verified against the running backend. Its response carries no `seller_id`, which is why `SessionStore.save` never overwrites a field the response omits.
-- **A create response is often just `{ "id": N }`**, not the row you sent. `POST /shipping-rates`, `bank_account_add` and `warehouses` all do this. The services fold the submitted values back into the returned model rather than parsing a stub — otherwise you get an object with a zoned id of 0.
-- **Adding an endpoint** means: path constant in `api_endpoints.dart` -> method on a `*Service` -> method on the abstract repository -> implementation via `guard` -> registration in `injector_service.dart` / `injector_repository.dart` **in that dependency order**.
+- 🔴 **The backend sends no CORS headers at all, and answers `OPTIONS` with 405.** A browser cannot call it cross-origin, which blocks the web build outright — the previous backend answered preflight with 204 and open headers. Until the backend adds CORS (including `X-Store-Id` in `Access-Control-Allow-Headers`), the web build has to be served from the same origin as the API. There is a dev proxy for this in the session scratchpad; production needs either CORS or same-origin hosting.
+- **`POST /media/upload` returns a URL on a host that does not serve.** It builds `http://localhost:8080/marketplace-api/uploads/...` from its own config while the file is actually served by the API host. `normaliseUploadUrl` in `media_service.dart` rewrites it; the test pins both the rewrite and the no-op cases.
+- **`GET /stores/{id}` answers `STORE_NOT_FOUND` for an inactive store, even to its owner.** It is the public profile. An owner's own store is only visible through `GET /stores`, which is why `StoreService.getMyStores` exists.
+- **A store opens `inactive`** and cannot sell until verified. `POST /stores` answers `{ "id": N }`, not the created row.
+- **The slug is assigned, not requested** — the server appends a uniqueness suffix, so the address that exists differs from the name that was typed.
+- **The database is being actively rebuilt by the backend team.** It was reset mid-session: accounts that worked minutes earlier started failing with `INVALID_CREDENTIALS`, and a fresh registration came back with `user_id: 2` after previously reaching 35. Before concluding the app broke something, register a new account and see whether that works.
 
-**Where the docs and the server disagree, the server wins.** Found by testing against the running backend while building this:
-
-- `GET /fleet-types` sends `capacity_kg_desc` as prose (`"± 5 ton"`, `"< 20 kg"`), not a numeric `capacity_kg`. It is display-only — never parse it into a weight limit.
-- `GET /zones` returns a flat list of 32 rows across `PROVINCE` / `CITY` / `ZONE`. Only `ZONE` rows can carry a tariff, and their names alone are ambiguous ("Bekasi Kota" vs "Bekasi Kabupaten"), so the picker walks `parent_id` to render `Jawa Barat › Bekasi › Bekasi Kota`.
-- `POST /sellers/{id}/sign_agreement` returns `{ seller_status, activation_gates }`. Signing while KYC and bank are still pending correctly leaves `status` at `DRAFT`.
-- **`GET /orders` returns plain order rows** — no nested `sub_orders[]`, no `sub_order_no`, no sub-order status or deadline, and `?status=` is ignored. The store's own line is reachable only through `GET /orders/{id}`, so `OrderService.getSubOrders()` is N+1 by construction, chunked, and filters by `seller_id` because an order may span several stores. (Before v2.2 this endpoint returned a flat order×sub-order join whose `id` could not be attributed to either side; that is gone, and so is the resolution code that worked around it.) Worth asking the backend for `GET /sub-orders?status=` — this is the store's main work queue.
-- **Every server deadline is 5 hours early** — the backend's PHP clock and MySQL clock disagree, so a 48-hour confirmation window is stored as 43. Do **not** correct this with an offset in the app: when the backend is fixed the correction becomes a second error. Show the server's absolute date and time, and keep countdowns from implying precision they do not have.
-- `POST /sellers/{id}/warehouses` **fails with HTTP 500 if `address_id` is set to an id that does not exist**, and the failure escapes CodeIgniter as a full HTML error page rather than the JSON envelope. `GET /addresses` exists but is empty on this backend, so in practice `address_id` must be omitted. The warehouse form says so; `ApiException` summarises HTML bodies rather than putting a document into a snackbar.
-- **`POST /offers` validates almost nothing, and no endpoint undoes it.** Verified live: it accepted a second offer for a SKU the store already listed, a freeform offer inside a `MASTER` category, and a master-SKU offer inside a `BEBAS` one — all 200, all created. `DELETE /offers/{id}` answers `METHOD_NOT_ALLOWED`, and `PUT` ignores `status`, so a wrong listing can only be deactivated, never removed. The category's `jalur` rule therefore lives entirely in the client (`OfferFormReady.needsSku` / `isFreeform`), and the create screen says the mistake is permanent before the store makes it.
-- **`PUT /offers/{id}` is a true partial update.** `BaseService` strips null fields, so an omitted argument leaves the column alone rather than clearing it — which is what lets the detail screen edit photos, price and specification through three separate sheets.
-- **`pod_items` is accepted and silently discarded.** `POST /shipments/{id}/pod` answers 200 and leaves `actual_qty_received` null — verified with a plain curl, no Flutter involved, on two separate non-bulk shipments. The brief presents this field as the store's protection against a "kurang kirim" dispute, so reporting it as saved when it was not is the worst possible failure. `PodCubit` re-reads the shipment after a successful POD and compares; a dropped count is surfaced as an error, not a success.
-- **`GET /shipments` omits `items[]`.** Only `GET /shipments/{id}` carries the lines. Without re-reading each one, the sub-order screen believes nothing has shipped and offers to ship the same goods twice — it showed "sisa 40 dari 40" for a sub-order whose 40 sacks had already gone out.
-- **v2.4 hard-blocks shipment creation on weight** (`FLEET_PAYLOAD_EXCEEDED`) — and the server's weight is wrong. `weight_kg_snapshot` on a sub-order item is the **line total**, but `POST /shipments` multiplies it by qty again, so a 1.6 kg tile reads as 48 kg. Verified live with an isolating request. Until the backend fixes it, **do not send `fleet_type_code`** — omitting it skips the check and is the only way a shipment can be created. `FleetType.canCarry` does the same check client-side, correctly.
-- **`GET /offers` is hard-capped at 50 rows for a `SEL` token, with no way past it.** The v2.4 note says the seller branch still returns every offer; it does not. It returns the **newest 50 by id** — creating a product pushes the oldest one out of the response — so a store's earliest listings are the ones that vanish. Seller 1 owns 124 offers and only 50 come back — `page`, `per_page`, `limit`, `offset` and `status` are all ignored and no `meta` comes back, so 74 products are unreachable. There is no client-side fix; `OffersState.isProbablyTruncated` warns the store when the list comes back at exactly 50. The backend needs to add pagination to that branch.
-- **v2.4 bulk lookups replace per-offer reads**: `GET /offers/prices?ids=` gives the cheapest RETAIL price per offer and `GET /sku-master?ids=` gives names, units and weights. The offers grid uses both — previously 50 products cost 50 detail reads plus 50 SKU reads.
-- **`/chat/messages` and `/payments/*` still return `created_at`**, aliased from `created_date`, unlike every other endpoint. `asCreatedDate` accepts both, so never hand-write either name.
-- **Any unhandled backend error arrives as HTML, not JSON.** `ApiException._plainBodyMessage` detects that and reports the `<title>` plus the status code. Never assume an error response is parseable.
-
-Test accounts (password `password123`, ids valid for the rebuilt v2.2 database): `081100000003` -> `seller_id 1` VERIFIED, `081100000004` -> `seller_id 2` VERIFIED distributor, `081100000005` -> `seller_id 3` DRAFT for the onboarding wizard. Admins log in **by email only**.
-
-What is implemented: catalogue create and edit (category → master SKU or freeform, photos measured client-side, price tiers, activation), auth (register/login/refresh/me) and the whole of onboarding — the four activation gates, KYC document submission, bank accounts, the agreement, warehouses, and shipping tariffs. All of it has been exercised end to end against a live backend. Catalogue, orders, shipments, finance, returns, disputes, RFQ, chat, vouchers and reports are **not** started.
-
-`SellerRoutes.bootstrap` (`/`) is the router's `initialLocation`, not the kit's splash — see *Known rough edges*.
-
+What is implemented: auth (register → verify → login, refresh, logout), the account profile, store list/create/settings and the active-store context, and file upload. Products, inventory, orders, wallet, chat, promotions and the rest of the 32 modules are **not** started.
 ### Feature-first layout
 
 ```
@@ -135,7 +102,7 @@ lib/generated/  # Flutter Intl output — DO NOT EDIT
 lib/l10n/       # .arb translation sources
 ```
 
-The seller features (`seller_auth`, `seller_onboarding`, `seller_shell`) use the same `presentation/{cubits,views,views/widgets}` shape but keep **no** `data/` subtree — their models and repositories are centralised under `lib/core/domain` and `lib/core/data`, per the target architecture.
+The seller features (`seller_auth`, `seller_store`, `seller_home`, `seller_shell`) use the same `presentation/{cubits,views,views/widgets}` shape but keep **no** `data/` subtree — their models and repositories are centralised under `lib/core/domain` and `lib/core/data`, per the target architecture.
 
 The convention is applied loosely: `favorites`, `trending`, and `spalsh` are single files with no `presentation/` layer. Directory names contain typos that are part of the real paths — `spalsh` (splash), `presentaion` (profile only), and `notifications&messages` (literal `&`). Match the existing spelling rather than "fixing" it, or every import breaks.
 
@@ -274,17 +241,14 @@ lib/
 
 ### Remaining API surface
 
-`docs/API-SELLER-APP.md` covers roughly 80 endpoints; onboarding is one of sixteen groups. Build the rest in this order, since each depends on the last: catalogue (SKU requests, offers, price tiers, activation gates, inventory) -> orders (sub-orders, shipments, POD) -> finance (balance, ledger, withdrawals) -> returns and disputes -> RFQ, chat, vouchers, reports.
+The marketplace API exposes 32 modules and roughly 223 endpoints; the seller app needs a fraction of them. Build in this order, since each depends on the last: **store verification** (submit + documents, using `/media/upload`) -> **product catalog** (categories, products, variants, images) -> **warehouses & inventory** (stock-in/out, adjustments, movements) -> **orders** (accept, pack, ship, cancel, tracking, refund requests) -> **store wallet** (balance, withdraw) -> chat, promotions, reviews, and the advanced modules.
 
-Traps documented in the API reference that must be handled when those land — each one fails silently or confusingly otherwise:
+Traps already confirmed against the running server, which will bite when those land:
 
-- `photos_json` must be objects `{url, width, height}`, not URL strings, and the app must measure the images itself. A bare string array makes `width` read as 0 and offer activation fails with no clear reason. Minimum 3 photos, each ≥ 800×800.
-- `POST /offers/{id}/price_tiers` is a **replace**, not an append. Read the current tiers, edit locally, send the complete list back.
-- `POST /sku-requests` answers **HTTP 200** when it did *not* create anything — branch on `data.similar_found`, never on the status code.
-- `GET /returns/{id}` and `GET /disputes/{id}` do not exist; use `/returns/{id}/detail` and `/disputes/{id}/detail`.
-- `strikethrough_price` is silently dropped if unproven; compare the response against what was sent and tell the store why it vanished.
-- Deadlines are in *working hours* and skip weekends and holidays. Never compute them client-side — use the server's `*_deadline` / `*_at` fields.
-- There is no file upload endpoint anywhere. Every `file_url` / `photo_url` / `photos_json` field takes a URL the app must have uploaded elsewhere first.
+- `POST /media/upload` is `multipart/form-data` with a single `file` part, and the returned URL needs `normaliseUploadUrl`. Verification documents take an extra `doc_type` part plus `X-Store-Id`.
+- `GET /products` and `GET /stores/{id}/products` paginate properly and return `meta: {page, per_page, total}` — unlike the previous backend, this one can be paged.
+- `/categories` is empty on a fresh database. Products need a category, so seeding one through `POST /admin/categories` is a prerequisite for testing the catalogue at all.
+- There is no seller-side order list separate from `/stores/{id}/orders`; the buyer's `/orders` is a different scope.
 
 ## Follow-ups when starting a new project from this base
 

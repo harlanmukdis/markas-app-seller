@@ -3,18 +3,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../config/route/app_route_seller.dart';
-import '../../../../core/domain/model/enums.dart';
-import '../../../../core/function/components.dart';
 import '../../../../core/function/custom_app_bar.dart';
 import '../../../../core/utils/app_styles.dart';
 import '../../../../core/utils/constant.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/custom_buttons.dart';
 import '../../../../core/widgets/custom_text_form_field.dart';
 import '../../../../core/widgets/state_widgets.dart';
 import '../cubits/seller_auth_cubit/seller_auth_cubit.dart';
 
+/// Creates the **account**, not the store.
+///
+/// On this backend every account starts as a buyer and becomes a seller by
+/// opening a store, so asking for a shop name here would be asking for
+/// something the endpoint cannot accept.
 class SellerRegisterView extends StatelessWidget {
   const SellerRegisterView({super.key});
 
@@ -37,20 +39,15 @@ class _SellerRegisterBody extends StatefulWidget {
 class _SellerRegisterBodyState extends State<_SellerRegisterBody> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _tokoNameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  String _sellerType = SellerType.toko;
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _fullNameController.dispose();
-    _tokoNameController.dispose();
-    _phoneController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -58,214 +55,121 @@ class _SellerRegisterBodyState extends State<_SellerRegisterBody> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final phone = _phoneController.text.trim();
     final error = await SellerAuthCubit.get(context).register(
-      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
       password: _passwordController.text,
       fullName: _fullNameController.text.trim(),
-      tokoName: _tokoNameController.text.trim(),
-      sellerType: _sellerType,
-      email: _emailController.text.trim().isEmpty
-          ? null
-          : _emailController.text.trim(),
+      phone: phone.isEmpty ? null : phone,
     );
 
     if (!mounted) return;
-
     if (error != null) {
       showErrorSnackBar(context, error);
       return;
     }
 
-    showSuccessSnackBar(
-      context,
-      'Akun toko dibuat. Lanjutkan proses aktivasi.',
-    );
-    // A brand-new store lands on the checklist rather than the shell: every
-    // gate is still open and that is genuinely where its next action is.
-    context.go(SellerRoutes.onboarding);
+    // Registered, verified and logged in — but with no store yet, so the
+    // bootstrap screen is what decides where to land.
+    context.go(SellerRoutes.bootstrap);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: customAppBar(context, 'Daftar Toko'),
+      appBar: customAppBar(context, 'Daftar akun'),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: 24.pa,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Text(
-                      'Buat akun toko',
-                      style: AppStyles.styleSemiBold18(context),
-                    ),
-                    8.sbh,
-                    Text(
-                      'Setelah mendaftar, toko berstatus DRAFT dan masuk masa '
-                      'percobaan. Empat gerbang aktivasi harus lolos sebelum '
-                      'bisa berjualan.',
-                      style: AppStyles.styleRegular12(context)
-                          .copyWith(color: kLightThirdColor),
-                    ),
-                    24.sbh,
-                    _Field(
-                      label: 'Nama pemilik',
-                      controller: _fullNameController,
-                      hintText: 'Nama sesuai KTP',
-                      validator: Validators.required('Nama pemilik'),
-                    ),
-                    _Field(
-                      label: 'Nama toko',
-                      controller: _tokoNameController,
-                      hintText: 'Toko Jaya Bangunan',
-                      validator: Validators.required('Nama toko'),
-                    ),
-                    _Field(
-                      label: 'Nomor HP',
-                      controller: _phoneController,
-                      hintText: '081234500001',
-                      keyboardType: TextInputType.phone,
-                      validator: Validators.phone,
-                    ),
-                    _Field(
-                      label: 'Email (opsional)',
-                      controller: _emailController,
-                      hintText: 'toko@mail.com',
-                      keyboardType: TextInputType.emailAddress,
-                      validator: Validators.optionalEmail,
-                    ),
-                    Text(
-                      'Jenis toko',
-                      style: AppStyles.styleMedium14(context),
-                    ),
-                    8.sbh,
-                    DropdownButtonFormField<String>(
-                      initialValue: _sellerType,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: isAppDarkMode()
-                            ? kLightSecondColor
-                            : const Color(0xffF4F6F9),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+        child: BlocBuilder<SellerAuthCubit, SellerAuthState>(
+          builder: (context, state) {
+            final isBusy = state is SellerAuthInProgress;
+
+            return SingleChildScrollView(
+              padding: 24.pa,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          'Buat akun dulu, tokonya menyusul',
+                          style: AppStyles.styleSemiBold18(context),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                        8.sbh,
+                        Text(
+                          'Satu akun bisa punya beberapa toko. Toko pertama '
+                          'dibuat setelah akun jadi.',
+                          style: AppStyles.styleRegular12(context)
+                              .copyWith(color: kLightThirdColor),
                         ),
-                      ),
-                      items: SellerType.all
-                          .map(
-                            (type) => DropdownMenuItem<String>(
-                              value: type,
-                              child: Text(SellerType.label(type)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) => setState(
-                        () => _sellerType = value ?? SellerType.toko,
-                      ),
-                    ),
-                    4.sbh,
-                    Text(
-                      'Distributor hanya pembeda tampilan — alur onboarding, '
-                      'katalog, pesanan, dan pencairan identik.',
-                      style: AppStyles.styleRegular10(context)
-                          .copyWith(color: kLightThirdColor),
-                    ),
-                    16.sbh,
-                    Text(
-                      'Kata sandi',
-                      style: AppStyles.styleMedium14(context),
-                    ),
-                    8.sbh,
-                    CustomTextFormField(
-                      controller: _passwordController,
-                      hintText: 'Minimal 6 karakter',
-                      obscureText: _obscurePassword,
-                      textInputAction: TextInputAction.done,
-                      filled: true,
-                      onSubmitted: (_) => _submit(),
-                      validator: Validators.password,
-                      suffix: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                        24.sbh,
+                        CustomTextFormField(
+                          controller: _fullNameController,
+                          labelText: 'Nama lengkap',
+                          textInputAction: TextInputAction.next,
+                          validator: Validators.required('Nama lengkap'),
                         ),
-                        onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword,
+                        16.sbh,
+                        CustomTextFormField(
+                          controller: _emailController,
+                          labelText: 'Email',
+                          hintText: 'nama@toko.com',
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: Validators.email,
                         ),
-                      ),
-                    ),
-                    32.sbh,
-                    BlocBuilder<SellerAuthCubit, SellerAuthState>(
-                      builder: (context, state) {
-                        final isBusy = state is SellerAuthInProgress;
-                        return CustomButton(
+                        16.sbh,
+                        CustomTextFormField(
+                          controller: _phoneController,
+                          labelText: 'Nomor HP (opsional)',
+                          keyboardType: TextInputType.phone,
+                          textInputAction: TextInputAction.next,
+                          validator: Validators.optional,
+                        ),
+                        16.sbh,
+                        CustomTextFormField(
+                          controller: _passwordController,
+                          labelText: 'Kata sandi',
+                          obscureText: true,
+                          textInputAction: TextInputAction.done,
+                          validator: Validators.password,
+                        ),
+                        32.sbh,
+                        FilledButton(
                           onPressed: isBusy ? null : _submit,
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                          ),
                           child: isBusy
                               ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
+                                  width: 18,
+                                  height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: kWhiteColor,
                                   ),
                                 )
                               : const Text('Daftar'),
-                        );
-                      },
+                        ),
+                        16.sbh,
+                        Center(
+                          child: TextButton(
+                            onPressed: isBusy
+                                ? null
+                                : () => context.go(SellerRoutes.login),
+                            child: const Text('Sudah punya akun? Masuk'),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
-      ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.label,
-    required this.controller,
-    required this.validator,
-    this.hintText,
-    this.keyboardType,
-  });
-
-  final String label;
-  final TextEditingController controller;
-  final String? Function(String?) validator;
-  final String? hintText;
-  final TextInputType? keyboardType;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(label, style: AppStyles.styleMedium14(context)),
-          8.sbh,
-          CustomTextFormField(
-            controller: controller,
-            hintText: hintText,
-            keyboardType: keyboardType,
-            filled: true,
-            validator: validator,
-          ),
-        ],
       ),
     );
   }

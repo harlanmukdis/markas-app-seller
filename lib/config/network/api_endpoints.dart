@@ -1,180 +1,88 @@
 /// Path constants, relative to [AppConfig.apiBaseUrl].
 ///
-/// Only the paths phase 1 actually calls are listed. Two routing quirks from
-/// API doc 1.6 are worth remembering when this list grows: `GET /returns/{id}`
-/// and `GET /disputes/{id}` do not exist — those need `/detail` — and a 404
-/// reading "Endpoint not found" means the URL is wrong, while "Not found"
-/// means the URL is right but the row is not yours.
+/// The marketplace API splits cleanly in two: paths under `/me` and `/auth`
+/// belong to the logged-in **user**, and paths under `/stores/{id}` belong to
+/// one of the **stores** that user owns. A user may own several, so nothing
+/// here assumes a single store identity the way the previous backend did —
+/// the active store id is passed explicitly and also travels as `X-Store-Id`.
 abstract class ApiEndpoints {
-  // Auth
+  // ---------------------------------------------------------------- Auth
   static const String register = '/auth/register';
   static const String login = '/auth/login';
   static const String refresh = '/auth/refresh';
-  static const String me = '/auth/me';
+  static const String logout = '/auth/logout';
+  static const String verifyEmail = '/auth/verify-email';
+  static const String resendVerification = '/auth/resend-verification';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
 
-  // Seller profile & onboarding
-  static String seller(int sellerId) => '/sellers/$sellerId';
+  // ---------------------------------------------------------------- User
+  static const String me = '/me';
+  static const String switchRole = '/me/switch-role';
+  static const String addresses = '/me/addresses';
+  static String address(int id) => '/me/addresses/$id';
 
-  static String kycUpload(int sellerId) => '/sellers/$sellerId/kyc_upload';
+  /// The upload endpoint the previous backend never had. Everything that used
+  /// to demand a URL the app could not produce — verification documents,
+  /// product images, avatars — goes through here first.
+  static const String mediaUpload = '/media/upload';
 
-  static String bankAccountAdd(int sellerId) =>
-      '/sellers/$sellerId/bank_account_add';
+  // --------------------------------------------------------------- Store
+  static const String stores = '/stores';
+  static String store(int storeId) => '/stores/$storeId';
+  static String storeSettings(int storeId) => '/stores/$storeId/settings';
+  static String storeRatings(int storeId) => '/stores/$storeId/ratings';
+  static String storeAnalytics(int storeId) => '/stores/$storeId/analytics';
 
-  static String bankAccounts(int sellerId) =>
-      '/sellers/$sellerId/bank_accounts';
+  // -------------------------------------------------- Seller verification
+  static String verification(int storeId) => '/stores/$storeId/verification';
+  static String verificationDocuments(int storeId) =>
+      '/stores/$storeId/verification/documents';
 
-  static String signAgreement(int sellerId) =>
-      '/sellers/$sellerId/sign_agreement';
-
-  static String warehouses(int sellerId) => '/sellers/$sellerId/warehouses';
-
-  // Shipping rates (gate 3)
-  static const String shippingRates = '/shipping-rates';
-
-  static String shippingRate(int rateId) => '/shipping-rates/$rateId';
-
-  static const String zones = '/zones';
-  static const String fleetTypes = '/fleet-types';
-
-  // Catalogue
+  // ------------------------------------------------------------- Catalog
   static const String categories = '/categories';
+  static const String products = '/products';
+  static String storeProducts(int storeId) => '/stores/$storeId/products';
+  static String product(int productId) => '/products/$productId';
+  static String productVariants(int productId) => '/products/$productId/variants';
+  static String productVariant(int productId, int variantId) =>
+      '/products/$productId/variants/$variantId';
+  static String productImages(int productId) => '/products/$productId/images';
 
-  static String category(int id) => '/categories/$id';
+  // --------------------------------------------- Warehouses & inventory
+  static String storeWarehouses(int storeId) => '/stores/$storeId/warehouses';
+  static String warehouse(int warehouseId) => '/warehouses/$warehouseId';
+  static String warehouseStocks(int warehouseId) =>
+      '/warehouses/$warehouseId/stocks';
+  static String warehouseMovements(int warehouseId) =>
+      '/warehouses/$warehouseId/movements';
+  static String warehouseStockIn(int warehouseId) =>
+      '/warehouses/$warehouseId/stock-in';
+  static String warehouseStockOut(int warehouseId) =>
+      '/warehouses/$warehouseId/stock-out';
+  static const String stockAdjustments = '/stock-adjustments';
+  static const String stockTransfers = '/stock-transfers';
+  static String stockTransferComplete(int transferId) =>
+      '/stock-transfers/$transferId/complete';
 
-  /// Requires either `q` or `category_id`.
-  static const String skuMaster = '/sku-master';
+  // --------------------------------------------------------------- Orders
+  static String storeOrders(int storeId) => '/stores/$storeId/orders';
+  static String order(int orderId) => '/orders/$orderId';
+  static String orderAccept(int orderId) => '/orders/$orderId/accept';
+  static String orderPack(int orderId) => '/orders/$orderId/pack';
+  static String orderShip(int orderId) => '/orders/$orderId/ship';
+  static String orderCancel(int orderId) => '/orders/$orderId/cancel';
+  static String orderTracking(int orderId) => '/orders/$orderId/tracking';
+  static String refundApprove(int orderId, int refundId) =>
+      '/orders/$orderId/refund-request/$refundId/approve';
+  static String refundReject(int orderId, int refundId) =>
+      '/orders/$orderId/refund-request/$refundId/reject';
 
-  static String skuMasterDetail(int id) => '/sku-master/$id';
+  // --------------------------------------------------------------- Wallet
+  static String storeWallet(int storeId) => '/stores/$storeId/wallet';
+  static String storeWalletWithdraw(int storeId) =>
+      '/stores/$storeId/wallet/withdraw';
 
-  static const String skuRequests = '/sku-requests';
-
-  static String skuRequestWithdraw(int id) => '/sku-requests/$id/withdraw';
-
-  static String skuRequestResubmit(int id) => '/sku-requests/$id/resubmit';
-
-  // Offers
-  static const String offers = '/offers';
-
-  /// v2.4 bulk lookup: cheapest RETAIL price per offer, keyed by offer id.
-  /// Uses the same price definition as the buyer's price filter and facets.
-  static const String offerPrices = '/offers/prices';
-
-  static String offer(int id) => '/offers/$id';
-
-  static String offerPriceTiers(int id) => '/offers/$id/price_tiers';
-
-  static String offerGates(int id) => '/offers/$id/gates';
-
-  /// v2.2. A buyer-side feature the store still wants to read: rating drives
-  /// the buyer's `min_rating` filter and `sort=popular`.
-  static String offerReviews(int id) => '/offers/$id/reviews';
-
-  static String offerActivate(int id) => '/offers/$id/activate';
-
-  static String offerDeactivate(int id) => '/offers/$id/deactivate';
-
-  // Inventory
-  static const String inventoryStockIn = '/inventory/stock_in';
-  static const String inventoryAdjust = '/inventory/adjust';
-  static const String inventoryLedger = '/inventory/ledger';
-  static const String inventoryAvailable = '/inventory/available';
-
-  // Orders
-  static const String orders = '/orders';
-
-  static String order(int id) => '/orders/$id';
-
-  static String subOrder(int id) => '/sub-orders/$id';
-
-  static String subOrderConfirm(int id) => '/sub-orders/$id/confirm';
-
-  static String subOrderReject(int id) => '/sub-orders/$id/reject';
-
-  static String subOrderReadyToShip(int id) => '/sub-orders/$id/ready_to_ship';
-
-  // Shipments
-  static const String shipments = '/shipments';
-
-  static String shipment(int id) => '/shipments/$id';
-
-  static String shipmentProcess(int id) => '/shipments/$id/process';
-
-  static String shipmentShip(int id) => '/shipments/$id/ship';
-
-  static String shipmentPod(int id) => '/shipments/$id/pod';
-
-  static String shipmentFailDelivery(int id) => '/shipments/$id/fail_delivery';
-
-  static String shipmentReturnToSeller(int id) =>
-      '/shipments/$id/return_to_seller';
-
-  /// v2.4: put goods that came back into sellable stock again (FLD-04).
-  static String shipmentRestock(int id) => '/shipments/$id/restock';
-
-  /// v2.4: release the packaging/pallet deposit held from the buyer (FLD-07).
-  static String shipmentConfirmPackagingReturned(int id) =>
-      '/shipments/$id/confirm_packaging_returned';
-
-  // Finance
-  static const String financeBalance = '/finance/balance';
-  static const String financeLedger = '/finance/ledger';
-  static const String financeWithdraw = '/finance/withdraw';
-  static const String financeInvoices = '/finance/invoices';
-  static const String financeTaxInvoices = '/finance/tax_invoices';
-
-  // Returns — note there is no `GET /returns/{id}`; the detail route needs
-  // the `/detail` suffix (API doc 1.6).
-  static const String returns = '/returns';
-
-  static String returnDetail(int id) => '/returns/$id/detail';
-
-  static String returnRespond(int id) => '/returns/$id/respond';
-
-  static String returnInspect(int id) => '/returns/$id/inspect';
-
-  // Disputes — same `/detail` quirk as returns.
-  static const String disputes = '/disputes';
-
-  static String disputeDetail(int id) => '/disputes/$id/detail';
-
-  static String disputeEvidence(int id) => '/disputes/$id/evidence';
-
-  // Chat
-  static const String chatThreads = '/chat/threads';
-  static const String chatMessages = '/chat/messages';
-  static const String chatResponseRate = '/chat/seller_response_rate';
-
-  // Vouchers
-  static const String vouchers = '/vouchers';
-
-  static String voucher(int id) => '/vouchers/$id';
-
-  // RFQ
-  static const String rfq = '/rfq';
-
-  static String rfqDetail(int id) => '/rfq/$id';
-
-  static String rfqOffers(int id) => '/rfq/$id/offers';
-
-  static String rfqRequestAdjustment(int contractId) =>
-      '/rfq/$contractId/request_adjustment';
-
-  static String rfqBatches(int contractId) => '/rfq/$contractId/batches';
-
-  static String rfqCancellationTerms(int contractId) =>
-      '/rfq/$contractId/cancellation_terms';
-
-  // Reports
-  static const String reportSales = '/reports/sales';
-  static const String reportStock = '/reports/stock';
-  static const String reportFinanceSummary = '/reports/finance_summary';
-  static const String reportSellerPerformance = '/reports/seller_performance';
-  static const String reportPph22 = '/reports/pph22';
-
-  // Commission (v2.4) — readable by a store, which is the point: it can see
-  // what will be deducted before setting a price.
-  static const String commissionRates = '/commission-rates';
-
-  // Config
-  static const String configParameters = '/config/parameters';
+  // --------------------------------------------------------------- System
+  static const String health = '/health';
 }

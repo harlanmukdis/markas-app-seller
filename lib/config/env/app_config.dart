@@ -6,20 +6,22 @@
 /// compile time and works identically on web:
 ///
 /// ```bash
-/// flutter run -d chrome --dart-define=API_BASE_URL=http://localhost/markas/api/v1
+/// flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000/api/v1
 /// ```
 abstract class AppConfig {
-  /// Base URL of the CodeIgniter backend.
+  /// Base URL of the marketplace backend.
   ///
-  /// Note there is no port 8080 — the backend listens on port 80 (API doc 1.1).
-  /// Running in Chrome on the same machine as the server, plain `localhost`
-  /// resolves correctly. The Flutter dev server sits on a different port, so
-  /// every call is cross-origin; the backend answers preflight `OPTIONS` with
-  /// 204 and open CORS headers, which is what makes this work at all.
+  /// The Flutter dev server sits on a different port, so every call is
+  /// cross-origin and depends on the backend answering preflight `OPTIONS`.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost/markas/api/v1',
+    defaultValue: 'http://localhost:8000/api/v1',
   );
+
+  /// The access token lives 15 minutes (`expires_in: 900`), so a session that
+  /// is open for an afternoon refreshes dozens of times. Refresh has to be
+  /// automatic and serialised, never something a screen thinks about.
+  static const Duration accessTokenLifetime = Duration(minutes: 15);
 
   /// Wire-level request/response logging. Off by default because tokens and
   /// KYC document URLs travel through these logs.

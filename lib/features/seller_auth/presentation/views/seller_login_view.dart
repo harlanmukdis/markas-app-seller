@@ -34,13 +34,13 @@ class _SellerLoginBody extends StatefulWidget {
 
 class _SellerLoginBodyState extends State<_SellerLoginBody> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -49,7 +49,7 @@ class _SellerLoginBodyState extends State<_SellerLoginBody> {
     if (!_formKey.currentState!.validate()) return;
 
     final error = await SellerAuthCubit.get(context).login(
-      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
       password: _passwordController.text,
     );
 
@@ -90,14 +90,14 @@ class _SellerLoginBodyState extends State<_SellerLoginBody> {
                           .copyWith(color: kLightThirdColor),
                     ),
                     32.sbh,
-                    Text('Nomor HP', style: AppStyles.styleMedium14(context)),
+                    Text('Email', style: AppStyles.styleMedium14(context)),
                     8.sbh,
                     CustomTextFormField(
-                      controller: _phoneController,
-                      hintText: '081234500001',
-                      keyboardType: TextInputType.phone,
+                      controller: _emailController,
+                      hintText: 'nama@toko.com',
+                      keyboardType: TextInputType.emailAddress,
                       filled: true,
-                      validator: Validators.phone,
+                      validator: Validators.email,
                     ),
                     16.sbh,
                     Text('Kata sandi', style: AppStyles.styleMedium14(context)),

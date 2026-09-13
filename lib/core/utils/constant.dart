@@ -29,9 +29,9 @@ const String kDark = 'dark';
 const String kLight = 'light';
 
 // Seller session (Markas API)
-const String kSellerId = 'sellerId';
+const String kActiveStoreId = 'activeStoreId';
 const String kUserRole = 'userRole';
-const String kActorType = 'actorType';
+const String kUserEmail = 'userEmail';
 const String kUserFullName = 'userFullName';
 const String kUserPhone = 'userPhone';
 

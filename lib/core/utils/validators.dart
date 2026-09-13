@@ -33,6 +33,17 @@ abstract class Validators {
   }
 
   /// Optional field — empty passes.
+  /// Identity on the marketplace backend is the email address, so this is a
+  /// required field rather than the optional one below.
+  static String? email(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) return 'Email wajib diisi';
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(trimmed)) {
+      return 'Format email tidak valid';
+    }
+    return null;
+  }
+
   static String? optionalEmail(String? value) {
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty) return null;

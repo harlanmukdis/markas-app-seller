@@ -32,18 +32,19 @@ class _SellerBootstrapViewState extends State<SellerBootstrapView> {
   void _route() {
     final session = injector<SessionStore>();
 
-    // No token, or a token belonging to an account with no store attached —
-    // every seller endpoint would answer 403 NO_SELLER_CONTEXT, so there is
-    // nothing useful to show.
-    if (!session.isLoggedIn || !session.hasSellerContext) {
+    if (!session.isLoggedIn) {
       router.go(SellerRoutes.login);
       return;
     }
 
-    // The shell, not the activation checklist. A store that has already
-    // finished activating has no reason to land on a page full of green ticks,
-    // and one that has not gets an "Aktivasi belum selesai" card on the
-    // dashboard that links straight to it.
+    // Logged in but no store chosen. An account can own several — or none at
+    // all, since every account starts as a buyer — so the picker is where that
+    // gets settled, and it offers opening the first one.
+    if (!session.hasStoreContext) {
+      router.go(SellerRoutes.storePicker);
+      return;
+    }
+
     router.go(SellerRoutes.home);
   }
 

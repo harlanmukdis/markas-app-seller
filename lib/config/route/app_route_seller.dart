@@ -4,48 +4,27 @@ import 'package:go_router/go_router.dart';
 import '../../core/utils/app_routes.dart';
 import '../../features/seller_auth/presentation/views/seller_login_view.dart';
 import '../../features/seller_auth/presentation/views/seller_register_view.dart';
-import '../../features/seller_onboarding/presentation/views/agreement_view.dart';
-import '../../features/seller_onboarding/presentation/views/bank_account_view.dart';
-import '../../features/seller_onboarding/presentation/views/kyc_upload_view.dart';
-import '../../features/seller_onboarding/presentation/views/onboarding_gates_view.dart';
-import '../../features/seller_onboarding/presentation/views/shipping_rate_view.dart';
-import '../../features/seller_catalog/presentation/views/offer_detail_view.dart';
-import '../../features/seller_catalog/presentation/views/offer_form_view.dart';
 import '../../features/seller_home/presentation/views/seller_home_shell.dart';
-import '../../features/seller_onboarding/presentation/views/warehouse_view.dart';
-import '../../features/seller_orders/presentation/views/pod_view.dart';
-import '../../features/seller_orders/presentation/views/sub_order_detail_view.dart';
 import '../../features/seller_shell/presentation/views/seller_bootstrap_view.dart';
+import '../../features/seller_store/presentation/views/store_create_view.dart';
+import '../../features/seller_store/presentation/views/store_picker_view.dart';
 
 /// Paths for the seller domain.
 ///
 /// Kept separate from the UI kit's [AppRoutes] and spread into the single
-/// [router] — the per-domain split the target architecture asks for, started
-/// here rather than by rewriting the existing flat table.
+/// [router] — the per-domain split the target architecture asks for.
 abstract class SellerRoutes {
   static const String bootstrap = '/';
   static const String login = '/seller/login';
   static const String register = '/seller/register';
 
-  /// The main shell once the store is up and running.
+  /// The main shell once an account has a store selected.
   static const String home = '/seller/home';
 
-  static const String subOrderDetail = '/seller/orders/detail';
-
-  /// Recorded away from the shop, so it gets its own screen rather than a
-  /// dialog over the order.
-  static const String pod = '/seller/shipments/pod';
-  static const String offerDetail = '/seller/products/detail';
-  static const String offerCreate = '/seller/products/new';
-
-  /// The activation checklist. Reachable at any time, but only the *landing*
-  /// page for a store that has not finished activating.
-  static const String onboarding = '/seller/onboarding';
-  static const String kyc = '/seller/onboarding/kyc';
-  static const String bankAccount = '/seller/onboarding/bank-account';
-  static const String agreement = '/seller/onboarding/agreement';
-  static const String warehouse = '/seller/onboarding/warehouse';
-  static const String shippingRates = '/seller/onboarding/shipping-rates';
+  /// An account can own several stores, so which one the app is acting as is
+  /// an explicit choice rather than an identity baked into the token.
+  static const String storePicker = '/seller/stores';
+  static const String storeCreate = '/seller/stores/new';
 }
 
 /// Every route uses the same fade-through wrapper as the rest of the app.
@@ -54,36 +33,8 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.login, const SellerLoginView()),
   _sellerRoute(SellerRoutes.register, const SellerRegisterView()),
   _sellerRoute(SellerRoutes.home, const SellerHomeShell()),
-  _sellerRoute(SellerRoutes.onboarding, const OnboardingGatesView()),
-  _sellerRoute(SellerRoutes.offerCreate, const OfferFormView()),
-  GoRoute(
-    path: SellerRoutes.offerDetail,
-    pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
-      transitionKey: state.pageKey,
-      page: OfferDetailView(offerId: state.extra! as int),
-    ),
-  ),
-  GoRoute(
-    path: SellerRoutes.pod,
-    pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
-      transitionKey: state.pageKey,
-      page: PodView(shipmentId: state.extra! as int),
-    ),
-  ),
-  GoRoute(
-    path: SellerRoutes.subOrderDetail,
-    pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
-      transitionKey: state.pageKey,
-      // Arguments travel untyped through `extra` and are cast, matching the
-      // kit's existing convention.
-      page: SubOrderDetailView(subOrderId: state.extra! as int),
-    ),
-  ),
-  _sellerRoute(SellerRoutes.kyc, const KycUploadView()),
-  _sellerRoute(SellerRoutes.bankAccount, const BankAccountView()),
-  _sellerRoute(SellerRoutes.agreement, const AgreementView()),
-  _sellerRoute(SellerRoutes.warehouse, const WarehouseView()),
-  _sellerRoute(SellerRoutes.shippingRates, const ShippingRateView()),
+  _sellerRoute(SellerRoutes.storePicker, const StorePickerView()),
+  _sellerRoute(SellerRoutes.storeCreate, const StoreCreateView()),
 ];
 
 GoRoute _sellerRoute(String path, Widget page) => GoRoute(
