@@ -32,13 +32,54 @@ void main() {
             <String, dynamic>{'id': '1'},
           ],
           'error': null,
-          'meta': <String, dynamic>{'limit': 50, 'offset': 0},
+          'meta': <String, dynamic>{'page': 1, 'per_page': 20, 'total': 100},
         }),
       );
 
       expect(envelope.list, hasLength(1));
-      expect(envelope.limit, 50);
-      expect(envelope.offset, 0);
+      expect(envelope.page, 1);
+      expect(envelope.perPage, 20);
+      expect(envelope.total, 100);
+    });
+
+    test('reads the facets block GET /products adds to meta', () {
+      final envelope = ApiEnvelope.from(
+        _response(<String, dynamic>{
+          'success': true,
+          'data': <dynamic>[],
+          'error': null,
+          'meta': <String, dynamic>{
+            'page': 1,
+            'per_page': 20,
+            'total': 0,
+            'facets': <String, dynamic>{
+              'rating': <dynamic>[
+                <String, dynamic>{'min_rating': 5, 'count': 0},
+              ],
+            },
+          },
+        }),
+      );
+
+      expect(envelope.facets?['rating'], hasLength(1));
+    });
+
+    test('reports null pagination for a list endpoint that sends no meta', () {
+      // GET /stores/{id}/products answers with a bare array — the seller-side
+      // list screens cannot read a total off the server.
+      final envelope = ApiEnvelope.from(
+        _response(<String, dynamic>{
+          'success': true,
+          'data': <dynamic>[
+            <String, dynamic>{'id': '1'},
+          ],
+          'error': null,
+        }),
+      );
+
+      expect(envelope.list, hasLength(1));
+      expect(envelope.page, isNull);
+      expect(envelope.total, isNull);
     });
 
     test('throws with the backend code when success is false on a 2xx', () {
@@ -99,17 +140,19 @@ void main() {
 
   group('ApiException.fromDio', () {
     test('prefers the envelope error over Dio generic text', () {
+      // Real response from POST /stores/{id}/wallet/withdraw on a store whose
+      // balance is still 0.00.
       final exception = ApiException.fromDio(
         DioException(
-          requestOptions: RequestOptions(path: '/offers/1/activate'),
+          requestOptions: RequestOptions(path: '/stores/11/wallet/withdraw'),
           response: _response(
             <String, dynamic>{
               'success': false,
               'data': null,
               'error': <String, dynamic>{
-                'code': 'GATES_NOT_PASSED',
-                'message': 'Syarat aktivasi belum terpenuhi',
-                'details': <String, dynamic>{'photos_ok': false},
+                'code': 'WITHDRAWAL_REJECTED',
+                'message': 'Saldo tidak mencukupi',
+                'details': <String, dynamic>{'balance': '0.00'},
               },
             },
             status: 422,
@@ -118,15 +161,34 @@ void main() {
         ),
       );
 
-      expect(exception.code, 'GATES_NOT_PASSED');
+      expect(exception.code, 'WITHDRAWAL_REJECTED');
       expect(exception.statusCode, 422);
-      expect(exception.details?['photos_ok'], isFalse);
+      expect(exception.details?['balance'], '0.00');
+    });
+
+    test('keeps the REST layer wording when error is a bare string', () {
+      // A route reached with a verb it does not implement never gets as far as
+      // the envelope: DELETE /products/{id} answers 405 with the REST
+      // library's own `{status, error}` shape, where `error` is a string.
+      final exception = ApiException.fromDio(
+        DioException(
+          requestOptions: RequestOptions(path: '/products/23'),
+          response: _response(
+            <String, dynamic>{'status': false, 'error': 'Unknown method'},
+            status: 405,
+          ),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      expect(exception.message, 'Unknown method');
+      expect(exception.statusCode, 405);
     });
 
     test('maps a connection failure to a message that names the base URL', () {
       final options = RequestOptions(
         path: '/auth/login',
-        baseUrl: 'http://localhost/markas/api/v1',
+        baseUrl: 'http://localhost:8000/api/v1',
       );
 
       final exception = ApiException.fromDio(
@@ -137,16 +199,17 @@ void main() {
       );
 
       expect(exception.code, DataErrorCode.network);
-      expect(exception.message, contains('http://localhost/markas/api/v1'));
+      expect(exception.message, contains('http://localhost:8000/api/v1'));
       // On web a blocked CORS preflight is indistinguishable from a dead
       // server, so the message has to mention both.
       expect(exception.message, contains('CORS'));
     });
 
     test('summarises an HTML error page instead of dumping it', () {
-      // Real response from POST /sellers/{id}/warehouses when address_id
-      // points at a row that does not exist: CodeIgniter's unhandled database
-      // error escapes as a full HTML document, not the JSON envelope.
+      // Real response from POST /warehouses/{id}/stock-in when
+      // product_variant_id points at a row that does not exist: CodeIgniter's
+      // unhandled database error escapes as a full HTML document, not the JSON
+      // envelope.
       const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
           '<meta charset="utf-8">\n<title>Database Error</title>\n'
           '<style type="text/css">body { margin: 40px; }</style></head>'

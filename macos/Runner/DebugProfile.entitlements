@@ -8,5 +8,10 @@
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
+	<!-- Outbound network. The whole seller app is an API client, so without
+	     this the sandbox silently refuses every request to the marketplace
+	     backend and the app looks like the server is down. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
 </dict>
 </plist>

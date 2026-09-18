@@ -4,5 +4,8 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- See DebugProfile.entitlements: the app cannot reach its API without it. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
 </dict>
 </plist>

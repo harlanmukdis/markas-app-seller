@@ -1,8 +1,13 @@
 import 'package:dio/dio.dart';
 
 import '../core/data/datasources/remote/service/auth_service.dart';
+import '../core/data/datasources/remote/service/catalog_service.dart';
+import '../core/data/datasources/remote/service/inventory_service.dart';
 import '../core/data/datasources/remote/service/media_service.dart';
+import '../core/data/datasources/remote/service/order_service.dart';
+import '../core/data/datasources/remote/service/shipping_service.dart';
 import '../core/data/datasources/remote/service/store_service.dart';
+import '../core/data/datasources/remote/service/verification_service.dart';
 import '../config/network/dio_client.dart';
 import 'injector.dart';
 
@@ -14,4 +19,10 @@ void initializeService() {
   injector.registerLazySingleton<AuthService>(() => AuthService(dio));
   injector.registerLazySingleton<StoreService>(() => StoreService(dio));
   injector.registerLazySingleton<MediaService>(() => MediaService(dio));
+  injector.registerLazySingleton<CatalogService>(() => CatalogService(dio));
+  injector
+      .registerLazySingleton<VerificationService>(() => VerificationService(dio));
+  injector.registerLazySingleton<InventoryService>(() => InventoryService(dio));
+  injector.registerLazySingleton<ShippingService>(() => ShippingService(dio));
+  injector.registerLazySingleton<OrderService>(() => OrderService(dio));
 }

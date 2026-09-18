@@ -27,11 +27,14 @@ abstract class StoreRepository {
 
   Future<DataState<StoreSettings>> getSettings(int storeId);
 
+  /// Writes only the fields that are passed, then returns the row as the server
+  /// holds it — the `PATCH` itself answers no data.
   Future<DataState<StoreSettings>> updateSettings(
     int storeId, {
     bool? autoAcceptOrder,
     bool? vacationMode,
-    String? vacationMessage,
+    String? contactPhone,
+    String? contactWhatsapp,
   });
 
   /// Uploads a file and returns a URL usable by the rest of the API.

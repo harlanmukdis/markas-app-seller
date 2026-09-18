@@ -4,15 +4,26 @@ import '../../core/data_state.dart';
 import '../../core/utils/json_parse.dart';
 import 'api_exception.dart';
 
-/// Every successful response shares one shape (API doc 1.3):
+/// Every successful response shares one shape (`docs/03-api-documentation.md`,
+/// "Format response standar"):
 ///
 /// ```jsonc
 /// { "success": true, "data": <anything>, "error": null }
-/// { "success": true, "data": [...], "error": null, "meta": { "limit": 50, "offset": 0 } }
+/// { "success": true, "data": [...], "error": null, "meta": { "page": 1, "per_page": 20, "total": 100 } }
 /// ```
 ///
 /// Services unwrap through this rather than reaching into `response.data`
-/// directly, so a malformed body fails in one place with a useful message.
+/// directly, so a malformed body fails in one place with a useful message —
+/// including the raw HTML error page the backend returns instead of JSON when a
+/// query hits a constraint (an unknown `product_variant_id` on `/stock-in`, for
+/// one), which arrives as a 500 with no envelope at all.
+///
+/// **`meta` is not universal.** Only a few list endpoints send it: `GET
+/// /products` does (with an extra `facets` block), while the store-scoped
+/// `GET /stores/{id}/products`, `/warehouses/{id}/movements`,
+/// `/stores/{id}/orders` and `/stores/{id}/ratings` all return a bare array and
+/// accept `page` without reporting a total. Treat [page] and friends as
+/// nullable everywhere rather than assuming a paginated contract.
 class ApiEnvelope {
   const ApiEnvelope({this.data, this.meta});
 
@@ -25,7 +36,8 @@ class ApiEnvelope {
     if (body == null) {
       throw ApiException(
         code: DataErrorCode.parse,
-        message: 'Server membalas dengan format yang tidak dikenali.',
+        message: _uncaughtExceptionMessage(response.data) ??
+            'Server membalas dengan format yang tidak dikenali.',
         statusCode: response.statusCode,
       );
     }
@@ -65,7 +77,34 @@ class ApiEnvelope {
     return asMapList(map[key]);
   }
 
-  int? get limit => asIntOrNull(meta?['limit']);
+  /// CodeIgniter renders an uncaught exception as an HTML fragment and still
+  /// sends it with **HTTP 200**, so it arrives here rather than as a Dio error.
+  /// The one useful thing in it is the exception message — for an order that is
+  /// in the wrong state, that message is the whole explanation — so it is
+  /// lifted out instead of being replaced by "unrecognised format".
+  ///
+  /// Order actions are the common case: `POST /orders/{id}/accept` on an order
+  /// that is not `paid` answers 200 with
+  /// `Message: Order berstatus 'pending', tidak bisa transisi ke 'processed'`.
+  static String? _uncaughtExceptionMessage(dynamic data) {
+    if (data is! String) return null;
+    final match = RegExp(
+      r'<p>Message:\s*(.*?)</p>',
+      caseSensitive: false,
+      dotAll: true,
+    ).firstMatch(data);
+    final message = match?.group(1)?.trim();
+    if (message == null || message.isEmpty) return null;
+    return '$message (server membalas dengan halaman error, bukan JSON)';
+  }
 
-  int? get offset => asIntOrNull(meta?['offset']);
+  int? get page => asIntOrNull(meta?['page']);
+
+  int? get perPage => asIntOrNull(meta?['per_page']);
+
+  int? get total => asIntOrNull(meta?['total']);
+
+  /// `GET /products` returns a `facets` block inside `meta` — rating buckets and
+  /// price ranges for the filter UI. Absent from every other list endpoint.
+  Map<String, dynamic>? get facets => asMapOrNull(meta?['facets']);
 }

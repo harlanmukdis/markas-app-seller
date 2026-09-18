@@ -144,17 +144,49 @@ void main() {
 
   group('StoreSettings.fromJson', () {
     test('reads the 0/1 flags as booleans', () {
+      // Captured from GET /stores/1/settings after a PATCH.
       final settings = StoreSettings.fromJson(<String, dynamic>{
-        'id': '1',
+        'id': '2',
         'store_id': '1',
         'auto_accept_order': '0',
         'vacation_mode': '1',
         'default_currency': 'IDR',
+        'operational_hours': null,
+        'return_policy': null,
+        'shipping_origin': null,
+        'contact_phone': '08123456789',
+        'contact_whatsapp': '08123456789',
       });
 
       expect(settings.storeId, 1);
       expect(settings.autoAcceptOrder, isFalse);
       expect(settings.vacationMode, isTrue);
+      expect(settings.contactPhone, '08123456789');
+      expect(settings.contactWhatsapp, '08123456789');
+    });
+
+    test('empty() stands in for a store with no settings row', () {
+      // Every seeded store answers `data: null` here, which is not an error —
+      // it means nothing has been saved yet.
+      const settings = StoreSettings.empty(7);
+
+      expect(settings.storeId, 7);
+      expect(settings.autoAcceptOrder, isFalse);
+      expect(settings.vacationMode, isFalse);
+      expect(settings.defaultCurrency, 'IDR');
+      expect(settings.contactPhone, isNull);
+    });
+
+    test('decodes the JSON columns whether or not they arrive as strings', () {
+      final settings = StoreSettings.fromJson(<String, dynamic>{
+        'store_id': '1',
+        'operational_hours': '{"mon":"09:00-17:00"}',
+        'shipping_origin': <String, dynamic>{'warehouse_id': 3},
+      });
+
+      expect(settings.operationalHours?['mon'], '09:00-17:00');
+      expect(settings.shippingOrigin?['warehouse_id'], 3);
+      expect(settings.returnPolicy, isNull);
     });
   });
 

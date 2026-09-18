@@ -48,6 +48,23 @@ class ApiException implements Exception {
       );
     }
 
+    // The REST library underneath CodeIgniter answers with a shape of its own
+    // before any controller runs — `{"status": false, "error": "Unknown
+    // method"}` — where `error` is a plain string rather than the envelope's
+    // `{code, message}` object. That is what a route reached with a verb it
+    // does not implement returns (`DELETE /products/{id}` is a 405 of exactly
+    // this kind), so it shows up constantly while wiring a new endpoint. Keep
+    // the server's own wording: "Server membalas dengan status 405" sends
+    // people looking for a permission problem instead of a typo'd verb.
+    final restError = asStringOrNull(body?['error']);
+    if (restError != null) {
+      return ApiException(
+        code: DataErrorCode.unexpected,
+        message: restError,
+        statusCode: response?.statusCode,
+      );
+    }
+
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
@@ -102,8 +119,9 @@ class ApiException implements Exception {
       // An unhandled PHP/database error escapes CodeIgniter as a full HTML
       // error page instead of the JSON envelope. Rendering that verbatim would
       // put a whole document into a snackbar, so it is summarised instead.
-      // Seen for real: POST /sellers/{id}/warehouses with an address_id that
-      // does not exist returns a "Database Error" page.
+      // Seen for real: POST /warehouses/{id}/stock-in with a
+      // `product_variant_id` that does not exist returns a "Database Error"
+      // page, because the foreign key is never checked before the insert.
       if (_looksLikeHtml(body)) {
         final title = _htmlTitle(body);
         return 'Server mengalami kesalahan internal (HTTP $status'

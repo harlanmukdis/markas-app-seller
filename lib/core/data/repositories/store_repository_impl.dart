@@ -60,13 +60,15 @@ class StoreRepositoryImpl with RepositoryGuard implements StoreRepository {
     int storeId, {
     bool? autoAcceptOrder,
     bool? vacationMode,
-    String? vacationMessage,
+    String? contactPhone,
+    String? contactWhatsapp,
   }) =>
       guard(() => _service.updateSettings(
             storeId,
             autoAcceptOrder: autoAcceptOrder,
             vacationMode: vacationMode,
-            vacationMessage: vacationMessage,
+            contactPhone: contactPhone,
+            contactWhatsapp: contactWhatsapp,
           ));
 
   @override

@@ -58,27 +58,46 @@ class StoreService extends BaseService {
     return Store.fromJson(envelope.map);
   }
 
+  /// A store that has never had settings saved answers `data: null` rather
+  /// than a row of defaults — every seeded store is in that state — so the
+  /// empty envelope becomes [StoreSettings.empty] carrying the id we already
+  /// know, not a parse failure or a settings object with `storeId: 0`.
   Future<StoreSettings> getSettings(int storeId) async {
     final envelope = await getRequest(ApiEndpoints.storeSettings(storeId));
+    if (envelope.isNull) return StoreSettings.empty(storeId);
     return StoreSettings.fromJson(envelope.map);
   }
 
+  /// `PATCH` answers `data: null`, so the saved row has to be read back —
+  /// parsing the patch response would hand every caller a blank settings object
+  /// and quietly undo what the form just showed.
+  ///
+  /// Only the fields the caller passes are sent: the server whitelists
+  /// `auto_accept_order`, `vacation_mode`, `operational_hours`,
+  /// `return_policy`, `shipping_origin`, `contact_phone` and
+  /// `contact_whatsapp`, and writing a subset leaves the rest alone.
   Future<StoreSettings> updateSettings(
     int storeId, {
     bool? autoAcceptOrder,
     bool? vacationMode,
-    String? vacationMessage,
+    String? contactPhone,
+    String? contactWhatsapp,
+    Map<String, dynamic>? operationalHours,
+    Map<String, dynamic>? returnPolicy,
+    Map<String, dynamic>? shippingOrigin,
   }) async {
-    final envelope = await patchRequest(
+    await patchRequest(
       ApiEndpoints.storeSettings(storeId),
       body: <String, dynamic>{
-        'auto_accept_order': autoAcceptOrder == null
-            ? null
-            : (autoAcceptOrder ? 1 : 0),
-        'vacation_mode': vacationMode == null ? null : (vacationMode ? 1 : 0),
-        'vacation_message': vacationMessage,
+        if (autoAcceptOrder != null) 'auto_accept_order': autoAcceptOrder ? 1 : 0,
+        if (vacationMode != null) 'vacation_mode': vacationMode ? 1 : 0,
+        if (contactPhone != null) 'contact_phone': contactPhone,
+        if (contactWhatsapp != null) 'contact_whatsapp': contactWhatsapp,
+        if (operationalHours != null) 'operational_hours': operationalHours,
+        if (returnPolicy != null) 'return_policy': returnPolicy,
+        if (shippingOrigin != null) 'shipping_origin': shippingOrigin,
       },
     );
-    return StoreSettings.fromJson(envelope.map);
+    return getSettings(storeId);
   }
 }

@@ -134,6 +134,36 @@ class DashboardTab extends StatelessWidget {
                       ],
                     ),
                   ),
+                  12.sbh,
+                  const _NavCard(
+                    icon: Icons.receipt_long_outlined,
+                    label: 'Pesanan',
+                    route: SellerRoutes.orders,
+                  ),
+                  12.sbh,
+                  const _NavCard(
+                    icon: Icons.inventory_2_outlined,
+                    label: 'Produk',
+                    route: SellerRoutes.products,
+                  ),
+                  12.sbh,
+                  const _NavCard(
+                    icon: Icons.warehouse_outlined,
+                    label: 'Gudang & stok',
+                    route: SellerRoutes.warehouses,
+                  ),
+                  12.sbh,
+                  const _NavCard(
+                    icon: Icons.local_shipping_outlined,
+                    label: 'Kurir pengiriman',
+                    route: SellerRoutes.couriers,
+                  ),
+                  12.sbh,
+                  const _NavCard(
+                    icon: Icons.verified_user_outlined,
+                    label: 'Verifikasi toko',
+                    route: SellerRoutes.verification,
+                  ),
                   if (state.stores.length > 1) ...<Widget>[
                     12.sbh,
                     SectionCard(
@@ -158,6 +188,37 @@ class DashboardTab extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One row of the dashboard's navigation. Each domain gets one as it lands,
+/// which is also how this screen shows what the app can and cannot do yet.
+class _NavCard extends StatelessWidget {
+  const _NavCard({
+    required this.icon,
+    required this.label,
+    required this.route,
+  });
+
+  final IconData icon;
+  final String label;
+  final String route;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      onTap: () => context.push(route),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, size: 18),
+          12.sbw,
+          Expanded(
+            child: Text(label, style: AppStyles.styleRegular14(context)),
+          ),
+          const Icon(Icons.chevron_right, size: 18),
         ],
       ),
     );

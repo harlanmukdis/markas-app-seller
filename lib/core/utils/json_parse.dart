@@ -1,10 +1,15 @@
 /// Tolerant JSON readers.
 ///
 /// The backend hands MySQL column values straight to `json_encode`, so numbers
-/// and booleans arrive as strings far more often than not — `"id": "1"`,
-/// `"score": "100.00"`, `"is_official_store": "0"` (API doc 1.7). A direct
-/// `json['id'] as int` throws on real responses, so every model reads its
-/// fields through these helpers instead.
+/// and booleans arrive as strings far more often than not — `"id": "22"`,
+/// `"base_price": "149000.00"`, `"rating_avg": "0.00"`, `"email_verified": "0"`.
+/// A direct `json['id'] as int` throws on real responses, so every model reads
+/// its fields through these helpers instead.
+///
+/// Money is the case worth spelling out: prices arrive as two-decimal strings
+/// even though the platform has no cents. [asIntOrNull] falls through to
+/// `double.round()` for exactly that reason — `"149000.00"` reads as `149000`
+/// rather than null.
 library;
 
 import 'dart:convert';
@@ -101,9 +106,10 @@ List<T> asModelList<T>(dynamic value, T Function(Map<String, dynamic>) fromJson)
     asMapList(value).map(fromJson).toList(growable: false);
 
 /// Some columns hold JSON that the backend hands back **as a string** rather
-/// than as a decoded structure — `photos_json` on an offer and
-/// `tier_snapshot_json` on an order item both do this. Reading them as a List
-/// or Map without decoding silently yields nothing.
+/// than as a decoded structure — `variant_options` on a product variant is the
+/// one that matters most here, and it arrives that way both nested inside
+/// `GET /products/{id}` and joined onto `GET /warehouses/{id}/stocks`. Reading
+/// them as a List or Map without decoding silently yields nothing.
 dynamic asDecodedJson(dynamic value) {
   if (value is List || value is Map) return value;
   final raw = asStringOrNull(value);
@@ -124,16 +130,14 @@ Map<String, dynamic> asEncodedMap(dynamic value) => asMap(asDecodedJson(value));
 
 /// Audit timestamps.
 ///
-/// The v2.2 backend refactor renamed these across all 87 tables —
-/// `created_at` became `created_date` and `updated_at` became
-/// `modified_date` — and the old names are gone entirely, so reading them
-/// yields null rather than an error. Both names are accepted here so a
-/// rolled-back or mixed environment still parses, and so the rename lives in
-/// one place instead of at every call site.
+/// The marketplace API uses `created_at` / `updated_at` on every table, which
+/// is what these read. The `created_date` / `modified_date` spellings are the
+/// previous backend's and are accepted only so that a model shared with
+/// `markas-app-member` keeps parsing; nothing this app talks to sends them.
 ///
-/// **Semantic** timestamps were not renamed: `kyc_approved_at`,
-/// `hold_release_at`, `surat_jalan_issued_at` and every `*_deadline` keep
-/// their names and must not be routed through here.
+/// **Semantic** timestamps — `opened_at`, `valid_from`, `valid_until`,
+/// `scheduled_at`, `start_at`, `end_at` — are not audit fields and must not be
+/// routed through here.
 DateTime? asCreatedDate(Map<String, dynamic> json) =>
     asDateTime(json['created_date'] ?? json['created_at']);
 

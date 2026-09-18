@@ -56,12 +56,21 @@ dependencies:
   pinput: ^5.0.0
   otp_timer_button: ^1.1.1
   flutter_phoenix: ^1.1.1
+  # Verification documents are uploaded as bytes — the endpoint takes a file
+  # part, not a URL — and this is the one picker that returns bytes on every
+  # platform including web, where there is no path to hand over.
+  file_picker: ^8.1.2
 #  flutter_native_splash: ^2.4.1
 
 
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+
+  # Drives the real app on a real device against the running backend.
+  # `flutter test integration_test -d macos` — see integration_test/README.md.
+  integration_test:
     sdk: flutter
 
   flutter_lints: 4.0.0

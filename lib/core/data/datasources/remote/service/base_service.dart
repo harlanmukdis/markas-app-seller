@@ -39,6 +39,29 @@ abstract class BaseService {
             options: _options(headers),
           ));
 
+  /// A **form-encoded** POST, for the handful of endpoints that read their
+  /// fields with the REST library's `post()` helper.
+  ///
+  /// That helper only ever reads `$_POST`, which PHP populates from a form body
+  /// and never from JSON — so those endpoints see an empty request when sent
+  /// JSON. The damage is silent rather than loud: `POST /orders/{id}/ship` still
+  /// moves the order to `shipped`, it just stores a null AWB. Known members of
+  /// this group: `orders/{id}/ship`, `orders/{id}/cancel`,
+  /// `orders/{id}/refund-request`, `admin/verifications/{id}/reject`,
+  /// `vouchers/claim`. Everything else on this API wants JSON.
+  Future<ApiEnvelope> postFormRequest(
+    String path, {
+    required Map<String, String> fields,
+    Map<String, dynamic>? headers,
+  }) =>
+      _send(() => dio.post<dynamic>(
+            path,
+            data: fields,
+            options: (_options(headers) ?? Options()).copyWith(
+              contentType: Headers.formUrlEncodedContentType,
+            ),
+          ));
+
   Future<ApiEnvelope> putRequest(
     String path, {
     Map<String, dynamic>? body,

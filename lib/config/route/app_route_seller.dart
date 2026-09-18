@@ -3,8 +3,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/utils/app_routes.dart';
 import '../../features/seller_auth/presentation/views/seller_login_view.dart';
+import '../../features/seller_catalog/presentation/views/product_form_view.dart';
+import '../../features/seller_catalog/presentation/views/product_list_view.dart';
 import '../../features/seller_auth/presentation/views/seller_register_view.dart';
 import '../../features/seller_home/presentation/views/seller_home_shell.dart';
+import '../../features/seller_inventory/presentation/views/stock_view.dart';
+import '../../features/seller_orders/presentation/views/order_detail_view.dart';
+import '../../features/seller_orders/presentation/views/order_list_view.dart';
+import '../../features/seller_inventory/presentation/views/warehouse_list_view.dart';
+import '../../features/seller_shipping/presentation/views/courier_view.dart';
+import '../../features/seller_verification/presentation/views/verification_view.dart';
 import '../../features/seller_shell/presentation/views/seller_bootstrap_view.dart';
 import '../../features/seller_store/presentation/views/store_create_view.dart';
 import '../../features/seller_store/presentation/views/store_picker_view.dart';
@@ -25,9 +33,44 @@ abstract class SellerRoutes {
   /// an explicit choice rather than an identity baked into the token.
   static const String storePicker = '/seller/stores';
   static const String storeCreate = '/seller/stores/new';
+
+  /// The catalogue of whichever store is active.
+  static const String products = '/seller/products';
+  static const String productCreate = '/seller/products/new';
+
+  /// Declared with a path parameter rather than `state.extra`, so a product
+  /// screen survives a reload and is linkable — `extra` is the kit's habit, not
+  /// something the seller domain has to inherit.
+  static const String productEdit = '/seller/products/:id';
+
+  static String productEditPath(int productId) => '/seller/products/$productId';
+
+  /// Verification is the only route out of `inactive`, so it hangs off the
+  /// dashboard rather than being buried in settings.
+  static const String verification = '/seller/verification';
+
+  /// Warehouses, and the stock held in one of them.
+  static const String warehouses = '/seller/warehouses';
+  static const String warehouseStock = '/seller/warehouses/:id/stock';
+
+  static String warehouseStockPath(int warehouseId) =>
+      '/seller/warehouses/$warehouseId/stock';
+
+  /// Which couriers the store ships with — an optional whitelist; picking none
+  /// leaves every courier on offer.
+  static const String couriers = '/seller/couriers';
+
+  /// Incoming orders, and one of them.
+  static const String orders = '/seller/orders';
+  static const String orderDetail = '/seller/orders/:id';
+
+  static String orderDetailPath(int orderId) => '/seller/orders/$orderId';
 }
 
 /// Every route uses the same fade-through wrapper as the rest of the app.
+///
+/// Order matters: `/seller/products/new` has to come before the greedier
+/// `/seller/products/:id`, or "new" is read as a product id.
 final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.bootstrap, const SellerBootstrapView()),
   _sellerRoute(SellerRoutes.login, const SellerLoginView()),
@@ -35,12 +78,43 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.home, const SellerHomeShell()),
   _sellerRoute(SellerRoutes.storePicker, const StorePickerView()),
   _sellerRoute(SellerRoutes.storeCreate, const StoreCreateView()),
+  _sellerRoute(SellerRoutes.products, const ProductListView()),
+  _sellerRoute(SellerRoutes.productCreate, const ProductFormView()),
+  _sellerRouteBuilder(
+    SellerRoutes.productEdit,
+    (state) => ProductFormView(
+      productId: int.tryParse(state.pathParameters['id'] ?? ''),
+    ),
+  ),
+  _sellerRoute(SellerRoutes.verification, const VerificationView()),
+  _sellerRoute(SellerRoutes.couriers, const CourierView()),
+  _sellerRoute(SellerRoutes.orders, const OrderListView()),
+  _sellerRouteBuilder(
+    SellerRoutes.orderDetail,
+    (state) => OrderDetailView(
+      orderId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+    ),
+  ),
+  _sellerRoute(SellerRoutes.warehouses, const WarehouseListView()),
+  _sellerRouteBuilder(
+    SellerRoutes.warehouseStock,
+    (state) => StockView(
+      warehouseId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+    ),
+  ),
 ];
 
-GoRoute _sellerRoute(String path, Widget page) => GoRoute(
+GoRoute _sellerRoute(String path, Widget page) =>
+    _sellerRouteBuilder(path, (_) => page);
+
+GoRoute _sellerRouteBuilder(
+  String path,
+  Widget Function(GoRouterState state) builder,
+) =>
+    GoRoute(
       path: path,
       pageBuilder: (context, state) => FadeThroughTransitionPageWrapper(
         transitionKey: state.pageKey,
-        page: page,
+        page: builder(state),
       ),
     );
