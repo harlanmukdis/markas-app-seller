@@ -10,9 +10,12 @@ import '../../features/seller_home/presentation/views/seller_home_shell.dart';
 import '../../features/seller_inventory/presentation/views/stock_view.dart';
 import '../../features/seller_orders/presentation/views/order_detail_view.dart';
 import '../../features/seller_orders/presentation/views/order_list_view.dart';
+import '../../features/seller_promotions/presentation/views/flash_sale_detail_view.dart';
+import '../../features/seller_promotions/presentation/views/promotion_view.dart';
 import '../../features/seller_inventory/presentation/views/warehouse_list_view.dart';
 import '../../features/seller_shipping/presentation/views/courier_view.dart';
 import '../../features/seller_verification/presentation/views/verification_view.dart';
+import '../../features/seller_wallet/presentation/views/wallet_view.dart';
 import '../../features/seller_shell/presentation/views/seller_bootstrap_view.dart';
 import '../../features/seller_store/presentation/views/store_create_view.dart';
 import '../../features/seller_store/presentation/views/store_picker_view.dart';
@@ -65,6 +68,19 @@ abstract class SellerRoutes {
   static const String orderDetail = '/seller/orders/:id';
 
   static String orderDetailPath(int orderId) => '/seller/orders/$orderId';
+
+  /// Where the store's earnings land, and the only route out of them.
+  static const String wallet = '/seller/wallet';
+
+  /// Vouchers and flash sales, both create-and-list only.
+  static const String promotions = '/seller/promotions';
+
+  /// One sale's contents. There is no `GET /flash-sales/{id}` on the backend,
+  /// so the screen recovers the sale from the store's list by this id.
+  static const String flashSaleDetail = '/seller/flash-sales/:id';
+
+  static String flashSaleDetailPath(int flashSaleId) =>
+      '/seller/flash-sales/$flashSaleId';
 }
 
 /// Every route uses the same fade-through wrapper as the rest of the app.
@@ -89,6 +105,14 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.verification, const VerificationView()),
   _sellerRoute(SellerRoutes.couriers, const CourierView()),
   _sellerRoute(SellerRoutes.orders, const OrderListView()),
+  _sellerRoute(SellerRoutes.wallet, const WalletView()),
+  _sellerRoute(SellerRoutes.promotions, const PromotionView()),
+  _sellerRouteBuilder(
+    SellerRoutes.flashSaleDetail,
+    (state) => FlashSaleDetailView(
+      flashSaleId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+    ),
+  ),
   _sellerRouteBuilder(
     SellerRoutes.orderDetail,
     (state) => OrderDetailView(

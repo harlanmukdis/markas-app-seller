@@ -184,5 +184,70 @@ void main() {
     // explaining that buyers now only see what is ticked.
     expect(find.textContaining('Belum ada batasan kurir'), findsNothing);
     expect(find.textContaining('hanya bisa memilih kurir'), findsOneWidget);
-  }, timeout: const Timeout(Duration(minutes: 5)));
+
+    // ------------------------------------------------------------ promotions
+    // Exercised here rather than against the seed store because a voucher and
+    // a flash sale can never be deleted — no route on either path implements
+    // DELETE — so the residue has to land on a store nobody else uses.
+    await back(tester);
+    await pumpUntil(tester, find.text('Beranda'));
+
+    await tapText(tester, 'Promosi');
+    await pumpUntil(tester, find.text('Belum ada voucher toko.'));
+
+    // ------------------------------------------------------------- voucher
+    await tester.tap(find.byType(FloatingActionButton));
+    await pumpUntil(tester, find.text('Voucher baru'));
+
+    final voucherFields = find.byType(TextFormField);
+    await tester.enterText(voucherFields.at(0), 'Diskon E2E');
+    // Field 1 is the optional code, left blank so the server generates one.
+    await tester.enterText(voucherFields.at(2), '10'); // percentage
+    await tester.pump();
+    // Skipping the optional max-discount and min-spend fields; quota and the
+    // per-buyer cap are both required, and omitting either is a 500 rather
+    // than a validation error.
+    final quotaField = find.widgetWithText(TextFormField, 'Kuota voucher');
+    await tester.ensureVisible(quotaField);
+    await tester.enterText(quotaField, '50');
+    await tester.pump();
+
+    await tapButton(tester, 'Buat voucher');
+    await pumpUntil(tester, find.text('Diskon E2E'));
+
+    // The code was generated server-side, so the card shows something the form
+    // never typed — proof the list was re-read rather than assembled locally.
+    expect(find.textContaining('VC-'), findsOneWidget);
+    expect(find.text('0 / 50 terpakai'), findsOneWidget);
+    expect(find.text('Berjalan'), findsOneWidget,
+        reason: 'the window opens today, so the phase is derived as running');
+
+    // ---------------------------------------------------------- flash sale
+    await tester.tap(find.text('Flash sale'));
+    await pumpUntil(tester, find.text('Belum ada flash sale.'));
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await pumpUntil(tester, find.text('Flash sale baru'));
+
+    await tester.enterText(find.byType(TextFormField).first, 'Kilat E2E');
+    await tester.pump();
+    await tapButton(tester, 'Buat flash sale');
+    await pumpUntil(tester, find.text('Kilat E2E'));
+
+    // The form defaults the start to now, so the server's CASE expression
+    // makes this one `active` at creation. A sale scheduled for later would be
+    // born `scheduled` and depend on a cron worker to ever start — which is
+    // why the form warns about that case and defaults away from it.
+    expect(find.text('Berjalan'), findsOneWidget);
+    expect(find.text('Tidak jalan'), findsNothing);
+
+    // ------------------------------------------------- one product into it
+    await tester.tap(find.text('Kilat E2E'));
+    await pumpUntil(tester, find.text('Belum ada produk di flash sale ini.'));
+
+    // The store has no products, so the picker has to say that rather than
+    // offer an empty list.
+    await tester.tap(find.byType(FloatingActionButton));
+    await pumpUntil(tester, find.textContaining('belum punya produk'));
+  }, timeout: const Timeout(Duration(minutes: 6)));
 }

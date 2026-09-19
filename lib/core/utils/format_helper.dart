@@ -59,6 +59,18 @@ String formatDateTime(DateTime? value) {
   return '${formatDate(value)}, $hour:$minute';
 }
 
+/// The other direction: a `DateTime` as this API wants to receive it,
+/// `2026-09-19 00:00:00`.
+///
+/// Sent as plain wall clock with no zone and no `T`, matching what the columns
+/// hold — the backend compares these against MySQL's `NOW()`, so an ISO-8601
+/// string with an offset would be read as a different moment.
+String formatApiDateTime(DateTime value) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${value.year}-${two(value.month)}-${two(value.day)} '
+      '${two(value.hour)}:${two(value.minute)}:${two(value.second)}';
+}
+
 /// Parses a user-typed rupiah amount, tolerating `750.000`, `750,000`,
 /// `Rp 750000` and stray spaces.
 int? parseRupiahInput(String? input) {

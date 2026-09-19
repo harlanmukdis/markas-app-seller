@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:navy_wear/core/domain/model/catalog/category.dart';
+import 'package:navy_wear/core/domain/model/catalog/flash_sale_info.dart';
 import 'package:navy_wear/core/domain/model/catalog/product.dart';
 import 'package:navy_wear/core/domain/model/catalog/product_variant.dart';
 
@@ -211,6 +212,86 @@ void main() {
       expect(product.flashSale!.remainingQuota, 88);
       // The sale price is what a buyer pays, so it wins over base_price.
       expect(product.effectivePrice, 59000);
+    });
+
+    test('per-variant flash_sale is always present, product-level is not', () {
+      // v1.1.0 added variants[i].flash_sale. The two levels disagree on how
+      // "no sale" looks: the product omits the key entirely, the variant keeps
+      // it and sets null.
+      final product = Product.fromJson(<String, dynamic>{
+        'id': '5',
+        'name': 'Kaos Multi Varian',
+        'base_price': '100000.00',
+        'status': 'active',
+        'variants': <dynamic>[
+          <String, dynamic>{
+            'id': '11',
+            'sku': 'KAOS-M',
+            'price': '100000.00',
+            'flash_sale': <String, dynamic>{
+              'flash_price': 79000,
+              'sold_count': 3,
+              'stock_quota': 50,
+              'ends_at': '2026-09-20 23:59:59',
+            },
+          },
+          <String, dynamic>{
+            'id': '12',
+            'sku': 'KAOS-L',
+            'price': '110000.00',
+            'flash_sale': null,
+          },
+        ],
+      });
+
+      // No product-level key at all, even though one variant is discounted.
+      expect(product.flashSale, isNull);
+
+      final discounted = product.variants.first;
+      final full = product.variants.last;
+      expect(discounted.flashSale, isNotNull);
+      expect(discounted.effectivePrice, 79000);
+      expect(discounted.flashSale!.remainingQuota, 47);
+
+      expect(full.flashSale, isNull);
+      // Pricing this one off the product-level block would have discounted it.
+      expect(full.effectivePrice, 110000);
+
+      expect(product.hasPartialFlashSale, isTrue);
+    });
+
+    test('a sale covering every variant is not partial', () {
+      final product = Product.fromJson(<String, dynamic>{
+        'id': '6',
+        'name': 'Semua Diskon',
+        'base_price': '50000.00',
+        'variants': <dynamic>[
+          <String, dynamic>{
+            'id': '21',
+            'sku': 'A',
+            'price': '50000.00',
+            'flash_sale': <String, dynamic>{'flash_price': 40000},
+          },
+          <String, dynamic>{
+            'id': '22',
+            'sku': 'B',
+            'price': '50000.00',
+            'flash_sale': <String, dynamic>{'flash_price': 40000},
+          },
+        ],
+      });
+
+      expect(product.hasPartialFlashSale, isFalse);
+    });
+
+    test('FlashSaleInfo.maybeFrom treats a missing key and null alike', () {
+      expect(FlashSaleInfo.maybeFrom(null), isNull);
+      expect(FlashSaleInfo.maybeFrom(<String, dynamic>{}), isNull);
+      expect(
+        FlashSaleInfo.maybeFrom(<String, dynamic>{'flash_price': 1000})!
+            .flashPrice,
+        1000,
+      );
     });
 
     test('authoredVariants hides the generated default', () {

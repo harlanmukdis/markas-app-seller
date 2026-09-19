@@ -16,7 +16,7 @@ import 'package:navy_wear/main.dart';
 /// This is not a unit test: it boots the same widget tree `main()` does, talks
 /// to `http://localhost:8000/api/v1` for real, and signs in as a seed seller.
 /// It therefore needs the backend up and seeded — see
-/// `docs/18-frontend-integration-guide.md` §3 for the accounts it uses.
+/// `docs/19-frontend-integration-guide.md` §3 for the accounts it uses.
 ///
 ///     flutter test integration_test -d macos
 ///
@@ -181,5 +181,52 @@ void main() {
     expect(find.text('Terima pesanan'), findsNothing);
     expect(find.text('Tandai sudah dikemas'), findsNothing);
     expect(find.text('Serahkan ke kurir'), findsNothing);
+
+    // -------------------------------------------------------------- wallet
+    await back(tester);
+    await pumpUntil(tester, find.text('Perlu tindakan'));
+    await back(tester);
+    await pumpUntil(tester, find.text('Beranda'));
+
+    final walletCard = find.text('Dompet toko').first;
+    await tester.ensureVisible(walletCard);
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(walletCard);
+    await pumpUntil(tester, find.text('Saldo bisa ditarik'));
+
+    // Seed store 1 has never earned, so the balance sits under the 50k floor
+    // and the button must be disabled rather than failing at the server.
+    expect(find.text('Belum ada transaksi.'), findsOneWidget);
+    expect(find.textContaining('mulai Rp 50.000'), findsOneWidget);
+
+    final withdrawButton =
+        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Tarik dana'));
+    expect(withdrawButton.onPressed, isNull,
+        reason: 'an empty wallet cannot file a withdrawal');
+
+    // ---------------------------------------------------------- promotions
+    // Read-only against the seed store on purpose: a voucher or flash sale
+    // created here could never be removed again — neither path implements
+    // DELETE — so the write side is exercised in the onboarding test, which
+    // works on a throwaway store.
+    await back(tester);
+    await pumpUntil(tester, find.text('Beranda'));
+
+    final promotionCard = find.text('Promosi').first;
+    await tester.ensureVisible(promotionCard);
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(promotionCard);
+    await pumpUntil(tester, find.textContaining('Voucher hanya bisa dibuat'));
+
+    expect(find.text('Belum ada voucher toko.'), findsOneWidget,
+        reason: 'GET /stores/1/vouchers answers an empty array');
+
+    await tester.tap(find.text('Flash sale'));
+    await pumpUntil(tester, find.text('Belum ada flash sale.'));
+
+    // Both lists are create-and-list only, and the screen has to say so before
+    // anything is submitted rather than after.
+    expect(find.textContaining('tidak bisa diubah atau dibatalkan'),
+        findsOneWidget);
   }, timeout: const Timeout(Duration(minutes: 4)));
 }

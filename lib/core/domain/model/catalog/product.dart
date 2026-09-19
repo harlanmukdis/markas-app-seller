@@ -1,4 +1,5 @@
 import '../../../utils/json_parse.dart';
+import 'flash_sale_info.dart';
 import 'product_variant.dart';
 
 /// A catalogue entry.
@@ -65,7 +66,9 @@ class Product {
   /// path for product images. A seller's own image goes on a variant instead.
   final List<ProductImage> images;
 
-  /// Absent — not null — when no sale is running, so presence is the signal.
+  /// The **aggregate** sale across variants, absent (not null) when none runs.
+  /// For a multi-variant product prefer each variant's own `flashSale`: the
+  /// aggregate prices undiscounted variants as if they were on sale.
   final FlashSaleInfo? flashSale;
 
   final DateTime? createdAt;
@@ -89,17 +92,26 @@ class Product {
         stock: asIntOrNull(json['stock']),
         variants: asModelList(json['variants'], ProductVariant.fromJson),
         images: asModelList(json['images'], ProductImage.fromJson),
-        flashSale: json['flash_sale'] == null
-            ? null
-            : FlashSaleInfo.fromJson(asMap(json['flash_sale'])),
+        flashSale: FlashSaleInfo.maybeFrom(json['flash_sale']),
         createdAt: asCreatedDate(json),
       );
 
   bool get isActive => status == ProductStatus.active;
   bool get isDraft => status == ProductStatus.draft;
 
-  /// The price a buyer would actually pay right now.
+  /// What a buyer would pay for the product as a whole. Honest only for a
+  /// single-variant product — otherwise read [ProductVariant.effectivePrice].
   int get effectivePrice => flashSale?.flashPrice ?? basePrice;
+
+  /// Some variants discounted and others not — the case where the
+  /// product-level price misleads, and the reason the backend added a
+  /// per-variant block in v1.1.0.
+  bool get hasPartialFlashSale {
+    if (variants.length < 2) return false;
+    final discounted =
+        variants.where((variant) => variant.flashSale != null).length;
+    return discounted > 0 && discounted < variants.length;
+  }
 
   /// Only the variants the seller made — the generated default is an artefact
   /// of creation rather than a choice, and listing it as a variant alongside
@@ -121,31 +133,6 @@ class ProductImage {
         imageUrl: asString(json['image_url']),
         sortOrder: asInt(json['sort_order']),
       );
-}
-
-/// The `flash_sale` block product detail adds while a sale is live.
-class FlashSaleInfo {
-  const FlashSaleInfo({
-    required this.flashPrice,
-    this.soldCount = 0,
-    this.stockQuota = 0,
-    this.endsAt,
-  });
-
-  final int flashPrice;
-  final int soldCount;
-  final int stockQuota;
-  final DateTime? endsAt;
-
-  factory FlashSaleInfo.fromJson(Map<String, dynamic> json) => FlashSaleInfo(
-        flashPrice: asInt(json['flash_price']),
-        soldCount: asInt(json['sold_count']),
-        stockQuota: asInt(json['stock_quota']),
-        endsAt: asDateTime(json['ends_at']),
-      );
-
-  int get remainingQuota =>
-      stockQuota - soldCount < 0 ? 0 : stockQuota - soldCount;
 }
 
 abstract class ProductStatus {

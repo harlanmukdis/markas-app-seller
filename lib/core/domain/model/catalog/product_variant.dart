@@ -1,4 +1,5 @@
 import '../../../utils/json_parse.dart';
+import 'flash_sale_info.dart';
 
 /// One sellable row of a product.
 ///
@@ -20,6 +21,7 @@ class ProductVariant {
     this.stock,
     this.warehouseCity,
     this.warehouseProvince,
+    this.flashSale,
   });
 
   final int id;
@@ -45,6 +47,14 @@ class ProductVariant {
   final String? warehouseCity;
   final String? warehouseProvince;
 
+  /// This variant's own sale, added in v1.1.0. Unlike the product-level block
+  /// the key is **always present** and carries `null` when this variant is not
+  /// discounted — so absence and "no sale" look different at the two levels.
+  ///
+  /// This is the one to price against: a product-level sale on a multi-variant
+  /// product would otherwise discount variants that are not in it.
+  final FlashSaleInfo? flashSale;
+
   factory ProductVariant.fromJson(Map<String, dynamic> json) => ProductVariant(
         id: asInt(json['id']),
         sku: asString(json['sku']),
@@ -57,7 +67,11 @@ class ProductVariant {
         stock: asIntOrNull(json['stock']),
         warehouseCity: asStringOrNull(json['warehouse_city']),
         warehouseProvince: asStringOrNull(json['warehouse_province']),
+        flashSale: FlashSaleInfo.maybeFrom(json['flash_sale']),
       );
+
+  /// What a buyer pays for this variant right now.
+  int get effectivePrice => flashSale?.flashPrice ?? price;
 
   /// `Banda Aceh, Aceh` — empty when nothing is in stock anywhere.
   String get originLabel => <String?>[warehouseCity, warehouseProvince]

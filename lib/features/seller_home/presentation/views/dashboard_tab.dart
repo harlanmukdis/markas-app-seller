@@ -142,6 +142,12 @@ class DashboardTab extends StatelessWidget {
                   ),
                   12.sbh,
                   const _NavCard(
+                    icon: Icons.account_balance_wallet_outlined,
+                    label: 'Dompet toko',
+                    route: SellerRoutes.wallet,
+                  ),
+                  12.sbh,
+                  const _NavCard(
                     icon: Icons.inventory_2_outlined,
                     label: 'Produk',
                     route: SellerRoutes.products,
@@ -151,6 +157,12 @@ class DashboardTab extends StatelessWidget {
                     icon: Icons.warehouse_outlined,
                     label: 'Gudang & stok',
                     route: SellerRoutes.warehouses,
+                  ),
+                  12.sbh,
+                  const _NavCard(
+                    icon: Icons.local_offer_outlined,
+                    label: 'Promosi',
+                    route: SellerRoutes.promotions,
                   ),
                   12.sbh,
                   const _NavCard(

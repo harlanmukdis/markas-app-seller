@@ -108,10 +108,10 @@ abstract class ApiEndpoints {
   /// only when `q` is given, and **the two have different shapes**: `rating`
   /// uses an integer `count`, `category` a string `cnt`.
   ///
-  /// Rows here are the `products` table plus `compare_at_price` and, when one
-  /// is running, `flash_sale`. **No images, stock, variants or couriers** —
-  /// those exist only on [product], so a listing screen needs placeholders
-  /// rather than a detail call per card.
+  /// Rows here are the `products` table plus `compare_at_price`, `image_url`
+  /// (added v1.1.0) and, when one is running, `flash_sale`. Still detail-only:
+  /// `stock`, `variants[]`, the full `images[]` and `couriers[]` — so a listing
+  /// screen must not fire a detail call per card just to show stock.
   ///
   /// This is also the search fallback: `/search/*` needs Elasticsearch on 9200
   /// and answers `503 SEARCH_UNAVAILABLE` without it, while `?q=` here is plain
@@ -119,6 +119,10 @@ abstract class ApiEndpoints {
   static const String products = '/products';
 
   /// The seller's own catalogue, drafts included — a bare array with no `meta`.
+  ///
+  /// Note the asymmetry: `GET /products` gained `image_url` per row in v1.1.0
+  /// but **this endpoint did not**, so the seller's own list still has no
+  /// thumbnail to show while the public one does.
   static String storeProducts(int storeId) => '/stores/$storeId/products';
 
   /// Detail, and the one call a product page needs: it nests `variants[]`,
@@ -130,8 +134,11 @@ abstract class ApiEndpoints {
   /// while almost every sibling field is a numeric string; `asInt` reads both,
   /// so route it through the same helper rather than casting.
   ///
-  /// `flash_sale` is an **optional key**, present only while a sale is running
-  /// — check for its presence, do not expect `null`.
+  /// `flash_sale` appears at two levels with two conventions: on the product it
+  /// is an **optional key** (absent, never null, when idle) and aggregates
+  /// across variants; on `variants[i]` it is **always present** and `null` when
+  /// that variant is not discounted. Price against the per-variant one — the
+  /// aggregate discounts variants that are not actually in the sale.
   static String product(int productId) => '/products/$productId';
 
   /// A product is born with one auto-generated variant (`SKU-<id>-<hash>`,
@@ -204,13 +211,30 @@ abstract class ApiEndpoints {
       '/stores/$storeId/staff-roles/$roleId/permissions';
 
   // ----------------------------------------------------------- Promotions
+  /// `GET` lists, `POST` creates. **There is no `PATCH` and no `DELETE`** on
+  /// this path — both answer `405 Unknown method` — so a voucher cannot be
+  /// edited, paused or withdrawn once it exists.
+  ///
   /// Create takes `valid_from`/`valid_until` and `min_spend` — **not**
-  /// `start_at`/`end_at` or `min_purchase`. The backend reads those two date
-  /// keys without a fallback, so omitting either is a 500, not a 422.
+  /// `start_at`/`end_at` or `min_purchase`. Only `name` is validated; the other
+  /// required keys are read without a fallback, so omitting one is a 500, not
+  /// a 422. `code` is optional and generated as `VC-XXXXXXXX` when absent,
+  /// which is safer than supplying one: the column is unique platform-wide and
+  /// a collision is an unhandled 500.
   static String storeVouchers(int storeId) => '/stores/$storeId/vouchers';
 
-  /// Flash sales, in contrast, really do take `start_at`/`end_at`.
+  /// Flash sales, in contrast, really do take `start_at`/`end_at` — and this
+  /// endpoint validates nothing at all, not even the name.
+  ///
+  /// The created `status` is computed once from whether the window already
+  /// covers `NOW()`; moving it afterwards is a cron worker's job. Since buyers
+  /// only see a sale whose status is `active` **and** whose window is open, one
+  /// created for later never runs where that worker is not installed.
   static String storeFlashSales(int storeId) => '/stores/$storeId/flash-sales';
+
+  /// A sale's contents. `GET` is **public**; `POST` adds a variant and does
+  /// **not** check that the variant belongs to the sale's store. There is no
+  /// `GET /flash-sales/{id}` and no way to remove a row once added.
   static String flashSaleProducts(int flashSaleId) =>
       '/flash-sales/$flashSaleId/products';
 
