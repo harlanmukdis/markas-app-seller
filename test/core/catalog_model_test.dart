@@ -320,4 +320,45 @@ void main() {
       expect(product.authoredVariants.single.sku, 'PROBE-RED-L');
     });
   });
+
+  group('Product badges', () {
+    // v1.4.0. The server derives these from columns it already has, so they
+    // cost no query and the seller cannot set them.
+    test('reads the badge list off a detail payload', () {
+      final product = Product.fromJson(<String, dynamic>{
+        'id': '1',
+        'name': 'Kopi Arabika Gayo 250g',
+        'base_price': '75000.00',
+        'badges': <dynamic>['new', 'best_seller'],
+      });
+
+      expect(product.badges, <String>['new', 'best_seller']);
+      expect(product.badges.contains(ProductBadge.isNew), isTrue);
+      expect(product.badges.contains(ProductBadge.hot), isFalse);
+    });
+
+    test('the seller listing carries no badges at all', () {
+      // attach_badges() runs on GET /products and GET /products/{id} only —
+      // GET /stores/{id}/products does not call it, which is why the
+      // catalogue cards in this app show none.
+      final row = Product.fromJson(<String, dynamic>{
+        'id': '1',
+        'name': 'Kopi Arabika Gayo 250g',
+        'base_price': '75000.00',
+      });
+
+      expect(row.badges, isEmpty);
+    });
+
+    test('an unrecognised badge is kept rather than dropped', () {
+      final product = Product.fromJson(<String, dynamic>{
+        'id': '1',
+        'name': 'Produk',
+        'badges': <dynamic>['new', 'limited_edition'],
+      });
+
+      expect(product.badges, contains('limited_edition'));
+      expect(ProductBadge.label('limited_edition'), 'limited_edition');
+    });
+  });
 }

@@ -238,6 +238,31 @@ abstract class ApiEndpoints {
   static String flashSaleProducts(int flashSaleId) =>
       '/flash-sales/$flashSaleId/products';
 
+  // -------------------------------------------------------- Merchandising
+  /// Product bundles (v1.2.0). `GET` lists the store's own, every status;
+  /// `POST` creates one with its items, which are **fixed from then on** —
+  /// `PATCH /bundles/{id}` whitelists `name`, `bundle_price` and `status`
+  /// only, and no route touches the items. There is no `DELETE` (405).
+  static String storeBundles(int storeId) => '/stores/$storeId/bundles';
+
+  /// A bundle with its items. **Public and active-only**, so the owner of an
+  /// `inactive` bundle gets `404 BUNDLE_NOT_FOUND` for their own row.
+  static String bundle(int bundleId) => '/bundles/$bundleId';
+
+  /// Store showcases — the seller's own product grouping, independent of the
+  /// category tree, and one product may belong to several. Full CRUD,
+  /// `DELETE` included.
+  static String storeShowcases(int storeId) => '/stores/$storeId/showcases';
+  static String showcase(int showcaseId) => '/showcases/$showcaseId';
+
+  /// `POST` adds one product (and answers `201` with **no id**); `GET` lists
+  /// them, paged at twenty and filtered to `status = 'active'` — so a draft
+  /// product can be added and will never show up here.
+  static String showcaseProducts(int showcaseId) =>
+      '/showcases/$showcaseId/products';
+  static String showcaseProduct(int showcaseId, int productId) =>
+      '/showcases/$showcaseId/products/$productId';
+
   // ------------------------------------------------------------ Locations
   /// Province/city master data (v1.2.0), public and unpaged. Their payloads
   /// use `province_name` / `city_name` / `active`, not this API's usual
@@ -295,6 +320,12 @@ abstract class ApiEndpoints {
   static String notificationRead(int notificationId) =>
       '/me/notifications/$notificationId/read';
   static const String notificationsReadAll = '/me/notifications/read-all';
+
+  /// `GET` lists a mute switch per type per channel, `PATCH` sets **one** of
+  /// them at a time (`{notification_type, channel, is_enabled}`). Added in
+  /// v1.5.0. The list only contains types the account has already received,
+  /// and `in_app` cannot be muted — the server answers 422.
+  static const String notificationPreferences = '/me/notification-preferences';
 
   // --------------------------------------------------------------- System
   static const String health = '/health';

@@ -34,6 +34,7 @@ class Product {
     this.variants = const <ProductVariant>[],
     this.images = const <ProductImage>[],
     this.flashSale,
+    this.badges = const <String>[],
     this.createdAt,
   });
 
@@ -71,6 +72,18 @@ class Product {
   /// aggregate prices undiscounted variants as if they were on sale.
   final FlashSaleInfo? flashSale;
 
+  /// How buyers see this product on a card: a subset of `new`, `best_seller`,
+  /// `hot` and `sale` (v1.4.0). The server derives them from columns it
+  /// already has — age, `sold_count`, `view_count`, and the better of the
+  /// `compare_at_price` and flash-sale discounts — so they cost no extra
+  /// query and cannot be set by the seller.
+  ///
+  /// **Only on the public listing and on `GET /products/{id}`.** The seller's
+  /// own catalogue, `GET /stores/{id}/products`, does not attach them, so this
+  /// is empty there — a product card in this app cannot show badges, but the
+  /// product's own screen can.
+  final List<String> badges;
+
   final DateTime? createdAt;
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -93,6 +106,7 @@ class Product {
         variants: asModelList(json['variants'], ProductVariant.fromJson),
         images: asModelList(json['images'], ProductImage.fromJson),
         flashSale: FlashSaleInfo.maybeFrom(json['flash_sale']),
+        badges: asStringList(json['badges']),
         createdAt: asCreatedDate(json),
       );
 
@@ -133,6 +147,35 @@ class ProductImage {
         imageUrl: asString(json['image_url']),
         sortOrder: asInt(json['sort_order']),
       );
+}
+
+/// The `badges` vocabulary, and the thresholds behind each one.
+///
+/// The thresholds are hardcoded fallbacks on the server, overridable through
+/// `admin_settings` — so the numbers quoted here are what a default install
+/// uses, not a guarantee. They are worth showing the seller anyway: a badge
+/// is free promotion, and knowing "50 sold" is the bar makes it actionable.
+abstract class ProductBadge {
+  static const String isNew = 'new';
+  static const String bestSeller = 'best_seller';
+  static const String hot = 'hot';
+  static const String sale = 'sale';
+
+  static String label(String badge) => switch (badge) {
+        isNew => 'Baru',
+        bestSeller => 'Terlaris',
+        hot => 'Populer',
+        sale => 'Diskon',
+        _ => badge,
+      };
+
+  static String explain(String badge) => switch (badge) {
+        isNew => 'Dibuat dalam 14 hari terakhir',
+        bestSeller => 'Terjual minimal 50',
+        hot => 'Dilihat minimal 500 kali',
+        sale => 'Diskon minimal 20%',
+        _ => 'Dihitung otomatis oleh server',
+      };
 }
 
 abstract class ProductStatus {

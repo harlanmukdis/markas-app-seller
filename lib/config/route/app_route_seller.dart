@@ -9,6 +9,10 @@ import '../../features/seller_chat/presentation/views/chat_thread_view.dart';
 import '../../features/seller_catalog/presentation/views/product_list_view.dart';
 import '../../features/seller_auth/presentation/views/seller_register_view.dart';
 import '../../features/seller_home/presentation/views/seller_home_shell.dart';
+import '../../features/seller_merchandising/presentation/views/bundle_detail_view.dart';
+import '../../features/seller_merchandising/presentation/views/merchandising_view.dart';
+import '../../features/seller_merchandising/presentation/views/showcase_detail_view.dart';
+import '../../features/seller_notifications/presentation/views/notification_inbox_view.dart';
 import '../../features/seller_inventory/presentation/views/stock_view.dart';
 import '../../features/seller_orders/presentation/views/order_detail_view.dart';
 import '../../features/seller_orders/presentation/views/order_list_view.dart';
@@ -92,6 +96,25 @@ abstract class SellerRoutes {
 
   static String chatThreadPath(int conversationId) =>
       '/seller/chat/$conversationId';
+
+  /// The account's notifications — per user, not per store.
+  static const String notifications = '/seller/notifications';
+
+  /// Bundles and showcases, the two ways products are grouped.
+  static const String merchandising = '/seller/merchandising';
+
+  /// A bundle's contents. Readable only while the bundle is active — the
+  /// screen handles that rather than hiding it.
+  static const String bundleDetail = '/seller/bundles/:id';
+
+  static String bundleDetailPath(int bundleId) => '/seller/bundles/$bundleId';
+
+  /// A showcase's products. There is no `GET /showcases/{id}`, so the row is
+  /// recovered from the store's list by this id.
+  static const String showcaseDetail = '/seller/showcases/:id';
+
+  static String showcaseDetailPath(int showcaseId) =>
+      '/seller/showcases/$showcaseId';
 }
 
 /// Every route uses the same fade-through wrapper as the rest of the app.
@@ -119,6 +142,20 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.wallet, const WalletView()),
   _sellerRoute(SellerRoutes.promotions, const PromotionView()),
   _sellerRoute(SellerRoutes.chat, const ChatInboxView()),
+  _sellerRoute(SellerRoutes.notifications, const NotificationInboxView()),
+  _sellerRoute(SellerRoutes.merchandising, const MerchandisingView()),
+  _sellerRouteBuilder(
+    SellerRoutes.bundleDetail,
+    (state) => BundleDetailView(
+      bundleId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+    ),
+  ),
+  _sellerRouteBuilder(
+    SellerRoutes.showcaseDetail,
+    (state) => ShowcaseDetailView(
+      showcaseId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+    ),
+  ),
   _sellerRouteBuilder(
     SellerRoutes.chatThread,
     (state) => ChatThreadView(

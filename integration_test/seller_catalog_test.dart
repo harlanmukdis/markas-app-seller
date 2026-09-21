@@ -255,5 +255,27 @@ void main() {
     // The thread is reachable meanwhile, which is what keeps the working half
     // of chat usable.
     expect(find.text('Buka percakapan lewat ID'), findsOneWidget);
-  }, timeout: const Timeout(Duration(minutes: 5)));
+
+    // --------------------------------------------------------- notifications
+    await back(tester);
+    await pumpUntil(tester, find.text('Beranda'));
+
+    final notificationCard = find.text('Notifikasi').first;
+    await tester.ensureVisible(notificationCard);
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(notificationCard);
+    // Either a list or the empty state resolves; the settings action is on
+    // the bar in both cases, so it is the stable thing to wait for.
+    await pumpUntil(tester, find.byIcon(Icons.tune_rounded));
+
+    // The mute switches. Asserting the copy rather than the rows: the list is
+    // derived from the types this account has *received*, so its contents
+    // depend on traffic while this explanation never does.
+    await tester.tap(find.byIcon(Icons.tune_rounded));
+    await pumpUntil(tester, find.text('Pengaturan notifikasi'));
+
+    expect(find.textContaining('tetap masuk ke daftar di aplikasi ini'),
+        findsOneWidget,
+        reason: 'in_app cannot be muted, and the sheet has to say why');
+  }, timeout: const Timeout(Duration(minutes: 6)));
 }

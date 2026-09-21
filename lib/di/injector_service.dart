@@ -6,6 +6,8 @@ import '../core/data/datasources/remote/service/chat_service.dart';
 import '../core/data/datasources/remote/service/inventory_service.dart';
 import '../core/data/datasources/remote/service/location_service.dart';
 import '../core/data/datasources/remote/service/media_service.dart';
+import '../core/data/datasources/remote/service/merchandising_service.dart';
+import '../core/data/datasources/remote/service/notification_service.dart';
 import '../core/data/datasources/remote/service/order_service.dart';
 import '../core/data/datasources/remote/service/promotion_service.dart';
 import '../core/data/datasources/remote/service/shipping_service.dart';
@@ -33,4 +35,8 @@ void initializeService() {
   injector.registerLazySingleton<PromotionService>(() => PromotionService(dio));
   injector.registerLazySingleton<ChatService>(() => ChatService(dio));
   injector.registerLazySingleton<LocationService>(() => LocationService(dio));
+  injector.registerLazySingleton<MerchandisingService>(
+      () => MerchandisingService(dio));
+  injector.registerLazySingleton<NotificationService>(
+      () => NotificationService(dio));
 }

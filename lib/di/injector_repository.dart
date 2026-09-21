@@ -4,6 +4,8 @@ import '../core/data/datasources/remote/service/chat_service.dart';
 import '../core/data/datasources/remote/service/inventory_service.dart';
 import '../core/data/datasources/remote/service/location_service.dart';
 import '../core/data/datasources/remote/service/media_service.dart';
+import '../core/data/datasources/remote/service/merchandising_service.dart';
+import '../core/data/datasources/remote/service/notification_service.dart';
 import '../core/data/datasources/remote/service/order_service.dart';
 import '../core/data/datasources/remote/service/promotion_service.dart';
 import '../core/data/datasources/remote/service/shipping_service.dart';
@@ -16,6 +18,8 @@ import '../core/data/repositories/catalog_repository_impl.dart';
 import '../core/data/repositories/chat_repository_impl.dart';
 import '../core/data/repositories/inventory_repository_impl.dart';
 import '../core/data/repositories/location_repository_impl.dart';
+import '../core/data/repositories/merchandising_repository_impl.dart';
+import '../core/data/repositories/notification_repository_impl.dart';
 import '../core/data/repositories/order_repository_impl.dart';
 import '../core/data/repositories/promotion_repository_impl.dart';
 import '../core/data/repositories/shipping_repository_impl.dart';
@@ -27,6 +31,8 @@ import '../core/domain/repositories/catalog_repository.dart';
 import '../core/domain/repositories/chat_repository.dart';
 import '../core/domain/repositories/inventory_repository.dart';
 import '../core/domain/repositories/location_repository.dart';
+import '../core/domain/repositories/merchandising_repository.dart';
+import '../core/domain/repositories/notification_repository.dart';
 import '../core/domain/repositories/order_repository.dart';
 import '../core/domain/repositories/promotion_repository.dart';
 import '../core/domain/repositories/shipping_repository.dart';
@@ -85,5 +91,13 @@ void initializeRepository() {
 
   injector.registerLazySingleton<LocationRepository>(
     () => LocationRepositoryImpl(injector<LocationService>()),
+  );
+
+  injector.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(injector<NotificationService>()),
+  );
+
+  injector.registerLazySingleton<MerchandisingRepository>(
+    () => MerchandisingRepositoryImpl(injector<MerchandisingService>()),
   );
 }

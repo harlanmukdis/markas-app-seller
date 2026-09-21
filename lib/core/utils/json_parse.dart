@@ -97,6 +97,17 @@ Map<String, dynamic>? asMapOrNull(dynamic value) {
 
 /// Reads a list of objects, skipping anything that is not a map. Used for
 /// `units[]`, `attributes[]`, `sub_orders[]` and friends.
+/// A JSON array of strings, with anything unusable dropped rather than
+/// crashing the parse. Empty for a missing key, so a caller cannot tell
+/// "absent" from "empty" — which suits `badges`, where both mean none.
+List<String> asStringList(dynamic value) {
+  if (value is! List) return const <String>[];
+  return value
+      .map(asStringOrNull)
+      .whereType<String>()
+      .toList(growable: false);
+}
+
 List<Map<String, dynamic>> asMapList(dynamic value) {
   if (value is! List) return const <Map<String, dynamic>>[];
   return value.whereType<Map>().map(asMap).toList(growable: false);

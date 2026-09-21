@@ -274,6 +274,8 @@ class _ProductFormBodyState extends State<_ProductFormBody> {
                 ),
                 if (product != null) ...<Widget>[
                   24.sbh,
+                  _BadgeSection(product: product),
+                  24.sbh,
                   _VariantSection(product: product, isBusy: state.isSaving),
                 ],
                 32.sbh,
@@ -380,6 +382,98 @@ class _ReadOnlyRow extends StatelessWidget {
 
 /// Stock lives on variants, never on the product, so this is where an inventory
 /// screen will eventually hang off.
+/// The labels buyers see on this product's card.
+///
+/// Read-only by nature: the server derives them from the product's own age,
+/// sales, views and discount, and there is no field to set one. Showing them
+/// here — with the bar each needs — turns them from a mystery into something
+/// the seller can aim at.
+///
+/// They arrive only on `GET /products/{id}`, which is what this screen loads.
+/// The catalogue list does not carry them, so the cards on the previous screen
+/// deliberately show nothing.
+class _BadgeSection extends StatelessWidget {
+  const _BadgeSection({required this.product});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    final earned = product.badges;
+
+    return SectionCard(
+      title: 'Label pembeli',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            earned.isEmpty
+                ? 'Produk ini belum mendapat label apa pun. Label dihitung '
+                    'otomatis dari umur produk, penjualan, jumlah dilihat, dan '
+                    'besar diskon — tidak bisa diatur manual.'
+                : 'Dihitung otomatis oleh server, tidak bisa diatur manual.',
+            style: AppStyles.styleRegular12(context)
+                .copyWith(color: kLightThirdColor),
+          ),
+          12.sbh,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              for (final badge in <String>[
+                ProductBadge.isNew,
+                ProductBadge.bestSeller,
+                ProductBadge.hot,
+                ProductBadge.sale,
+              ])
+                _BadgeChip(badge: badge, earned: earned.contains(badge)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BadgeChip extends StatelessWidget {
+  const _BadgeChip({required this.badge, required this.earned});
+
+  final String badge;
+  final bool earned;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = earned ? kSuccessColor : kLightThirdColor;
+
+    return Tooltip(
+      message: ProductBadge.explain(badge),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: earned ? 0.12 : 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              earned ? Icons.check_circle : Icons.circle_outlined,
+              size: 13,
+              color: color,
+            ),
+            6.sbw,
+            Text(
+              ProductBadge.label(badge),
+              style: AppStyles.styleRegular12(context).copyWith(color: color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _VariantSection extends StatelessWidget {
   const _VariantSection({required this.product, required this.isBusy});
 

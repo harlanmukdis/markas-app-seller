@@ -166,9 +166,21 @@ class DashboardTab extends StatelessWidget {
                   ),
                   12.sbh,
                   const _NavCard(
+                    icon: Icons.shelves,
+                    label: 'Bundel & etalase',
+                    route: SellerRoutes.merchandising,
+                  ),
+                  12.sbh,
+                  const _NavCard(
                     icon: Icons.forum_outlined,
                     label: 'Chat',
                     route: SellerRoutes.chat,
+                  ),
+                  12.sbh,
+                  const _NavCard(
+                    icon: Icons.notifications_none_rounded,
+                    label: 'Notifikasi',
+                    route: SellerRoutes.notifications,
                   ),
                   12.sbh,
                   const _NavCard(

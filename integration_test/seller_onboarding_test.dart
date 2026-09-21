@@ -56,6 +56,13 @@ void main() {
     await tester.tap(button);
   }
 
+  /// A modal bottom sheet covers the app bar, so [back] cannot reach its
+  /// button — tapping the scrim above the sheet is what closes one.
+  Future<void> dismissSheet(WidgetTester tester) async {
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+  }
+
   Future<void> back(WidgetTester tester) async {
     await tester.tap(
       find
@@ -266,5 +273,55 @@ void main() {
     // offer an empty list.
     await tester.tap(find.byType(FloatingActionButton));
     await pumpUntil(tester, find.textContaining('belum punya produk'));
-  }, timeout: const Timeout(Duration(minutes: 6)));
+
+    // -------------------------------------------------- bundles & showcases
+    // Written against the throwaway store because a bundle can never be
+    // deleted — only switched off — so this would be permanent residue in a
+    // seed store.
+    await dismissSheet(tester);
+    await back(tester); // leave the flash sale's contents
+    // Back on the promotions screen, still on the flash sale tab — the sale
+    // created a moment ago is what proves we landed there.
+    await pumpUntil(tester, find.text('Kilat E2E'));
+    await back(tester); // leave promotions
+    await pumpUntil(tester, find.text('Beranda'));
+
+    await tapText(tester, 'Bundel & etalase');
+    await pumpUntil(tester, find.text('Belum ada bundel produk.'));
+
+    // A bundle needs at least one product and this store has none, so the
+    // form has to say so rather than offering an empty picker.
+    await tester.tap(find.byType(FloatingActionButton));
+    await pumpUntil(tester, find.text('Bundel baru'));
+    expect(find.textContaining('belum punya produk untuk dibundel'),
+        findsOneWidget);
+    expect(find.textContaining('tidak bisa diubah setelah dibuat'),
+        findsOneWidget,
+        reason: 'bundle contents are final, and the form says so up front');
+
+    await dismissSheet(tester);
+
+    // ------------------------------------------------------------ showcase
+    await tester.tap(find.text('Etalase'));
+    await pumpUntil(tester, find.text('Belum ada etalase.'));
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await pumpUntil(tester, find.text('Etalase baru'));
+    await tester.enterText(find.byType(TextFormField).first, 'Etalase E2E');
+    await tester.pump();
+    await tapButton(tester, 'Buat etalase');
+    await pumpUntil(tester, find.text('Etalase E2E'));
+
+    // Unlike everything else built lately, a showcase is fully editable —
+    // both controls have to be there.
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+
+    await tester.tap(find.text('Etalase E2E'));
+    await pumpUntil(tester, find.text('Belum ada produk aktif di etalase ini.'));
+
+    // The trap worth guarding: a draft can be added and then never appears.
+    expect(find.textContaining('Hanya produk aktif yang tampil'),
+        findsOneWidget);
+  }, timeout: const Timeout(Duration(minutes: 8)));
 }
