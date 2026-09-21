@@ -166,6 +166,12 @@ class DashboardTab extends StatelessWidget {
                   ),
                   12.sbh,
                   const _NavCard(
+                    icon: Icons.forum_outlined,
+                    label: 'Chat',
+                    route: SellerRoutes.chat,
+                  ),
+                  12.sbh,
+                  const _NavCard(
                     icon: Icons.local_shipping_outlined,
                     label: 'Kurir pengiriman',
                     route: SellerRoutes.couriers,

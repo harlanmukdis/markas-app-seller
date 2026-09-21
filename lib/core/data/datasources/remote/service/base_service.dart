@@ -14,15 +14,25 @@ abstract class BaseService {
 
   final Dio dio;
 
+  /// [receiveTimeout] overrides the client-wide budget for this one call.
+  ///
+  /// Needed by the chat long-poll, which deliberately holds the connection
+  /// open for up to 25 seconds before answering. The default 30-second budget
+  /// technically covers that, but with so little margin that ordinary latency
+  /// would surface as a connection failure rather than an empty result.
   Future<ApiEnvelope> getRequest(
     String path, {
     Map<String, dynamic>? query,
     Map<String, dynamic>? headers,
+    Duration? receiveTimeout,
   }) =>
       _send(() => dio.get<dynamic>(
             path,
             queryParameters: _clean(query),
-            options: _options(headers),
+            options: receiveTimeout == null
+                ? _options(headers)
+                : (_options(headers) ?? Options())
+                    .copyWith(receiveTimeout: receiveTimeout),
           ));
 
   /// [body] is cleaned of nulls and sent as JSON. [data] is passed through

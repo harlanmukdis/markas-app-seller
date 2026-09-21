@@ -29,6 +29,7 @@ class InventoryRepositoryImpl
     required String city,
     required String province,
     required String postalCode,
+    int? cityId,
   }) =>
       guard(() => _service.createWarehouse(
             storeId,
@@ -37,6 +38,7 @@ class InventoryRepositoryImpl
             city: city,
             province: province,
             postalCode: postalCode,
+            cityId: cityId,
           ));
 
   @override
@@ -48,6 +50,7 @@ class InventoryRepositoryImpl
     String? province,
     String? postalCode,
     String? status,
+    int? cityId,
   }) =>
       guard(() => _service.updateWarehouse(
             warehouseId,
@@ -57,6 +60,7 @@ class InventoryRepositoryImpl
             province: province,
             postalCode: postalCode,
             status: status,
+            cityId: cityId,
           ));
 
   @override

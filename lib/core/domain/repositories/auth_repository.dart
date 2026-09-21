@@ -40,5 +40,12 @@ abstract class AuthRepository {
 
   int? get activeStoreId;
 
+  /// Cached from the profile read that follows login.
+  ///
+  /// Chat needs it: a message carries only `sender_user_id`, so telling the
+  /// store's own replies from the buyer's is a comparison against this rather
+  /// than anything the payload says.
+  int? get currentUserId;
+
   Future<void> setActiveStore(int storeId);
 }

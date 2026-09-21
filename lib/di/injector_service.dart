@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 
 import '../core/data/datasources/remote/service/auth_service.dart';
 import '../core/data/datasources/remote/service/catalog_service.dart';
+import '../core/data/datasources/remote/service/chat_service.dart';
 import '../core/data/datasources/remote/service/inventory_service.dart';
+import '../core/data/datasources/remote/service/location_service.dart';
 import '../core/data/datasources/remote/service/media_service.dart';
 import '../core/data/datasources/remote/service/order_service.dart';
 import '../core/data/datasources/remote/service/promotion_service.dart';
@@ -29,4 +31,6 @@ void initializeService() {
   injector.registerLazySingleton<OrderService>(() => OrderService(dio));
   injector.registerLazySingleton<WalletService>(() => WalletService(dio));
   injector.registerLazySingleton<PromotionService>(() => PromotionService(dio));
+  injector.registerLazySingleton<ChatService>(() => ChatService(dio));
+  injector.registerLazySingleton<LocationService>(() => LocationService(dio));
 }

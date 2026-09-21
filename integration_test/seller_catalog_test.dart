@@ -228,5 +228,32 @@ void main() {
     // anything is submitted rather than after.
     expect(find.textContaining('tidak bisa diubah atau dibatalkan'),
         findsOneWidget);
-  }, timeout: const Timeout(Duration(minutes: 4)));
+
+    // ---------------------------------------------------------------- chat
+    // Only the inbox is driven here. The thread needs a conversation id, and
+    // no conversation is seed data — the backend has no way for a seller to
+    // create or even list one, which is the whole finding. Pinning the test to
+    // an id that happens to exist today would make it fail mysteriously after
+    // the next reseed, so the thread's contract is verified against the API
+    // directly instead (read, reply, read-receipt and long-poll all confirmed).
+    await back(tester);
+    await pumpUntil(tester, find.text('Beranda'));
+
+    final chatCard = find.text('Chat').first;
+    await tester.ensureVisible(chatCard);
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(chatCard);
+    await pumpUntil(tester, find.text('Kotak masuk toko belum bisa dibuat'));
+
+    // GET /chat/conversations answers 200 with the account's conversations as
+    // a *buyer*. The screen must not pass those off as the store's enquiries.
+    expect(find.text('Percakapan Anda sebagai pembeli'), findsOneWidget);
+    expect(find.textContaining('GET /stores/{id}/chat/conversations'),
+        findsOneWidget,
+        reason: 'the screen names the endpoint the backend still owes');
+
+    // The thread is reachable meanwhile, which is what keeps the working half
+    // of chat usable.
+    expect(find.text('Buka percakapan lewat ID'), findsOneWidget);
+  }, timeout: const Timeout(Duration(minutes: 5)));
 }

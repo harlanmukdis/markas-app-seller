@@ -238,6 +238,14 @@ abstract class ApiEndpoints {
   static String flashSaleProducts(int flashSaleId) =>
       '/flash-sales/$flashSaleId/products';
 
+  // ------------------------------------------------------------ Locations
+  /// Province/city master data (v1.2.0), public and unpaged. Their payloads
+  /// use `province_name` / `city_name` / `active`, not this API's usual
+  /// `name` / `is_active`. The seed is small and incomplete, so
+  /// `warehouses.city_id` stays optional and the free-text columns remain.
+  static const String locationProvinces = '/locations/provinces';
+  static const String locationCities = '/locations/cities';
+
   // ------------------------------------------------- Performance & tax
   /// Answers `data: null` until the nightly job assigns a tier.
   static String storeTier(int storeId) => '/stores/$storeId/tier';
@@ -253,7 +261,20 @@ abstract class ApiEndpoints {
   static String liveSessionProducts(int sessionId) =>
       '/live-sessions/$sessionId/products';
 
+  /// ⚠️ **`GET` here is buyer-scoped, not store-scoped.** The model filters on
+  /// `buyer_id = <signed in user>`, so a seller gets the conversations in which
+  /// they are the customer and never their own shop's. There is no store-side
+  /// listing anywhere in `routes.php`, which is what blocks a seller inbox.
+  ///
+  /// `POST` (form or JSON, `store_id`) opens a conversation **as the buyer** —
+  /// including against a store the caller owns, which the server accepts and
+  /// which produces a row where buyer and owner are the same person. The
+  /// seller app never calls it.
   static const String chatConversations = '/chat/conversations';
+
+  /// `GET` is paged thirty at a time, newest first; `POST` reads JSON.
+  /// Both admit the store's owner and active staff, so the thread itself works
+  /// for a seller — only finding it does not.
   static String chatMessages(int conversationId) =>
       '/chat/conversations/$conversationId/messages';
   static String chatRead(int conversationId) =>
@@ -261,6 +282,8 @@ abstract class ApiEndpoints {
 
   /// There is no WebSocket in this build despite what the docs promise — this
   /// long-poll endpoint (`?since_id=`) is the only realtime path that exists.
+  /// It **holds the request for about 25 seconds** before answering with an
+  /// empty list, so it needs a receive timeout of its own.
   static String chatPoll(int conversationId) =>
       '/chat/conversations/$conversationId/poll';
 

@@ -18,6 +18,7 @@ abstract class InventoryRepository {
     required String city,
     required String province,
     required String postalCode,
+    int? cityId,
   });
 
   Future<DataState<Warehouse>> updateWarehouse(
@@ -28,6 +29,7 @@ abstract class InventoryRepository {
     String? province,
     String? postalCode,
     String? status,
+    int? cityId,
   });
 
   Future<DataState<List<WarehouseStock>>> getStocks(int warehouseId);

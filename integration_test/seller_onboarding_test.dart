@@ -141,10 +141,27 @@ void main() {
     final wFields = find.byType(TextFormField);
     await tester.enterText(wFields.at(0), 'Gudang E2E');
     await tester.enterText(wFields.at(1), 'Jl. Percobaan 1');
-    await tester.enterText(wFields.at(2), 'Jakarta Timur');
-    await tester.enterText(wFields.at(3), 'DKI Jakarta');
-    await tester.enterText(wFields.at(4), '13920');
+    await tester.enterText(wFields.at(2), '13920');
     await tester.pump();
+
+    // Province and city come from the master data added in v1.2.0, and
+    // choosing them is what fills the new `city_id` column. The lists load
+    // over the network, so wait for the hint rather than settling.
+    await pumpUntil(tester, find.text('Pilih provinsi'));
+    await tester.tap(find.text('Pilih provinsi'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DKI Jakarta').last);
+    await tester.pumpAndSettle();
+
+    await pumpUntil(tester, find.text('Pilih kota'));
+    await tester.tap(find.text('Pilih kota'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Jakarta').last);
+    await tester.pumpAndSettle();
+
+    // The escape hatch stays on offer: the seed master holds eleven provinces
+    // and fifteen cities, and does not contain Jakarta Timur.
+    expect(find.textContaining('tidak ada di daftar'), findsOneWidget);
 
     await tapButton(tester, 'Tambah gudang');
     // Waiting on the default pill rather than the name: the name is still in

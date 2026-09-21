@@ -31,7 +31,11 @@ class _WarehouseListBody extends StatelessWidget {
 
   Future<void> _create(BuildContext context) async {
     final cubit = WarehouseCubit.get(context);
-    final draft = await showWarehouseSheet(context);
+    final draft = await showWarehouseSheet(
+      context,
+      provinces: cubit.provinces,
+      citiesOf: cubit.citiesOf,
+    );
     if (draft == null || !context.mounted) return;
 
     final (error, _) = await cubit.create(
@@ -40,6 +44,7 @@ class _WarehouseListBody extends StatelessWidget {
       city: draft.city,
       province: draft.province,
       postalCode: draft.postalCode,
+      cityId: draft.cityId,
     );
     if (!context.mounted) return;
     if (error != null) {
@@ -51,7 +56,12 @@ class _WarehouseListBody extends StatelessWidget {
 
   Future<void> _edit(BuildContext context, Warehouse warehouse) async {
     final cubit = WarehouseCubit.get(context);
-    final draft = await showWarehouseSheet(context, existing: warehouse);
+    final draft = await showWarehouseSheet(
+      context,
+      existing: warehouse,
+      provinces: cubit.provinces,
+      citiesOf: cubit.citiesOf,
+    );
     if (draft == null || !context.mounted) return;
 
     final error = await cubit.update(
@@ -62,6 +72,7 @@ class _WarehouseListBody extends StatelessWidget {
       province: draft.province,
       postalCode: draft.postalCode,
       status: draft.status,
+      cityId: draft.cityId,
     );
     if (!context.mounted) return;
     if (error != null) {

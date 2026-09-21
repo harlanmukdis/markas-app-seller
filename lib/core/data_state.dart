@@ -101,6 +101,12 @@ abstract class DataErrorCode {
   static const String invalidState = 'INVALID_STATE';
   static const String conflict = 'CONFLICT';
   static const String validationError = 'VALIDATION_ERROR';
+
+  /// Added with the v1.2.0 security audit: the auth endpoints are throttled.
+  /// Login allows five attempts per email and twenty per IP over fifteen
+  /// minutes, and the counter is incremented **before** the password is
+  /// checked — so successful logins count against it as well.
+  static const String tooManyRequests = 'TOO_MANY_REQUESTS';
   static const String gatesNotPassed = 'GATES_NOT_PASSED';
   static const String dbError = 'DB_ERROR';
 

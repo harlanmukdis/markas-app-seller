@@ -117,5 +117,8 @@ class AuthRepositoryImpl with RepositoryGuard implements AuthRepository {
   int? get activeStoreId => _session.activeStoreId;
 
   @override
+  int? get currentUserId => _session.userId;
+
+  @override
   Future<void> setActiveStore(int storeId) => _session.saveActiveStore(storeId);
 }

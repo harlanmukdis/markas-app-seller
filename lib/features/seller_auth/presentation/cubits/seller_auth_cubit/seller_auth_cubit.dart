@@ -36,7 +36,7 @@ class SellerAuthCubit extends Cubit<SellerAuthState> {
         return null;
       case DataFailed<AuthSession>(:final failure):
         emit(const SellerAuthIdle());
-        return failure;
+        return _explainRateLimit(failure);
       default:
         emit(const SellerAuthIdle());
         return const DataError(
@@ -44,6 +44,21 @@ class SellerAuthCubit extends Cubit<SellerAuthState> {
           message: 'Server tidak mengembalikan sesi.',
         );
     }
+  }
+
+  /// Login is throttled at five attempts per email and twenty per IP, both
+  /// over fifteen minutes, and **a successful login counts too** — the check
+  /// runs before the password is verified and records every call. The server's
+  /// own wording is "coba lagi beberapa saat lagi", which does not say how
+  /// long, so the window is named here instead.
+  DataError _explainRateLimit(DataError failure) {
+    if (failure.code != DataErrorCode.tooManyRequests) return failure;
+    return DataError(
+      code: failure.code,
+      message: 'Terlalu banyak percobaan masuk. Tunggu sekitar 15 menit '
+          'sebelum mencoba lagi.',
+      details: failure.details,
+    );
   }
 
   /// Registration does not produce a session: the account must verify its

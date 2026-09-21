@@ -46,6 +46,7 @@ class InventoryService extends BaseService {
     required String city,
     required String province,
     required String postalCode,
+    int? cityId,
     double? latitude,
     double? longitude,
   }) async {
@@ -56,6 +57,7 @@ class InventoryService extends BaseService {
         'address': address,
         'city': city,
         'province': province,
+        'city_id': cityId,
         'postal_code': postalCode,
         'latitude': latitude,
         'longitude': longitude,
@@ -72,6 +74,7 @@ class InventoryService extends BaseService {
     String? address,
     String? city,
     String? province,
+    int? cityId,
     String? postalCode,
     String? status,
   }) async {
@@ -82,6 +85,7 @@ class InventoryService extends BaseService {
         'address': address,
         'city': city,
         'province': province,
+        'city_id': cityId,
         'postal_code': postalCode,
         'status': status,
       },

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/utils/app_routes.dart';
 import '../../features/seller_auth/presentation/views/seller_login_view.dart';
 import '../../features/seller_catalog/presentation/views/product_form_view.dart';
+import '../../features/seller_chat/presentation/views/chat_inbox_view.dart';
+import '../../features/seller_chat/presentation/views/chat_thread_view.dart';
 import '../../features/seller_catalog/presentation/views/product_list_view.dart';
 import '../../features/seller_auth/presentation/views/seller_register_view.dart';
 import '../../features/seller_home/presentation/views/seller_home_shell.dart';
@@ -81,6 +83,15 @@ abstract class SellerRoutes {
 
   static String flashSaleDetailPath(int flashSaleId) =>
       '/seller/flash-sales/$flashSaleId';
+
+  /// Chat. The inbox is not an inbox yet — the backend has no store-scoped
+  /// conversation list — so it explains the gap and hands off to a thread,
+  /// which does work.
+  static const String chat = '/seller/chat';
+  static const String chatThread = '/seller/chat/:id';
+
+  static String chatThreadPath(int conversationId) =>
+      '/seller/chat/$conversationId';
 }
 
 /// Every route uses the same fade-through wrapper as the rest of the app.
@@ -107,6 +118,13 @@ final List<RouteBase> appRouterSeller = <RouteBase>[
   _sellerRoute(SellerRoutes.orders, const OrderListView()),
   _sellerRoute(SellerRoutes.wallet, const WalletView()),
   _sellerRoute(SellerRoutes.promotions, const PromotionView()),
+  _sellerRoute(SellerRoutes.chat, const ChatInboxView()),
+  _sellerRouteBuilder(
+    SellerRoutes.chatThread,
+    (state) => ChatThreadView(
+      conversationId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+    ),
+  ),
   _sellerRouteBuilder(
     SellerRoutes.flashSaleDetail,
     (state) => FlashSaleDetailView(

@@ -12,6 +12,7 @@ class Warehouse {
     this.address,
     this.city,
     this.province,
+    this.cityId,
     this.postalCode,
     this.latitude,
     this.longitude,
@@ -26,6 +27,13 @@ class Warehouse {
   final String? address;
   final String? city;
   final String? province;
+
+  /// Points at `master_cities`, added in v1.2.0 and **nullable on purpose**.
+  /// The free-text [city] and [province] were kept because the master list is
+  /// still a small seed that does not cover every real address, so a warehouse
+  /// may be named by text alone. Null means exactly that.
+  final int? cityId;
+
   final String? postalCode;
   final double? latitude;
   final double? longitude;
@@ -45,6 +53,7 @@ class Warehouse {
         address: asStringOrNull(json['address']),
         city: asStringOrNull(json['city']),
         province: asStringOrNull(json['province']),
+        cityId: asIntOrNull(json['city_id']),
         postalCode: asStringOrNull(json['postal_code']),
         latitude: asDoubleOrNull(json['latitude']),
         longitude: asDoubleOrNull(json['longitude']),

@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/data_state.dart';
 import '../../../../../core/domain/model/inventory/warehouse.dart';
+import '../../../../../core/domain/model/location/master_location.dart';
 import '../../../../../core/domain/repositories/auth_repository.dart';
 import '../../../../../core/domain/repositories/inventory_repository.dart';
+import '../../../../../core/domain/repositories/location_repository.dart';
 import '../../../../../di/injector.dart';
 
 part 'warehouse_state.dart';
@@ -19,7 +21,50 @@ class WarehouseCubit extends Cubit<WarehouseState> {
   static WarehouseCubit get(BuildContext context) => BlocProvider.of(context);
 
   final InventoryRepository _inventory = injector<InventoryRepository>();
+  final LocationRepository _locations = injector<LocationRepository>();
   final AuthRepository _auth = injector<AuthRepository>();
+
+  /// Master data for the address fields, fetched once. Both lists are small —
+  /// eleven provinces and fifteen cities in the current seed — and change
+  /// rarely, so the whole city list is held rather than re-queried per
+  /// province.
+  List<MasterProvince>? _provinces;
+  List<MasterCity>? _cities;
+
+  /// Empty when the master data cannot be read, which the form treats as "fall
+  /// back to free text" rather than as an error: the columns behind these are
+  /// still nullable and the text ones were kept.
+  Future<List<MasterProvince>> provinces() async {
+    final cached = _provinces;
+    if (cached != null) return cached;
+
+    final result = await _locations.getProvinces();
+    final list = switch (result) {
+      DataSuccess<List<MasterProvince>>(:final value) => value,
+      _ => const <MasterProvince>[],
+    };
+    _provinces = list;
+    return list;
+  }
+
+  Future<List<MasterCity>> citiesOf(int provinceId) async {
+    final cached = _cities;
+    if (cached != null) {
+      return cached
+          .where((city) => city.provinceId == provinceId)
+          .toList(growable: false);
+    }
+
+    final result = await _locations.getCities();
+    final list = switch (result) {
+      DataSuccess<List<MasterCity>>(:final value) => value,
+      _ => const <MasterCity>[],
+    };
+    _cities = list;
+    return list
+        .where((city) => city.provinceId == provinceId)
+        .toList(growable: false);
+  }
 
   Future<void> load() async {
     if (isClosed) return;
@@ -57,6 +102,7 @@ class WarehouseCubit extends Cubit<WarehouseState> {
     required String city,
     required String province,
     required String postalCode,
+    int? cityId,
   }) async {
     final storeId = _auth.activeStoreId;
     if (storeId == null) {
@@ -77,6 +123,7 @@ class WarehouseCubit extends Cubit<WarehouseState> {
       city: city,
       province: province,
       postalCode: postalCode,
+      cityId: cityId,
     );
     if (isClosed) return (null, null);
 
@@ -107,6 +154,7 @@ class WarehouseCubit extends Cubit<WarehouseState> {
     String? province,
     String? postalCode,
     String? status,
+    int? cityId,
   }) async {
     _setBusy(true);
     final result = await _inventory.updateWarehouse(
@@ -117,6 +165,7 @@ class WarehouseCubit extends Cubit<WarehouseState> {
       province: province,
       postalCode: postalCode,
       status: status,
+      cityId: cityId,
     );
     if (isClosed) return null;
 

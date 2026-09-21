@@ -1,6 +1,8 @@
 import '../core/data/datasources/remote/service/auth_service.dart';
 import '../core/data/datasources/remote/service/catalog_service.dart';
+import '../core/data/datasources/remote/service/chat_service.dart';
 import '../core/data/datasources/remote/service/inventory_service.dart';
+import '../core/data/datasources/remote/service/location_service.dart';
 import '../core/data/datasources/remote/service/media_service.dart';
 import '../core/data/datasources/remote/service/order_service.dart';
 import '../core/data/datasources/remote/service/promotion_service.dart';
@@ -11,7 +13,9 @@ import '../core/data/datasources/remote/service/wallet_service.dart';
 import '../core/data/local/session_store.dart';
 import '../core/data/repositories/auth_repository_impl.dart';
 import '../core/data/repositories/catalog_repository_impl.dart';
+import '../core/data/repositories/chat_repository_impl.dart';
 import '../core/data/repositories/inventory_repository_impl.dart';
+import '../core/data/repositories/location_repository_impl.dart';
 import '../core/data/repositories/order_repository_impl.dart';
 import '../core/data/repositories/promotion_repository_impl.dart';
 import '../core/data/repositories/shipping_repository_impl.dart';
@@ -20,7 +24,9 @@ import '../core/data/repositories/verification_repository_impl.dart';
 import '../core/data/repositories/wallet_repository_impl.dart';
 import '../core/domain/repositories/auth_repository.dart';
 import '../core/domain/repositories/catalog_repository.dart';
+import '../core/domain/repositories/chat_repository.dart';
 import '../core/domain/repositories/inventory_repository.dart';
+import '../core/domain/repositories/location_repository.dart';
 import '../core/domain/repositories/order_repository.dart';
 import '../core/domain/repositories/promotion_repository.dart';
 import '../core/domain/repositories/shipping_repository.dart';
@@ -71,5 +77,13 @@ void initializeRepository() {
 
   injector.registerLazySingleton<PromotionRepository>(
     () => PromotionRepositoryImpl(injector<PromotionService>()),
+  );
+
+  injector.registerLazySingleton<ChatRepository>(
+    () => ChatRepositoryImpl(injector<ChatService>()),
+  );
+
+  injector.registerLazySingleton<LocationRepository>(
+    () => LocationRepositoryImpl(injector<LocationService>()),
   );
 }
