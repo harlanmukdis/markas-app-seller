@@ -1,0 +1,331 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#F7F8FA;}body{overscroll-behavior:none;font-family:'Inter',sans-serif;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"tertiary":"#972600","status-processing-fg":"#8C5002","bg-canvas":"#F7F8FA","secondary":"#465ba0","surface-variant":"#dce2f7","primary-fixed-dim":"#b6c4ff","brand-subtle":"#EBF2FF","primary-container":"#0056fe","error-container":"#ffdad6","on-surface-variant":"#434656","primary-fixed":"#dce1ff","status-perlu-tindakan-fg":"#D10C22","primary":"#0042c7","on-secondary":"#ffffff","on-primary-fixed":"#001550","signature-gold-dark":"#8C6E12","secondary-container":"#9fb3ff","secondary-fixed":"#dce1ff","text-primary":"#111827","outline":"#737688","status-custom-fg":"#4E34AB","tertiary-container":"#c13402","status-selesai-fg":"#0C7A44","surface-container-highest":"#dce2f7","status-dalam-pengiriman-fg":"#0047D1","status-dibatalkan-fg":"#4B5563","signature-bg":"#101014","success-subtle":"#E8F8EF","on-error-container":"#93000a","status-custom-bg":"#E0D9FD","surface-bright":"#f9f9ff","on-primary":"#ffffff","text-placeholder":"#9CA3AF","background":"#f9f9ff","inverse-primary":"#b6c4ff","warning-subtle":"#FFF6E5","signature-gold-mid":"#C9A227","brand-primary-pressed":"#0047D1","status-perlu-tindakan-bg":"#FFECEE","text-on-brand":"#FFFFFF","success":"#109553","surface-container-low":"#f1f3ff","on-tertiary":"#ffffff","surface-container":"#e9edff","bg-sunken":"#EFF1F4","border-strong":"#9CA3AF","surface-tint":"#004ee8","status-diterima-fg":"#08677B","secondary-fixed-dim":"#b6c4ff","status-preorder-fg":"#6344D6","brand-navy":"#0F286C","status-processing-bg":"#FFF6E5","status-dibatalkan-bg":"#EFF1F4","on-tertiary-fixed":"#3b0900","status-selesai-bg":"#E8F8EF","on-primary-container":"#e3e7ff","text-secondary":"#4B5563","surface-dim":"#d3daef","status-diterima-bg":"#E6F7FA","on-tertiary-fixed-variant":"#872100","inverse-on-surface":"#edf0ff","border-default":"#D1D5DB","inverse-surface":"#293040","warning":"#F59E0B","bg-surface":"#FFFFFF","danger":"#FB132D","text-tertiary":"#6B7280","on-error":"#ffffff","on-surface":"#141b2b","tertiary-fixed-dim":"#ffb5a0","surface-container-high":"#e1e8fd","on-secondary-container":"#2e4387","tertiary-fixed":"#ffdbd1","on-secondary-fixed":"#00164f","danger-subtle":"#FFECEE","signature-gold-light":"#E8D08A","outline-variant":"#c3c5d9","brand-primary":"#0056FE","on-secondary-fixed-variant":"#2d4286","on-primary-fixed-variant":"#003ab2","on-background":"#141b2b","error":"#ba1a1a","status-dalam-pengiriman-bg":"#EBF2FF","status-preorder-bg":"#F1EEFE","surface":"#f9f9ff","surface-container-lowest":"#ffffff","on-tertiary-container":"#ffe2da","border-subtle":"#E5E7EB"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{"margin":"1rem","space-md":"0.75rem","space-sm":"0.5rem","gutter":"0.75rem","space-xl":"1.5rem","space-lg":"1rem","space-xs":"0.25rem"},fontFamily:{"body":["Inter","sans-serif"]},fontSize:{"headline-l":["20px",{lineHeight:"28px",fontWeight:"600"}],"title-l":["16px",{lineHeight:"24px",fontWeight:"600"}],"headline-xl":["24px",{lineHeight:"32px",fontWeight:"700"}],"price-m":["16px",{lineHeight:"22px",fontWeight:"700"}],"label-m":["12px",{lineHeight:"16px",fontWeight:"500"}],"body-m":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-m":["18px",{lineHeight:"26px",fontWeight:"600"}],"numeric-stat":["22px",{lineHeight:"28px",fontWeight:"700"}],"body-s":["12px",{lineHeight:"18px",fontWeight:"400"}],"label-s":["11px",{lineHeight:"14px",fontWeight:"500"}],"price-s":["14px",{lineHeight:"20px",fontWeight:"600"}],"title-m":["14px",{lineHeight:"20px",fontWeight:"600"}],"label-l":["14px",{lineHeight:"20px",fontWeight:"500"}]}}}</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style></head><body class="bg-bg-canvas font-body text-text-primary flex flex-col min-h-screen">
+<!-- Top App Bar (sticky, pure white, subtle bottom border) -->
+<header class="sticky top-0 inset-x-0 z-50 bg-bg-surface border-b border-border-subtle pt-safe">
+<div class="h-14 px-4 flex items-center justify-between gap-2">
+<!-- Store Identity -->
+<div class="flex items-center gap-2.5 min-w-0 flex-1">
+<div class="w-10 h-10 rounded-full bg-brand-subtle flex items-center justify-center shrink-0 border border-border-default">
+<span class="text-[14px] font-bold text-brand-primary tracking-normal">MJ</span>
+</div>
+<div class="flex flex-col min-w-0 justify-center">
+<div class="flex items-center gap-1.5">
+<span class="text-[16px] text-gray-900 font-semibold truncate leading-tight">Toko Makmur Jaya</span>
+<span class="material-symbols-outlined text-brand-primary text-[18px] shrink-0" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="text-[12px] text-gray-500 truncate leading-tight">Verified Company • SLA Resi 99.4%</span>
+</div>
+</div>
+</div>
+<!-- Actions with 40x40 touch targets -->
+<div class="flex items-center gap-0.5 shrink-0">
+<button aria-label="Cari" class="w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-sunken transition-colors">
+<span class="material-symbols-outlined text-[22px]">search</span>
+</button>
+<button aria-label="Notifikasi" class="w-10 h-10 rounded-full flex items-center justify-center relative text-text-secondary hover:text-text-primary hover:bg-bg-sunken transition-colors">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-2 right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-danger text-text-on-brand text-[9px] font-bold flex items-center justify-center leading-none">3</span>
+</button>
+<button aria-label="Profil Singkat" class="w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-sunken transition-colors">
+<span class="material-symbols-outlined text-[22px]">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col relative w-full pb-28 bg-bg-canvas">
+<div class="flex flex-col w-full px-4 pt-4 space-y-5">
+<!-- Store Status Banner -->
+<section>
+<div class="bg-status-selesai-bg border border-[#A3E635] rounded-lg px-3.5 py-2.5 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-2.5 h-2.5 rounded-full bg-success shrink-0 ring-4 ring-white animate-pulse"></span>
+<span class="text-xs text-status-selesai-fg font-medium truncate">
+            Status Toko: Buka • SLA Pengiriman Optimal
+          </span>
+</div>
+<button class="text-xs font-medium text-brand-primary hover:text-brand-primary-pressed shrink-0 ml-2 focus:outline-none flex items-center">
+          Pengaturan Toko ›
+        </button>
+</div>
+</section>
+<!-- SECTION 1 — INFO & UPDATE XPEDIA -->
+<section class="flex flex-col space-y-3">
+<div class="flex items-center justify-between">
+<h2 class="text-[16px] font-bold text-gray-900 leading-snug">Info &amp; Update Xpedia</h2>
+<a class="text-[13px] font-semibold text-brand-primary hover:underline" href="#">Lihat Semua</a>
+</div>
+<!-- Horizontal Carousel Container -->
+<div class="flex overflow-x-auto gap-3 pb-1 -mx-4 px-4 no-scrollbar snap-x snap-mandatory">
+<!-- Card 1 -->
+<article class="w-[280px] bg-bg-surface border border-border-subtle rounded-lg p-4 flex flex-col justify-between shrink-0 snap-start shadow-sm">
+<div>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-brand-subtle text-status-dalam-pengiriman-fg text-[10px] font-semibold uppercase tracking-wider">
+              PENGUMUMAN RESMI
+            </span>
+<h3 class="text-[14px] font-bold text-gray-900 mt-2 leading-snug">
+              Penyesuaian Skema Komisi 5% Q1 2025
+            </h3>
+<p class="text-[12px] text-gray-600 mt-1 line-clamp-2 leading-relaxed">
+              Berlaku efektif per 1 Februari untuk seluruh kategori produk elektronik.
+            </p>
+</div>
+<div class="mt-3 pt-2.5 flex items-center justify-between border-t border-border-subtle">
+<a class="inline-flex items-center gap-1 text-[12px] font-semibold text-brand-primary hover:gap-1.5 transition-all" href="#">
+<span class="">Pelajari Selengkapnya →</span>
+</a>
+<span class="material-symbols-outlined text-brand-primary text-[18px]">campaign</span>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="w-[280px] bg-bg-surface border border-border-subtle rounded-lg p-4 flex flex-col justify-between shrink-0 snap-start shadow-sm">
+<div>
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-[#F1EEFE] text-[#6344D6] text-[10px] font-semibold uppercase tracking-wider">
+              PROGRAM PROMO
+            </span>
+<h3 class="text-[14px] font-bold text-gray-900 mt-2 leading-snug">
+              Xpedia Mega Brand Festival
+            </h3>
+<p class="text-[12px] text-gray-600 mt-1 line-clamp-2 leading-relaxed">
+              Daftarkan produk Anda sekarang dan dapatkan subsidi ongkir hingga 100%.
+            </p>
+</div>
+<div class="mt-3 pt-2.5 flex items-center justify-between border-t border-border-subtle">
+<a class="inline-flex items-center gap-1 text-[12px] font-semibold text-[#6344D6] hover:gap-1.5 transition-all" href="#">
+<span class="">Daftar Campaign →</span>
+</a>
+<span class="material-symbols-outlined text-[#6344D6] text-[18px]">loyalty</span>
+</div>
+</article>
+</div>
+</section>
+<!-- SECTION 2 — PERLU TINDAKAN -->
+<section class="flex flex-col space-y-3">
+<div class="flex items-center">
+<h2 class="text-[16px] font-bold text-gray-900">Perlu Tindakan</h2>
+<span class="px-2 py-0.5 rounded-full bg-danger-subtle text-status-perlu-tindakan-fg text-xs font-bold leading-tight ml-2">
+          9
+        </span>
+</div>
+<div class="bg-bg-surface border border-border-subtle rounded-lg divide-y divide-border-subtle overflow-hidden shadow-sm">
+<!-- Row 1 -->
+<a class="flex items-center justify-between p-4 hover:bg-bg-sunken/60 transition-colors active:bg-bg-sunken min-h-[52px]" href="#">
+<div class="flex items-center gap-3 min-w-0 pr-2">
+<span class="material-symbols-outlined text-status-perlu-tindakan-fg text-[20px] shrink-0">schedule</span>
+<span class="text-[13px] font-medium text-gray-900 truncate">
+              2 pesanan mendekati batas SLA resi
+            </span>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-danger-subtle text-status-perlu-tindakan-fg text-xs font-semibold">
+              Sisa &lt; 6 jam
+            </span>
+<span class="material-symbols-outlined text-text-tertiary text-[18px]">chevron_right</span>
+</div>
+</a>
+<!-- Row 2 -->
+<a class="flex items-center justify-between p-4 hover:bg-bg-sunken/60 transition-colors active:bg-bg-sunken min-h-[52px]" href="#">
+<div class="flex items-center gap-3 min-w-0 pr-2">
+<span class="material-symbols-outlined text-warning text-[20px] shrink-0">warning</span>
+</div>
+<div class="flex-1 min-w-0">
+<span class="text-[13px] font-medium text-gray-900 truncate block">
+              4 permintaan pembatalan pembeli
+            </span>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-warning-subtle text-status-processing-fg text-xs font-semibold">
+              4 baru
+            </span>
+<span class="material-symbols-outlined text-text-tertiary text-[18px]">chevron_right</span>
+</div>
+</a>
+<!-- Row 3 -->
+<a class="flex items-center justify-between p-4 hover:bg-bg-sunken/60 transition-colors active:bg-bg-sunken min-h-[52px]" href="#">
+<div class="flex items-center gap-3 min-w-0 pr-2">
+<span class="material-symbols-outlined text-brand-primary text-[20px] shrink-0">assignment_return</span>
+<span class="text-[13px] font-medium text-gray-900 truncate">
+              3 permohonan komplain &amp; retur
+            </span>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-brand-subtle text-status-dalam-pengiriman-fg text-xs font-semibold">
+              Perlu respon
+            </span>
+<span class="material-symbols-outlined text-text-tertiary text-[18px]">chevron_right</span>
+</div>
+</a>
+<!-- Row 4 -->
+<a class="flex items-center justify-between p-4 hover:bg-bg-sunken/60 transition-colors active:bg-bg-sunken min-h-[52px]" href="#">
+<div class="flex items-center gap-3 min-w-0 pr-2">
+<span class="material-symbols-outlined text-gray-500 text-[20px] shrink-0">inventory_2</span>
+<span class="text-[13px] font-medium text-gray-900 truncate">
+              5 produk stok menipis (&lt; 3 unit)
+            </span>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-[#EFF1F4] text-[#4B5563] text-xs font-semibold">
+              Update stok
+            </span>
+<span class="material-symbols-outlined text-text-tertiary text-[18px]">chevron_right</span>
+</div>
+</a>
+</div>
+</section>
+<!-- SECTION 3 — RINGKASAN TOKO -->
+<section class="flex flex-col space-y-3">
+<div class="flex items-center justify-between">
+<h2 class="text-[16px] font-bold text-gray-900">Ringkasan Toko</h2>
+<span class="text-[11px] text-gray-500">Hari ini, diperbarui 5 mnt lalu</span>
+</div>
+<!-- 2x2 Grid -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Card 1 -->
+<div class="bg-bg-surface border border-border-subtle rounded-lg p-3.5 flex flex-col justify-between shadow-sm min-h-[114px]">
+<div class="flex items-center justify-between">
+<span class="text-[12px] text-gray-500 font-medium">Pesanan Baru</span>
+<span class="material-symbols-outlined text-[18px] text-brand-primary">shopping_cart</span>
+</div>
+<div class="mt-1">
+<div class="text-[24px] font-extrabold text-gray-900 leading-none">12</div>
+<div class="mt-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-status-selesai-bg text-status-selesai-fg text-[11px] font-semibold">
+<span class="">↗ +20%</span>
+<span class="text-text-tertiary font-normal">vs kmrn</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-bg-surface border border-border-subtle rounded-lg p-3.5 flex flex-col justify-between shadow-sm min-h-[114px]">
+<div class="flex items-center justify-between">
+<span class="text-[12px] text-gray-500 font-medium">Perlu Dikirim</span>
+<span class="material-symbols-outlined text-[18px] text-warning">package_2</span>
+</div>
+<div class="mt-1">
+<div class="text-[24px] font-extrabold text-gray-900 leading-none">8</div>
+<div class="text-[11px] text-gray-500 mt-2 truncate">
+              Siap cetak resi
+            </div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-bg-surface border border-border-subtle rounded-lg p-3.5 flex flex-col justify-between shadow-sm min-h-[114px]">
+<div class="flex items-center justify-between">
+<span class="text-[12px] text-gray-500 font-medium">Dalam Pengiriman</span>
+<span class="material-symbols-outlined text-[18px] text-brand-primary">local_shipping</span>
+</div>
+<div class="mt-1">
+<div class="text-[24px] font-extrabold text-gray-900 leading-none">15</div>
+<div class="text-[11px] text-gray-500 mt-2 truncate">
+              Kurir aktif
+            </div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-bg-surface border border-border-subtle rounded-lg p-3.5 flex flex-col justify-between shadow-sm min-h-[114px]">
+<div class="flex items-center justify-between">
+<span class="text-[12px] text-gray-500 font-medium">Saldo Xpedia Wallet</span>
+<span class="material-symbols-outlined text-[18px] text-success">account_balance_wallet</span>
+</div>
+<div class="mt-1">
+<div class="text-[17px] font-bold text-brand-primary truncate leading-tight">Rp 12.460.000</div>
+<a class="text-[12px] font-semibold text-brand-primary hover:underline mt-2 block" href="#">
+              Tarik Dana →
+            </a>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 4 — AKSES CEPAT -->
+<section class="flex flex-col">
+<h2 class="text-[16px] font-bold text-gray-900 mb-3">Akses Cepat</h2>
+<div class="grid grid-cols-4 gap-2.5">
+<!-- Shortcut 1 -->
+<button class="bg-bg-surface border border-border-subtle rounded-lg p-3 flex flex-col items-center justify-center text-center shadow-sm hover:border-brand-primary/40 hover:bg-brand-subtle/20 active:bg-brand-subtle/40 transition-all group focus:outline-none">
+<div class="w-11 h-11 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary group-hover:scale-105 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[22px]">add</span>
+</div>
+<span class="text-[11px] font-medium text-gray-700 leading-tight">
+            + Tambah Produk
+          </span>
+</button>
+<!-- Shortcut 2 -->
+<button class="bg-bg-surface border border-border-subtle rounded-lg p-3 flex flex-col items-center justify-center text-center shadow-sm hover:border-brand-primary/40 hover:bg-brand-subtle/20 active:bg-brand-subtle/40 transition-all group focus:outline-none">
+<div class="w-11 h-11 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary group-hover:scale-105 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[22px]">confirmation_number</span>
+</div>
+<span class="text-[11px] font-medium text-gray-700 leading-tight">
+            Atur Promo
+          </span>
+</button>
+<!-- Shortcut 3 -->
+<button class="bg-bg-surface border border-border-subtle rounded-lg p-3 flex flex-col items-center justify-center text-center shadow-sm hover:border-brand-primary/40 hover:bg-brand-subtle/20 active:bg-brand-subtle/40 transition-all group focus:outline-none">
+<div class="w-11 h-11 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary group-hover:scale-105 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[22px]">monitoring</span>
+</div>
+<span class="text-[11px] font-medium text-gray-700 leading-tight">
+            Analitik &amp; Performa
+          </span>
+</button>
+<!-- Shortcut 4 -->
+<button class="bg-bg-surface border border-border-subtle rounded-lg p-3 flex flex-col items-center justify-center text-center shadow-sm hover:border-brand-primary/40 hover:bg-brand-subtle/20 active:bg-brand-subtle/40 transition-all group focus:outline-none">
+<div class="w-11 h-11 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary group-hover:scale-105 transition-transform mb-1.5">
+<span class="material-symbols-outlined text-[22px]">support_agent</span>
+</div>
+<span class="text-[11px] font-medium text-gray-700 leading-tight">
+            Xpedia 911
+          </span>
+</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Fixed Bottom Navigation (5 tabs, 64px height, white bg, 1px #E5E7EB border) -->
+<nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-bg-surface border-t border-border-subtle shadow-[0_-2px_12px_rgba(0,0,0,0.04)]">
+<div class="grid grid-cols-5 items-center h-16 px-1">
+<!-- Tab 1: Beranda (Active) -->
+<a class="flex flex-col items-center justify-center min-h-[48px] py-1 text-brand-primary transition-colors relative" data-path="beranda" href="#" style="color: rgb(0, 86, 254);">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[11px] font-medium mt-0.5 leading-none">Beranda</span>
+</a>
+<!-- Tab 2: Pesanan -->
+<a class="flex flex-col items-center justify-center min-h-[48px] py-1 text-text-tertiary hover:text-text-primary transition-colors relative" data-path="pesanan" href="#">
+<div class="relative flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">receipt_long</span>
+<span class="absolute -top-1 -right-3 min-w-[16px] h-4 px-1 rounded-full bg-danger text-text-on-brand text-[10px] font-bold flex items-center justify-center leading-none">12</span>
+</div>
+<span class="text-[11px] font-medium mt-0.5 leading-none">Pesanan</span>
+</a>
+<!-- Tab 3: Produk -->
+<a class="flex flex-col items-center justify-center min-h-[48px] py-1 text-text-tertiary hover:text-text-primary transition-colors" data-path="produk" href="#">
+<span class="material-symbols-outlined text-[24px]">inventory_2</span>
+<span class="text-[11px] font-medium mt-0.5 leading-none">Produk</span>
+</a>
+<!-- Tab 4: Chat -->
+<a class="flex flex-col items-center justify-center min-h-[48px] py-1 text-text-tertiary hover:text-text-primary transition-colors relative" data-path="chat" href="#">
+<div class="relative flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">chat_bubble_outline</span>
+<span class="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-danger text-text-on-brand text-[10px] font-bold flex items-center justify-center leading-none">8</span>
+</div>
+<span class="text-[11px] font-medium mt-0.5 leading-none">Chat</span>
+</a>
+<!-- Tab 5: Akun -->
+<a class="flex flex-col items-center justify-center min-h-[48px] py-1 text-text-tertiary hover:text-text-primary transition-colors relative" data-path="akun" href="#">
+<div class="relative flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">manage_accounts</span>
+</div>
+<span class="text-[11px] font-medium mt-0.5 leading-none">Akun</span>
+</a>
+</div>
+</nav>
+<script>
+  // Simple micro-interactions
+  document.querySelectorAll('button, a').forEach(el => {
+    el.addEventListener('touchstart', () => {}, { passive: true });
+  });
+</script>
+
+
+</body></html>

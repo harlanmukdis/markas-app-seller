@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<meta content="mobile_stack" name="shell-type"/>
+<title>Pengaturan Toko</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary-fixed-dim": "#b6c4ff",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed": "#3b0900",
+            "bg-sunken": "#EFF1F4",
+            "status-diterima-bg": "#E6F7FA",
+            "status-dalam-pengiriman-fg": "#0047D1",
+            "surface-container-highest": "#dce2f7",
+            "status-custom-bg": "#E0D9FD",
+            "outline-variant": "#c3c5d9",
+            "outline": "#737688",
+            "secondary-fixed-dim": "#b6c4ff",
+            "signature-gold-light": "#E8D08A",
+            "on-tertiary-fixed-variant": "#872100",
+            "inverse-on-surface": "#edf0ff",
+            "secondary": "#465ba0",
+            "brand-navy": "#0F286C",
+            "on-primary-container": "#e3e7ff",
+            "border-subtle": "#E5E7EB",
+            "primary-container": "#0056fe",
+            "signature-bg": "#101014",
+            "tertiary": "#972600",
+            "status-dibatalkan-fg": "#4B5563",
+            "signature-gold-mid": "#C9A227",
+            "surface-variant": "#dce2f7",
+            "surface-container-lowest": "#ffffff",
+            "status-diterima-fg": "#08677B",
+            "status-preorder-fg": "#6344D6",
+            "secondary-container": "#9fb3ff",
+            "tertiary-fixed-dim": "#ffb5a0",
+            "on-surface": "#141b2b",
+            "surface-bright": "#f9f9ff",
+            "on-background": "#141b2b",
+            "background": "#f9f9ff",
+            "surface-container": "#e9edff",
+            "error-container": "#ffdad6",
+            "status-custom-fg": "#4E34AB",
+            "status-processing-fg": "#8C5002",
+            "tertiary-container": "#c13402",
+            "status-selesai-fg": "#0C7A44",
+            "border-default": "#D1D5DB",
+            "surface-tint": "#004ee8",
+            "surface-container-high": "#e1e8fd",
+            "surface-dim": "#d3daef",
+            "primary": "#0042c7",
+            "on-surface-variant": "#434656",
+            "tertiary-fixed": "#ffdbd1",
+            "inverse-primary": "#b6c4ff",
+            "on-secondary": "#ffffff",
+            "border-strong": "#9CA3AF",
+            "danger": "#FB132D",
+            "status-dibatalkan-bg": "#EFF1F4",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#2e4387",
+            "warning-subtle": "#FFF6E5",
+            "surface-container-low": "#f1f3ff",
+            "on-primary-fixed-variant": "#003ab2",
+            "brand-primary": "#0056FE",
+            "success": "#109553",
+            "text-placeholder": "#9CA3AF",
+            "secondary-fixed": "#dce1ff",
+            "on-primary-fixed": "#001550",
+            "primary-fixed": "#dce1ff",
+            "text-tertiary": "#6B7280",
+            "status-preorder-bg": "#F1EEFE",
+            "warning": "#F59E0B",
+            "error": "#ba1a1a",
+            "text-secondary": "#4B5563",
+            "danger-subtle": "#FFECEE",
+            "text-on-brand": "#FFFFFF",
+            "inverse-surface": "#293040",
+            "brand-subtle": "#EBF2FF",
+            "bg-surface": "#FFFFFF",
+            "success-subtle": "#E8F8EF",
+            "status-perlu-tindakan-fg": "#D10C22",
+            "signature-gold-dark": "#8C6E12",
+            "status-dalam-pengiriman-bg": "#EBF2FF",
+            "bg-canvas": "#F7F8FA",
+            "on-secondary-fixed-variant": "#2d4286",
+            "on-tertiary-container": "#ffe2da",
+            "on-error-container": "#93000a",
+            "brand-primary-pressed": "#0047D1",
+            "text-primary": "#111827",
+            "on-tertiary": "#ffffff",
+            "status-perlu-tindakan-bg": "#FFECEE",
+            "status-processing-bg": "#FFF6E5",
+            "surface": "#f9f9ff",
+            "on-secondary-fixed": "#00164f",
+            "status-selesai-bg": "#E8F8EF"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: max(884px, 100dvh);
+      -webkit-font-smoothing: antialiased;
+    }
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 16px);
+    }
+    .pt-safe {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    /* Material icons sizing */
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="bg-bg-canvas text-text-primary min-h-screen flex flex-col antialiased">
+<!-- Top App Bar (56px standard, border bottom subtle, back button) -->
+<header class="fixed top-0 inset-x-0 z-40 bg-bg-surface border-b border-border-subtle pt-safe">
+<div class="h-14 px-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<button aria-label="Kembali" class="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-text-primary hover:bg-bg-sunken active:bg-border-subtle transition-colors" onclick="history.back()" type="button">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="text-[20px] font-semibold leading-7 text-text-primary tracking-tight">Pengaturan Toko</h1>
+</div>
+<div class="flex items-center">
+<button aria-label="Pusat Bantuan" class="w-10 h-10 -mr-2 rounded-full flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-sunken active:bg-border-subtle transition-colors" type="button">
+<span class="material-symbols-outlined text-[22px]">help_outline</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Scrollable Content -->
+<main class="flex-1 w-full max-w-lg mx-auto pt-[calc(3.5rem+env(safe-area-inset-top,0px))] pb-28">
+<div class="p-4 flex flex-col gap-3">
+<!-- Card 1: Profil Toko -->
+<section class="bg-bg-surface rounded-xl border border-border-subtle p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col gap-3.5">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="relative w-12 h-12 rounded-full bg-surface-container-high ring-2 ring-border-subtle/80 flex-shrink-0 overflow-hidden flex items-center justify-center">
+<img alt="Toko Makmur Jaya Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEPLgM4W5SGqIWtDB0yrd0Mnuo8i35sFwz996nC1bSU6BMocJgASjcdQ8HcpPRx0LdUAopKOvOp6HHJkTRwKYiknzYfVaDVi3rzMry60mcSPpdPsG_gbKbuLhj67vOaHiMWiswgjA3LjlYjqyZlBW6u-maRqeecLsE2N3sGk8NoeuH_ejvUFRtIJAz3vJhqiiCQf_I-yddQJ9PGr8rwWeQraS70yHyaQnf2XeL0H5Hq3dmJjf3xWn3Fg"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-brand-primary rounded-full border-2 border-bg-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[9px]" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="text-[16px] font-semibold text-text-primary leading-snug truncate">Toko Makmur Jaya</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-subtle text-status-selesai-fg text-[11px] font-medium leading-none flex-shrink-0">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                  Verified Company
+                </span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-[12px] text-text-tertiary">
+<span>ID Mitra: <strong class="font-medium text-text-secondary">XP-88219</strong></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Store Link Bar -->
+<div class="flex items-center justify-between px-3 py-2 bg-surface-container-low rounded-lg border border-border-subtle/60">
+<div class="flex items-center gap-1.5 min-w-0 mr-2 text-[13px] text-text-secondary">
+<span class="material-symbols-outlined text-[16px] text-text-tertiary flex-shrink-0">link</span>
+<span class="truncate select-all text-text-primary font-medium">xpedia.co.id/tokomakmurjaya</span>
+</div>
+<button class="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-semibold text-brand-primary hover:bg-brand-subtle rounded-md transition-colors" id="copySlugBtn" type="button">
+<span class="material-symbols-outlined text-[15px]">content_copy</span>
+            Salin
+          </button>
+</div>
+<!-- Secondary Button -->
+<button class="w-full h-10 rounded-lg border border-border-default hover:border-brand-primary/40 bg-bg-surface hover:bg-surface-container-low text-text-primary text-[14px] font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[17px] text-text-secondary">edit_note</span>
+<span>Ubah Profil Toko</span>
+</button>
+</section>
+<!-- Card 2: Deskripsi & Slogan Toko -->
+<section class="bg-bg-surface rounded-xl border border-border-subtle p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<h2 class="text-[15px] font-semibold text-text-primary">Deskripsi &amp; Slogan Toko</h2>
+<span class="text-[12px] text-text-tertiary font-normal" id="charCount">104/500</span>
+</div>
+<div class="relative bg-surface-container-low/70 border border-border-subtle rounded-lg p-3 focus-within:border-brand-primary focus-within:bg-bg-surface focus-within:ring-2 focus-within:ring-brand-primary/10 transition-all">
+<textarea class="w-full bg-transparent resize-none text-[13.5px] leading-relaxed text-text-primary focus:outline-none placeholder:text-text-placeholder font-normal" id="storeDesc" maxlength="500" placeholder="Tuliskan deskripsi toko, jaminan produk, dan jam layanan..." rows="3">Pusat audio dan gadget original bergaransi resmi. Melayani pengiriman cepat ke seluruh Indonesia.</textarea>
+</div>
+<div class="flex items-start gap-1.5 text-text-tertiary text-[12px] leading-snug">
+<span class="material-symbols-outlined text-[16px] text-text-secondary mt-0.5 flex-shrink-0">info</span>
+<span>Tampil pada profil toko etalase publik dan pencarian resmi platform Xpedia.</span>
+</div>
+</section>
+<!-- Card 3: Jam Operasional Toko -->
+<section class="bg-bg-surface rounded-xl border border-border-subtle p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-text-secondary">schedule</span>
+<h2 class="text-[15px] font-semibold text-text-primary">Jam Operasional Toko</h2>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-status-selesai-bg text-status-selesai-fg text-[12px] font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-status-selesai-fg"></span>
+            Buka (Aktif)
+          </span>
+</div>
+<!-- Operational Schedule Row -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-low border border-border-subtle/60">
+<div class="flex flex-col min-w-0 pr-2">
+<span class="text-[11px] font-medium uppercase tracking-wider text-text-tertiary">Jadwal Aktif</span>
+<span class="text-[13.5px] font-semibold text-text-primary mt-0.5">Senin - Minggu: 08:00 - 22:00 WIB</span>
+</div>
+<button class="flex-shrink-0 px-3 py-1.5 rounded-lg border border-border-default bg-bg-surface hover:bg-surface-container-low text-brand-primary text-[12px] font-semibold transition-colors shadow-sm" type="button">
+            Atur Jam Buka
+          </button>
+</div>
+<div class="h-[1px] bg-border-subtle w-full"></div>
+<!-- Vacation Mode Toggle -->
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex flex-col pr-3">
+<span class="text-[14px] font-medium text-text-primary">Mode Libur / Tutup Sementara</span>
+<span class="text-[12px] text-text-tertiary">Nonaktifkan pesanan masuk saat toko berhalangan</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+<input class="sr-only peer" id="toggleVacationMode" type="checkbox"/>
+<div class="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:bg-brand-primary"></div>
+</label>
+</div>
+<!-- Alert Note for SLA -->
+<div class="bg-warning-subtle/80 border border-warning/30 rounded-lg p-3 flex items-start gap-2.5">
+<span class="material-symbols-outlined text-status-processing-fg text-[18px] mt-0.5 flex-shrink-0">info</span>
+<p class="text-[12px] text-status-processing-fg leading-relaxed">
+              Saat mode libur aktif, pembeli tidak dapat membuat pesanan checkout baru. Pesanan aktif yang belum dicetak resi tetap wajib diproses tepat waktu sesuai batas komitmen SLA.
+            </p>
+</div>
+</div>
+</section>
+<!-- Card 4: Bahasa Aplikasi -->
+<section class="bg-bg-surface rounded-xl border border-border-subtle p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<h2 class="text-[15px] font-semibold text-text-primary">Bahasa Aplikasi</h2>
+<span class="text-[12px] text-text-tertiary">Language Preferences</span>
+</div>
+<div class="grid grid-cols-2 gap-2.5" id="langSelector">
+<!-- Bahasa Indonesia (Selected) -->
+<button class="lang-option p-3 rounded-lg border-2 border-brand-primary bg-brand-subtle/50 flex flex-col items-start gap-2 text-left relative transition-all" data-lang="id" type="button">
+<div class="w-full flex items-center justify-between">
+<span class="text-[22px] leading-none">🇮🇩</span>
+<span class="material-symbols-outlined text-brand-primary text-[20px] lang-check" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<p class="text-[13.5px] font-semibold text-brand-navy">Bahasa Indonesia</p>
+<p class="text-[11px] text-brand-primary font-medium">Default Toko</p>
+</div>
+</button>
+<!-- English -->
+<button class="lang-option p-3 rounded-lg border border-border-subtle bg-bg-surface hover:border-border-default flex flex-col items-start gap-2 text-left relative transition-all" data-lang="en" type="button">
+<div class="w-full flex items-center justify-between">
+<span class="text-[22px] leading-none">🇬🇧</span>
+<span class="material-symbols-outlined text-border-strong text-[20px] lang-check">radio_button_unchecked</span>
+</div>
+<div>
+<p class="text-[13.5px] font-semibold text-text-primary">English</p>
+<p class="text-[11px] text-text-tertiary">Global Translation</p>
+</div>
+</button>
+</div>
+</section>
+<!-- Card 5: Preferensi Notifikasi -->
+<section class="bg-bg-surface rounded-xl border border-border-subtle p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<h2 class="text-[15px] font-semibold text-text-primary">Preferensi Notifikasi</h2>
+<span class="text-[12px] text-brand-primary font-medium">Atur Bunyi &amp; Push</span>
+</div>
+<div class="flex flex-col">
+<!-- Row 1: Pesanan Baru & Kritis -->
+<div class="flex items-center justify-between py-2.5">
+<div class="flex flex-col pr-3">
+<span class="text-[14px] font-medium text-text-primary">Pesanan Baru &amp; Kritis</span>
+<span class="text-[12px] text-text-tertiary">Peringatan SLA cetak resi &amp; pembatalan</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:bg-brand-primary"></div>
+</label>
+</div>
+<div class="h-[1px] bg-border-subtle w-full"></div>
+<!-- Row 2: Chat Pembeli & Diskusi -->
+<div class="flex items-center justify-between py-2.5">
+<div class="flex flex-col pr-3">
+<span class="text-[14px] font-medium text-text-primary">Chat Pembeli &amp; Diskusi</span>
+<span class="text-[12px] text-text-tertiary">Pesan masuk buyer &amp; respon cepat</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:bg-brand-primary"></div>
+</label>
+</div>
+<div class="h-[1px] bg-border-subtle w-full"></div>
+<!-- Row 3: Xpedia 911 & Tiket -->
+<div class="flex items-center justify-between py-2.5">
+<div class="flex flex-col pr-3">
+<span class="text-[14px] font-medium text-text-primary">Xpedia 911 &amp; Tiket</span>
+<span class="text-[12px] text-text-tertiary">Eskalasi logistik &amp; kendala darurat</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:bg-brand-primary"></div>
+</label>
+</div>
+<div class="h-[1px] bg-border-subtle w-full"></div>
+<!-- Row 4: Promo & Info Algoritma -->
+<div class="flex items-center justify-between py-2.5">
+<div class="flex flex-col pr-3">
+<span class="text-[14px] font-medium text-text-primary">Promo &amp; Info Algoritma</span>
+<span class="text-[12px] text-text-tertiary">Update event &amp; flash sale</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-border-default peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:bg-brand-primary"></div>
+</label>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Sticky Action Bar (52px primary button #0056FE, rounded-lg, text white font-weight 600) -->
+<footer class="fixed bottom-0 inset-x-0 z-40 bg-bg-surface/95 backdrop-blur-md border-t border-border-subtle px-4 py-3 pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+<div class="max-w-lg mx-auto">
+<button class="w-full h-[52px] bg-brand-primary hover:bg-brand-primary-pressed active:bg-brand-primary-pressed text-white text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 transition-all shadow-[0_2px_8px_rgba(0,86,254,0.25)]" id="saveBtn" type="button">
+<span class="material-symbols-outlined text-[20px]">check</span>
+<span>Simpan Perubahan</span>
+</button>
+</div>
+</footer>
+<!-- Toast Notification Feedback -->
+<div class="fixed top-16 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-2" id="toast">
+<div class="bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 text-[13px] font-medium">
+<span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+<span id="toastMsg">Pengaturan toko berhasil disimpan</span>
+</div>
+</div>
+<script>
+    (function () {
+      const descArea = document.getElementById('storeDesc');
+      const charCounter = document.getElementById('charCount');
+      const copyBtn = document.getElementById('copySlugBtn');
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const saveBtn = document.getElementById('saveBtn');
+      const langOptions = document.querySelectorAll('.lang-option');
+
+      function showToast(text) {
+        if (!toast) return;
+        toastMsg.textContent = text;
+        toast.classList.remove('opacity-0', '-translate-y-2', 'pointer-events-none');
+        toast.classList.add('opacity-100', 'translate-y-0');
+        setTimeout(() => {
+          toast.classList.add('opacity-0', '-translate-y-2', 'pointer-events-none');
+          toast.classList.remove('opacity-100', 'translate-y-0');
+        }, 2200);
+      }
+
+      if (descArea && charCounter) {
+        descArea.addEventListener('input', (e) => {
+          const len = e.target.value.length;
+          charCounter.textContent = `${len}/500`;
+        });
+      }
+
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          const textToCopy = 'xpedia.co.id/tokomakmurjaya';
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+              showToast('Tautan toko disalin ke clipboard');
+            }).catch(() => {
+              showToast('Tautan toko disalin');
+            });
+          } else {
+            showToast('Tautan toko disalin');
+          }
+        });
+      }
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+          const originalContent = saveBtn.innerHTML;
+          saveBtn.disabled = true;
+          saveBtn.classList.add('opacity-85');
+          saveBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span><span>Menyimpan...</span>';
+          setTimeout(() => {
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-85');
+            saveBtn.innerHTML = originalContent;
+            showToast('Pengaturan toko berhasil diperbarui');
+          }, 650);
+        });
+      }
+
+      langOptions.forEach(btn => {
+        btn.addEventListener('click', () => {
+          langOptions.forEach(opt => {
+            opt.classList.remove('border-2', 'border-brand-primary', 'bg-brand-subtle/50');
+            opt.classList.add('border', 'border-border-subtle', 'bg-bg-surface');
+            const check = opt.querySelector('.lang-check');
+            check.classList.remove('text-brand-primary');
+            check.classList.add('text-border-strong');
+            check.textContent = 'radio_button_unchecked';
+            check.style.fontVariationSettings = "'FILL' 0";
+            
+            const title = opt.querySelector('p:first-child');
+            if (title) {
+              title.classList.remove('text-brand-navy');
+              title.classList.add('text-text-primary');
+            }
+          });
+
+          btn.classList.remove('border', 'border-border-subtle', 'bg-bg-surface');
+          btn.classList.add('border-2', 'border-brand-primary', 'bg-brand-subtle/50');
+          const activeCheck = btn.querySelector('.lang-check');
+          activeCheck.classList.remove('text-border-strong');
+          activeCheck.classList.add('text-brand-primary');
+          activeCheck.textContent = 'check_circle';
+          activeCheck.style.fontVariationSettings = "'FILL' 1";
+          
+          const title = btn.querySelector('p:first-child');
+          if (title) {
+            title.classList.remove('text-text-primary');
+            title.classList.add('text-brand-navy');
+          }
+        });
+      });
+    })();
+  </script>
+</body></html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-tertiary": "#ffffff", "signature-gold-mid": "#C9A227", "surface-container-highest": "#dce2f7", "danger-subtle": "#FFECEE", "tertiary-fixed": "#ffdbd1", "brand-subtle": "#EBF2FF", "brand-primary-pressed": "#0047D1", "status-dalam-pengiriman-fg": "#0047D1", "on-tertiary-container": "#ffe2da", "bg-canvas": "#F7F8FA", "status-preorder-fg": "#6344D6", "text-on-brand": "#FFFFFF", "on-secondary-container": "#2e4387", "inverse-surface": "#293040", "secondary-container": "#9fb3ff", "surface-tint": "#004ee8", "inverse-on-surface": "#edf0ff", "on-secondary-fixed": "#00164f", "signature-gold-light": "#E8D08A", "on-error": "#ffffff", "on-background": "#141b2b", "on-error-container": "#93000a", "status-perlu-tindakan-fg": "#D10C22", "primary-container": "#0056fe", "success-subtle": "#E8F8EF", "status-selesai-bg": "#E8F8EF", "status-dibatalkan-fg": "#4B5563", "tertiary-container": "#c13402", "status-diterima-bg": "#E6F7FA", "on-surface-variant": "#434656", "on-tertiary-fixed": "#3b0900", "warning": "#F59E0B", "status-processing-fg": "#8C5002", "surface-container": "#e9edff", "outline-variant": "#c3c5d9", "brand-primary": "#0056FE", "background": "#f9f9ff", "success": "#109553", "on-secondary-fixed-variant": "#2d4286", "outline": "#737688", "surface-bright": "#f9f9ff", "secondary-fixed": "#dce1ff", "status-dalam-pengiriman-bg": "#EBF2FF", "danger": "#FB132D", "tertiary-fixed-dim": "#ffb5a0", "border-strong": "#9CA3AF", "on-secondary": "#ffffff", "text-primary": "#111827", "surface-dim": "#d3daef", "status-preorder-bg": "#F1EEFE", "primary": "#0042c7", "primary-fixed": "#dce1ff", "surface-variant": "#dce2f7", "error-container": "#ffdad6", "inverse-primary": "#b6c4ff", "surface-container-lowest": "#ffffff", "secondary": "#465ba0", "surface-container-high": "#e1e8fd", "on-primary-fixed-variant": "#003ab2", "on-tertiary-fixed-variant": "#872100", "status-dibatalkan-bg": "#EFF1F4", "bg-surface": "#FFFFFF", "status-custom-bg": "#E0D9FD", "on-primary-fixed": "#001550", "on-primary-container": "#e3e7ff", "bg-sunken": "#EFF1F4", "text-tertiary": "#6B7280", "primary-fixed-dim": "#b6c4ff", "on-primary": "#ffffff", "on-surface": "#141b2b", "signature-gold-dark": "#8C6E12", "text-secondary": "#4B5563", "surface": "#f9f9ff", "border-default": "#D1D5DB", "status-selesai-fg": "#0C7A44", "status-perlu-tindakan-bg": "#FFECEE", "secondary-fixed-dim": "#b6c4ff", "brand-navy": "#0F286C", "text-placeholder": "#9CA3AF", "status-diterima-fg": "#08677B", "signature-bg": "#101014", "status-custom-fg": "#4E34AB", "error": "#ba1a1a", "warning-subtle": "#FFF6E5", "border-subtle": "#E5E7EB", "tertiary": "#972600", "status-processing-bg": "#FFF6E5", "surface-container-low": "#f1f3ff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-md": "0.75rem", "space-lg": "1rem", "margin": "1rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "space-xl": "1.5rem", "gutter": "0.75rem" }, fontFamily: { "numeric-stat": ["Inter"], "label-l": ["Inter"], "price-l": ["Inter"], "body-m": ["Inter"], "price-m": ["Inter"], "price-s": ["Inter"], "caption": ["Inter"], "body-l": ["Inter"], "overline": ["Inter"], "headline-m": ["Inter"], "title-l": ["Inter"], "headline-l": ["Inter"], "label-m": ["Inter"], "label-s": ["Inter"], "headline-xl": ["Inter"], "title-m": ["Inter"], "body-s": ["Inter"] }, fontSize: { "numeric-stat": ["22px", { "lineHeight": "28px", "fontWeight": "700" }], "label-l": ["14px", { "lineHeight": "20px", "fontWeight": "500" }], "price-l": ["18px", { "lineHeight": "24px", "fontWeight": "700" }], "body-m": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "price-m": ["16px", { "lineHeight": "22px", "fontWeight": "700" }], "price-s": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }], "body-l": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "overline": ["10px", { "lineHeight": "14px", "letterSpacing": "0.6px", "fontWeight": "600" }], "headline-m": ["18px", { "lineHeight": "26px", "fontWeight": "600" }], "title-l": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "headline-l": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "label-m": ["12px", { "lineHeight": "16px", "fontWeight": "500" }], "label-s": ["11px", { "lineHeight": "14px", "fontWeight": "500" }], "headline-xl": ["24px", { "lineHeight": "32px", "fontWeight": "700" }], "title-m": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "body-s": ["12px", { "lineHeight": "18px", "fontWeight": "400" }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#F7F8FA;}body{overscroll-behavior:none;font-family:'Inter',sans-serif;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-bg-canvas text-text-primary min-h-screen flex flex-col antialiased"><header class="fixed top-0 w-full z-50 pt-safe bg-bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-14 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0 flex-1"><button aria-label="Kembali" class="w-11 h-11 -ml-space-xs rounded-lg flex items-center justify-center text-text-primary hover:bg-bg-canvas active:bg-border-subtle transition-colors shrink-0" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><h1 class="font-headline-m text-headline-m text-text-primary truncate min-w-0 pr-space-xs">Unggah Dokumen Verifikasi</h1></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="Bantuan Pendaftaran" class="w-11 h-11 rounded-lg flex items-center justify-center text-text-secondary hover:text-brand-primary hover:bg-brand-subtle transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">help_outline</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-xs shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 w-full bg-bg-canvas pt-14 pb-safe flex flex-col"><div class="flex flex-col w-full pb-28">
+<!-- Stepper Progress Header -->
+<div class="px-margin pt-space-md pb-space-sm">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-overline text-overline uppercase tracking-wider text-brand-primary">Langkah 3 dari 3 • Verifikasi KYC &amp; Legalitas</span>
+<span class="font-caption text-caption text-text-secondary font-medium">75% Selesai</span>
+</div>
+<!-- Step Progress Bar -->
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden flex">
+<div class="h-full bg-brand-primary rounded-full transition-all duration-500" style="width: 75%;"></div>
+</div>
+</div>
+<!-- Header Title & Subtitle -->
+<div class="px-margin pt-space-xs pb-space-md">
+<h1 class="font-headline-xl text-headline-xl text-text-primary mb-space-xs">Unggah Dokumen Verifikasi</h1>
+<p class="font-body-m text-body-m text-text-secondary leading-relaxed">Unggah foto dokumen fisik asli yang jelas dan terbaca. Data diverifikasi tim kepatuhan Xpedia.</p>
+</div>
+<!-- Warning SLA & Compliance Banner -->
+<div class="px-margin mb-space-lg">
+<div class="bg-warning-subtle rounded-xl p-space-md flex items-start gap-space-sm shadow-sm relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-warning"></div>
+<div class="w-8 h-8 rounded-full bg-warning/20 flex items-center justify-center shrink-0 mt-0.5 text-status-processing-fg">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">schedule</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-m text-label-m font-semibold text-status-processing-fg mb-0.5">Batas Verifikasi Akun Baru</p>
+<p class="font-body-s text-body-s text-status-processing-fg opacity-95">Dokumen diverifikasi maksimal 2x24 jam kerja. Toko belum dapat memproses pesanan atau listing produk sebelum verifikasi disetujui.</p>
+</div>
+</div>
+</div>
+<!-- Section: Document Upload List -->
+<div class="px-margin flex flex-col gap-space-md">
+<!-- Card 1: e-KTP Asli Pemilik / PIC -->
+<div class="bg-bg-surface rounded-xl p-space-lg shadow-sm flex flex-col transition-all">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<h3 class="font-title-m text-title-m text-text-primary">e-KTP Asli Pemilik / PIC</h3>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-subtle text-success font-label-m text-label-m shrink-0 font-medium">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+          Terunggah
+        </span>
+</div>
+<p class="font-body-s text-body-s text-text-secondary mb-space-md">Foto e-KTP fisik jelas, tidak buram, dan tidak terpotong.</p>
+<!-- Uploaded State Thumbnail Row -->
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-bg-canvas">
+<div class="flex items-center gap-space-sm min-w-0 flex-1 pr-2">
+<div class="w-12 h-12 rounded-lg overflow-hidden shrink-0 relative bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A clean Indonesian national identity card e-KTP document held flat under warm diffuse office lighting, crisp typography, official chip visible, clean neutral background, studio product photography style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALq_1r6QEzQ5jWByVMuqzkaBcDCHQcxhHEZuAMDrBtU1pLP0uHnQqmB-fB3JkS6S2COkHjSSrdJxtYf78j1v2qAYAyB_OPhkbyd2LzuFp-aLcOnkN4N90eA-gpnkbUW7TFVyW3rT-2BzUwne3ocSLFq_3lIH1lK2t8hALhZPDfxTxaT2CYiUoo7whn_hbGDd-EpUWu5MhX5IXBDRVoC6b_iBP0sDZ-pqPBEecmhT7ec_uoAamVfyA3iw"/>
+<div class="absolute inset-0 bg-brand-navy/10"></div>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-label-m text-label-m text-text-primary font-medium truncate">ktp_dian_syahputra.jpg</p>
+<p class="font-caption text-caption text-text-tertiary">2.4 MB • Terverifikasi enkripsi</p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg text-brand-primary hover:bg-brand-subtle active:bg-brand-primary-pressed/10 font-label-m text-label-m font-semibold shrink-0 transition-colors" type="button">
+          Ganti
+        </button>
+</div>
+</div>
+<!-- Card 2: Selfie dengan Memegang KTP -->
+<div class="bg-bg-surface rounded-xl p-space-lg shadow-sm flex flex-col transition-all">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<h3 class="font-title-m text-title-m text-text-primary">Selfie dengan Memegang KTP</h3>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-subtle text-success font-label-m text-label-m shrink-0 font-medium">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+          Terunggah
+        </span>
+</div>
+<p class="font-body-s text-body-s text-text-secondary mb-space-md">Wajah dan tulisan pada e-KTP harus terlihat jelas secara bersamaan.</p>
+<!-- Uploaded State Thumbnail Row -->
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-bg-canvas">
+<div class="flex items-center gap-space-sm min-w-0 flex-1 pr-2">
+<div class="w-12 h-12 rounded-lg overflow-hidden shrink-0 relative bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A clear portrait selfie photo of an Indonesian entrepreneur holding up their ID card next to their smiling face, well-lit studio lighting with crisp details and high contrast" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRM8jqfYtHzXmznn1YzHasqkwHJThabmAWYMS7DKUSfbdESLf4DxChfOgsJRH7B-bzmZbG70b4wc1D5Ey_k0Q_P_yNMPSCWhvO9Pgf9tqPp2DAoQv2op6gN_pOlXVz5621qhDpeC3fpvMNqvfne7edhP7BYyUhEn3FUOc1KzrnJ-tGE3YGINoAAaYFKc9_IB8mN7K4OK3SGQF3fyTDK3vHC_ZfEhQ4jGmPXYw5ZvCKytZ9Ho5ltYOOwQ"/>
+<div class="absolute inset-0 bg-brand-navy/10"></div>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-label-m text-label-m text-text-primary font-medium truncate">selfie_ktp_verified.jpg</p>
+<p class="font-caption text-caption text-text-tertiary">3.1 MB • Wajah terdeteksi</p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg text-brand-primary hover:bg-brand-subtle active:bg-brand-primary-pressed/10 font-label-m text-label-m font-semibold shrink-0 transition-colors" type="button">
+          Ganti
+        </button>
+</div>
+</div>
+<!-- Card 3: NPWP Pribadi / Badan Usaha (Mandatory Pending State) -->
+<div class="bg-bg-surface rounded-xl p-space-lg shadow-sm flex flex-col transition-all">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<div class="flex items-center gap-1.5">
+<h3 class="font-title-m text-title-m text-text-primary">NPWP Pribadi / Badan Usaha</h3>
+<span class="w-2 h-2 rounded-full bg-danger"></span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-danger-subtle text-status-perlu-tindakan-fg font-label-m text-label-m shrink-0 font-medium">
+<span class="material-symbols-outlined text-[15px]">priority_high</span>
+          Belum Unggah
+        </span>
+</div>
+<p class="font-body-s text-body-s text-text-secondary mb-space-md">Dibutuhkan untuk pemotongan bukti potong pajak penghasilan komisi.</p>
+<!-- Interactive Dropzone -->
+<div class="cursor-pointer group flex flex-col items-center justify-center p-space-lg rounded-xl bg-brand-subtle/40 hover:bg-brand-subtle transition-all duration-200 text-center relative overflow-hidden active:scale-[0.99]" id="dropzone-npwp" onclick="document.getElementById('file-input-npwp').click()">
+<input accept=".jpg,.jpeg,.png,.pdf" class="hidden" id="file-input-npwp" onchange="handleFileSelected(this)" type="file"/>
+<div class="w-12 h-12 rounded-full bg-bg-surface shadow-sm flex items-center justify-center mb-space-sm text-brand-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">add_photo_alternate</span>
+</div>
+<p class="font-label-l text-label-l font-semibold text-brand-primary mb-1">Ambil Foto atau Pilih File PDF/JPG</p>
+<p class="font-body-s text-body-s text-text-tertiary">Maksimal ukuran file 10MB</p>
+<div class="mt-space-sm flex items-center gap-1.5 text-text-tertiary font-caption text-caption bg-bg-surface/80 px-2.5 py-1 rounded-full">
+<span class="material-symbols-outlined text-[14px]">verified_user</span>
+<span>Pratinjau otomatis • OCR Cepat</span>
+</div>
+</div>
+</div>
+<!-- Card 4: Buku Tabungan / Rekening Koran (Optional) -->
+<div class="bg-bg-surface rounded-xl p-space-lg shadow-sm flex flex-col transition-all">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<h3 class="font-title-m text-title-m text-text-primary">Buku Tabungan / Rekening Koran</h3>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bg-sunken text-status-dibatalkan-fg font-label-m text-label-m shrink-0 font-medium">
+          Opsional
+        </span>
+</div>
+<p class="font-body-s text-body-s text-text-secondary mb-space-md">Menampilkan nomor rekening dan nama pemilik rekening yang sesuai.</p>
+<!-- Upload Row Trigger -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-bg-canvas">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-text-secondary shrink-0">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-label-m text-label-m text-text-secondary truncate">Belum ada file dipilih</p>
+<p class="font-caption text-caption text-text-tertiary">Format PDF atau gambar</p>
+</div>
+</div>
+<button class="h-9 px-3.5 rounded-lg bg-bg-surface shadow-sm text-text-primary font-label-m text-label-m font-semibold flex items-center gap-1.5 active:bg-bg-canvas transition-colors shrink-0" onclick="triggerOptionalUpload(this)" type="button">
+<span class="material-symbols-outlined text-[16px] text-brand-primary">upload</span>
+<span>Unggah Dokumen</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Security Guarantee Box -->
+<div class="px-margin mt-space-lg">
+<div class="rounded-xl p-3.5 bg-brand-subtle/50 flex items-center gap-3">
+<div class="w-7 h-7 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0 text-brand-primary">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</div>
+<p class="font-caption text-caption text-brand-navy leading-tight">Data dilindungi standar <strong class="font-semibold">ISO 27001</strong> dan enkripsi perbankan <strong class="font-semibold">AES-256</strong>.</p>
+</div>
+</div>
+<!-- Sticky Bottom Submission Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-bg-surface/95 backdrop-blur-md shadow-[0_-4px_16px_rgba(0,0,0,0.06)] pb-safe">
+<div class="max-w-[480px] mx-auto px-margin py-3">
+<button class="w-full h-[52px] rounded-lg bg-brand-primary active:bg-brand-primary-pressed text-text-on-brand font-label-l text-label-l font-semibold shadow-md flex items-center justify-center gap-2 transition-all" id="btn-submit" onclick="handleSubmitDocuments(this)" type="button">
+<span class="material-symbols-outlined text-[22px]">verified_user</span>
+<span>Kirim Dokumen untuk Verifikasi</span>
+</button>
+</div>
+</div>
+<!-- Micro Interaction Toast / Sheet Simulation -->
+<div class="fixed top-16 left-4 right-4 z-50 transform -translate-y-24 opacity-0 transition-all duration-300 pointer-events-none" id="toast-notification">
+<div class="bg-brand-navy text-text-on-brand rounded-xl p-3.5 shadow-lg flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-success flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px] text-text-on-brand">check</span>
+</div>
+<p class="font-body-s text-body-s flex-1" id="toast-text">File berhasil diunggah.</p>
+</div>
+</div>
+</div>
+<script>
+  function showToast(message) {
+    const toast = document.getElementById('toast-notification');
+    const toastText = document.getElementById('toast-text');
+    if (!toast || !toastText) return;
+    toastText.innerText = message;
+    toast.classList.remove('-translate-y-24', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    setTimeout(() => {
+      toast.classList.add('-translate-y-24', 'opacity-0');
+      toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 2800);
+  }
+
+  function handleFileSelected(input) {
+    if (input.files && input.files[0]) {
+      const fileName = input.files[0].name;
+      const dropzone = document.getElementById('dropzone-npwp');
+      if (dropzone) {
+        dropzone.classList.remove('bg-brand-subtle/40');
+        dropzone.classList.add('bg-success-subtle/40');
+        dropzone.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <div class="flex items-center gap-2.5 text-left min-w-0">
+              <div class="w-10 h-10 rounded-lg bg-success-subtle text-success flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[20px]">task</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-label-m text-label-m text-text-primary font-semibold truncate">${fileName}</p>
+                <p class="font-caption text-caption text-success font-medium">Siap diverifikasi</p>
+              </div>
+            </div>
+            <span class="text-brand-primary font-label-m text-label-m font-semibold shrink-0">Ubah</span>
+          </div>
+        `;
+      }
+      showToast('NPWP berhasil dipilih: ' + fileName);
+    }
+  }
+
+  function triggerOptionalUpload(btn) {
+    showToast('Membuka penjelajah file...');
+  }
+
+  function handleSubmitDocuments(button) {
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = `
+      <span class="material-symbols-outlined animate-spin text-[20px]">sync</span>
+      <span>Mengunggah Dokumen...</span>
+    `;
+    setTimeout(() => {
+      button.innerHTML = `
+        <span class="material-symbols-outlined text-[22px]">check_circle</span>
+        <span>Dokumen Terkirim</span>
+      `;
+      button.classList.remove('bg-brand-primary');
+      button.classList.add('bg-success');
+      showToast('Semua dokumen KYC berhasil diserahkan ke Tim Kepatuhan.');
+    }, 1200);
+  }
+</script></main></body></html>

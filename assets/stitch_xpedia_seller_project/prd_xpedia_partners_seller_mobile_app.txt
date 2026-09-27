@@ -1,0 +1,197 @@
+# PRODUCT REQUIREMENTS DOCUMENT (PRD)
+## Xpedia Partners — Seller Mobile Application
+
+| Dokumen | Nilai |
+|---|---|
+| **ID Proyek** | PRD-XPD-PARTNERS-001 |
+| **Versi** | 1.0 (Final Architecture & Screen Inventory) |
+| **Produk** | Xpedia Partners (Seller Mobile App) |
+| **Platform Target** | Mobile (iOS & Android via Flutter) — 390 × 844 dp |
+| **Bahasa Antarmuka** | Bahasa Indonesia (Formal & Operasional) |
+| **Sistem Desain** | Xpedia Partners DS (`DESIGN.md` / Inter Font / #0056FE Brand Primary) |
+| **Status Inventaris** | 44 Layar Lengkap (13 Klaster Modul Terpadu) |
+
+---
+
+## 1. Executive Summary & Visi Produk
+
+**Xpedia Partners** adalah aplikasi *mobile-first* resmi bagi mitra penjual (*merchant/seller*) pada marketplace Xpedia Indonesia. Aplikasi ini dirancang khusus untuk memfasilitasi operasional toko secara *real-time* langsung dari ponsel pintar: mulai dari pendaftaran identitas terverifikasi, manajemen katalog berkapasitas tinggi, pemrosesan pesanan berkecepatan tinggi dengan SLA ketat, manajemen logistik multi-kurir dan multi-gudang, komunikasi pelanggan dengan perlindungan transaksi (*anti-bypass*), hingga pengelolaan keuangan escrow dan pertumbuhan omzet berbasis komisi murni tanpa skema iklan berbayar (*ads*).
+
+Aplikasi ini menolak kompleksitas portal desktop yang padat dengan menyajikan tata letak bertingkat (*single-column stack*) yang intuitif, tegas, operasional, dan mempertahankan privasi konsumen sebagai prinsip kedaulatan utama.
+
+---
+
+## 2. Profil Pengguna (Target Personas)
+
+1. **Individual Micro/Small Seller (Usaha Perorangan / Rumahan)**
+   - *Karakteristik:* Menjalankan operasional toko sendirian langsung dari ponsel. Butuh alur pendaftaran cepat menggunakan KTP pribadi, notifikasi pesanan instan, serta pencetakan resi dan pengaturan kurir drop-off/pickup yang sederhana tanpa kerumitan administrasi.
+2. **Company / Official Merchant PIC (Badan Usaha PT/CV & Brand Resmi)**
+   - *Karakteristik:* Mengelola katalog SKU dalam jumlah besar (>500 SKU), tim logistik multi-gudang (hingga 3 lokasi), sesi live streaming terjadwal, dan memerlukan rekonsiliasi keuangan faktur pajak (*Final Invoice*) serta keamanan akun multi-perangkat dan otorisasi 2FA/PIN.
+
+---
+
+## 3. Prinsip Desain & Aturan Keras Produk (Non-Negotiable Rules)
+
+1. **Perlindungan Privasi Pembeli Mutlak (*Buyer Privacy Guard*)**
+   - Penjual **TIDAK PERNAH** dapat melihat nama lengkap, nomor telepon utuh, email, atau alamat jalan spesifik milik pembeli di seluruh antarmuka pesanan.
+   - Format wajib: Nama dimasking `D******`, telepon dimasking `0812****456`, dan alamat hanya menampilkan Kota/Kabupaten tujuan (`Kota Jakarta Selatan`). Alamat lengkap hanya dienkripsi untuk keperluan label cetak resi termal ekspedisi.
+2. **Ketiadaan Tombol "Terima Pesanan" & Titik Komitmen "Cetak Resi"**
+   - Tidak ada tombol manual "Terima Pesanan". Pesanan yang telah dibayar pembeli otomatis berstatus `Processing`.
+   - Titik komitmen penjual adalah tombol primer **"Cetak Resi"**.
+   - Penolakan pesanan hanya melalui tombol sekunder *Ghost Danger* **"Tolak Pesanan"** yang disertai peringatan tegas terhadap skor performa toko (*Cancellation Rate*).
+3. **Standar SLA Ganda Berbasis Hari Kerja (Working Days)**
+   - **SLA 1 (Pembayaran → Cetak Resi):** Maksimal 2×24 jam kerja.
+   - **SLA 2 (Cetak Resi → Serah Terima Kurir/Handover):** Maksimal 2×24 jam kerja.
+   - Pelanggaran batas waktu memicu pembatalan otomatis dengan pengembalian dana 100% ke pembeli.
+4. **Hierarki Baku Rincian Pendapatan Seller (*Financial Breakdown Table*)**
+   Tabel kalkulasi pendapatan bersih wajib tersusun dalam 6 baris paten tanpa perubahan urutan:
+   1. *Total Nilai Barang*
+   2. *Support Ongkir Seller* (pengurang)
+   3. *Komisi Xpedia 5%* (pengurang)
+   4. *Xpedia Growth* (pengurang ekstra komisi bila aktif)
+   5. *Biaya Layanan* (Rp 0 / nominal flat)
+   6. **Total Pendapatan Seller** (teks Price/L tebal)
+5. **Diferensiasi Resi vs Final Invoice**
+   - Dokumen *Final Invoice* **hanya terbit** setelah status pesanan berubah menjadi `Selesai (Completed)`. Sebelum itu, dokumen yang berlaku murni Label Pengiriman / Thermal Waybill.
+6. **Protokol Chat Aman & Anti-Bypass**
+   - Tidak ada kolom diskusi publik/Q&A produk. Semua pertanyaan diarahkan ke chat privat.
+   - Chat hanya mendukung: Teks, Foto, Product Card, Order Reference, dan Voucher Sistem. Tidak diizinkan pengiriman file dokumen sembarang, video, atau audio. Pesan yang telah dikirim tidak dapat diedit atau dihapus. Dilengkapi 4 status centang (*Pending, Sent, Delivered, Read*).
+   - Sensor otomatis terhadap nomor telepon, tautan eksternal, atau kode transaksi luar platform (*Anti-Bypass Protection*).
+7. **Skema Pertumbuhan "Xpedia Growth" Tanpa Istilah Iklan**
+   - Xpedia Growth murni ekstra komisi (1%–15%) yang hanya dipotong bila transaksi berhasil.
+   - **Dilarang keras** menggunakan terminologi periklanan: *ads, iklan, CPC, budget, sponsor*.
+   - Terkunci 7×24 jam setelah disimpan dan hanya dapat diakses oleh toko dengan skor *Natural Performance* ≥ 60.
+
+---
+
+## 4. Arsitektur Navigasi Aplikasi
+
+Aplikasi mengadopsi struktur navigasi bawah (*Bottom Navigation Bar*) tetap dengan 5 menu utama:
+1. **Beranda:** Dashboard ringkasan operasional harian, informasi resmi, dan daftar tindakan darurat.
+2. **Pesanan:** Pusat pemantauan pesanan lintas status, pembatalan, komplain, dan invoice.
+3. **Produk:** Manajemen katalog etalase, varian stok, penambahan SKU, dan status moderasi kurasi.
+4. **Chat:** Percakapan real-time dengan calon pembeli dan pelanggan aktif.
+5. **Akun:** Hub sentral menuju seluruh fitur perluasan: *Xpedia Wallet, Xpedia Growth, Campaign Promosi, Partners Performance, Analytics Bisnis, Pengaturan Pengiriman & Gudang, Storefront & Live Streaming, Xpedia 911, serta Pengaturan Keamanan*.
+
+---
+
+## 5. Rincian 13 Klaster Modul & 44 Inventaris Layar
+
+### Klaster 1: Onboarding & Registrasi Toko (`ONB`)
+*Tujuan: Memandu mitra baru melakukan pendaftaran legal dengan prinsip 1 KTP = 1 Akun.*
+* **S-01 — Masuk & Daftar Partner:** Autentikasi nomor ponsel & verifikasi OTP email/SMS.
+* **S-02 — Pilih Tipe Akun:** Kartu komparasi tipe *Individual* (KTP) vs *Company* (Badan Usaha).
+* **S-03 — Data Identitas Individual:** Formulir NIK KTP, nama lengkap, dan validasi inline.
+* **S-03b — Data Badan Usaha & PIC:** Legalitas PT/CV, NPWP badan usaha, NIB, dan data identitas PIC.
+* **S-04 — Rekening Bank Toko:** Pendaftaran rekening penarikan yang wajib selaras dengan identitas KTP/Badan Usaha.
+* **S-05 — Profil Toko & Logo:** Penetapan nama toko publik, deskripsi, dan upload logo toko ber-watermark.
+* **S-06 — Penolakan Duplikasi Identitas:** Layar resolusi error saat KTP/telepon telah terdaftar di sistem.
+* **S-07 — Ajukan Kapasitas Katalog:** Formulir pengajuan kenaikan kuota listing SKU di atas batas default 500 SKU.
+
+### Klaster 2: Verifikasi & Kredensial Resmi Toko (`VER`)
+*Tujuan: Menjamin integritas dan legitimasi merchant sebelum diizinkan menjual barang.*
+* **S-08 — Unggah Dokumen Verifikasi KYC:** Slot unggah foto KTP, selfie memegang KTP, dan NPWP.
+* **S-09 — Status Verifikasi Toko:** Notifikasi SLA peninjauan 2×24 jam, status disetujui, atau alasan penolakan terstruktur.
+* **S-10 — Primary Status & Signature:** Tampilan badge resmi (*Verified Individual, Verified Company, Official Store*) serta penghargaan eksklusif *Xpedia Signature* (award badge hitam-emas).
+
+### Klaster 3: Beranda & Global Search (`HOM`)
+*Tujuan: Pusat kendali harian toko dalam satu pandangan ringkas.*
+* **S-11 — Beranda / Dashboard Seller:** Banner carousel pengumuman resmi marketplace, baris *Perlu Tindakan* dengan badge merah darurat, metrik ringkasan toko 2×2, serta jalan pintas navigasi.
+* **S-12 — Global Search Terpadu:** Pencarian lintas entitas mencakup nomor pesanan, SKU produk, nama masked pembeli, hingga artikel bantuan.
+
+### Klaster 4: Siklus Pesanan & Penanganan Pengecualian (`ORD`)
+*Tujuan: Mengawal alur transaksi dari pembayaran hingga selesai beserta kasus sengketa.*
+* **S-13 — Daftar Pesanan:** Tab status pesanan (*Semua, Processing, Dikirim, Diterima, Selesai, Dibatalkan*), chip SLA countdown darurat, dan aksi cepat.
+* **S-14 / S05 — Detail Pesanan:** Layar operasional terpadat: timeline 5 tahap, masked buyer, detail item, seleksi drop-off/pickup, kalkulasi 6 baris pendapatan paten, dan banner Pre-Order.
+* **S-15 — Tolak Pesanan:** Alasan penolakan terstruktur dan peringatan penalti terhadap skor performa toko.
+* **S-16 — Custom Order Konfirmasi:** Penetapan spesifikasi khusus, lead time pengerjaan, dan revisi harga akhir (SLA respon 2×24 jam kerja).
+* **S-17 — Partial Fulfillment:** Pemilihan pemenuhan barang yang tersedia dan persetujuan pengiriman bertahap pembeli.
+* **S-18 — Tanggapi Permintaan Pembatalan:** Penanganan pembatalan pasca penerbitan resi pengiriman.
+* **S-19 — Komplain & Retur:** Peninjauan bukti foto/video unboxing pembeli dengan 4 opsi aksi (*Setuju Refund, Ganti Barang, Tolak, atau Eskalasi*).
+* **S-20 — Final Invoice:** Lembar faktur resmi legal pasca transaksi berstatus `Selesai`.
+
+### Klaster 5: Logistik, Pengiriman & Pergudangan (`SHP` & `STK`)
+*Tujuan: Manajemen rantai suplai, pemenuhan kurir, dan lokasi inventaris.*
+* **S-21 — Atur Pengiriman & Cetak Resi:** Seleksi metode penyerahan paket (Drop-off mitra agen vs Pickup lokasi kurir) dan input nomor resi.
+* **S-22 — Pratinjau Label Pengiriman:** Format waybill termal standar ekspedisi berbarcode dengan penandaan privasi dan marker Secure+.
+* **S-23 — Monitoring Pengiriman:** Pelacakan checkpoint logistik real-time dan deteksi kendala rute transit.
+* **S-24 — Pilih Kurir Aktif:** Pengaturan ekspedisi yang dibuka untuk pembeli (JNE, SiCepat, J&T, Instant GoSend/Grab).
+* **S-25 — Coverage & Lokasi Gudang:** Manajemen multi-lokasi hingga 3 gudang cabang serta penetapan daftar kota yang dikecualikan (*SLA Protect*).
+
+### Klaster 6: Katalog Produk & Moderasi Listing (`PRD`)
+*Tujuan: Pengelolaan etalase dagang dan kepatuhan regulasi produk.*
+* **S-26 — Daftar Produk:** Etalase toko berfilter status (*Aktif, Stok Kosong, Discontinued, Draft*), chip mode stok, dan tombol floating penambahan SKU.
+* **S-27 — Tambah / Edit Produk:** Formulir bertingkat terpadu mencakup media watermark, identitas produk, mode stok & lead-time stepper, varian harga, tier grosir, spesifikasi fisik pengiriman, dan kepatuhan MSDS barang berbahaya.
+* **S-28 — Status Moderasi Produk:** Umpan balik transparansi kurasi kepatuhan (*Klaim HAKI merek dagang* & *Sertifikasi baterai*).
+
+### Klaster 7: Komunikasi & Chat Center (`CHT`)
+*Tujuan: Saluran konsultasi transaksi resmi dan perlindungan sengketa.*
+* **S-29 — Daftar Chat:** List riwayat percakapan dengan badge pesan belum dibaca dan filter konteks pesanan.
+* **S-30 — Ruang Chat Interaktif:** Percakapan berbasis kartu produk, rujukan pesanan terpadu, 4 indikator status pesan centang, dan banner proteksi anti-transaksi luar.
+
+### Klaster 8: Promosi Mandiri & Xpedia Growth (`PRM` & `GRW`)
+*Tujuan: Mesin eskalasi omzet dengan proteksi laba bersih merchant.*
+* **S-31 — Campaign & Promo Seller:** Pembuatan diskon mandiri, bundling, ekstra subsidi ongkir, serta simulasi *Proteksi Margin HPP*.
+* **S-32 — Xpedia Growth:** Slider ekstra komisi 1%–15% berbasis skor performa (min. 60) dengan periode terkunci 7×24 jam.
+
+### Klaster 9: Analisis Bisnis & Performa Mitra (`ANL` & `PRF`)
+*Tujuan: Evaluasi kesehatan toko dan metrik operasional terukur.*
+* **S-33 — Analytics:** Analisis corong konversi belanja (*Kunjungan → Dilihat → Klik → Keranjang → Terjual*) dan sumber lalu lintas.
+* **S-34 — Partners Performance:** Evaluasi 4 pilar kinerja merchant (*Kepuasan Rating Bintang, Order Performance SLA, Service Response, dan Live Performance*).
+
+### Klaster 10: Storefront, Live Streaming & Ulasan (`STF` & `REV`)
+*Tujuan: Manajemen etalase publik dan keterlibatan interaktif pembeli.*
+* **S-35 — Kelola Storefront:** Tata letak banner toko rasio 1 utama + 2 panel pendamping dan pengurutan rak etalase.
+* **S-36 — Live Selling Toko:** Studio siaran interaktif dengan monitor kamera real-time, viewer counter, pin SKU produk flash sale, dan komentar pembeli.
+* **S-37 — Ulasan Produk:** Manajemen testimoni foto/bintang pembeli dan komposer balasan resmi toko tanpa izin penghapusan ulasan.
+
+### Klaster 11: Finansial & Xpedia Wallet (`WLT`)
+*Tujuan: Transparansi dana penjualan dan pencairan aman.*
+* **S-38 — Xpedia Wallet:** Rekapitulasi Saldo Tersedia, Saldo Ditahan (*Escrow*), dan buku besar (*ledger*) riwayat transaksi bertanda tangan nominal.
+* **S-39 — Penarikan Dana Xpedia Wallet:** Penarikan saldo ke rekening terverifikasi bebas biaya transfer BI-FAST dengan otorisasi PIN 6 digit.
+
+### Klaster 12: Notifikasi & Dukungan Darurat (`NTF` & `SUP`)
+*Tujuan: Responsivitas krisis operasional dan komunikasi eskalasi.*
+* **S-40 — Pusat Notifikasi Seller:** Tab pemisahan notifikasi berkategori Kritis (peringatan batas SLA & komplain), Operasional, dan Update Sistem.
+* **S-41 — Xpedia 911:** Pusat bantuan 24 jam dengan 4 kategori tunggal baku (*Pesanan, Pengiriman, Xpedia Wallet, Produk*).
+* **S-42 — Detail Tiket Bantuan:** Riwayat diskusi penanganan masalah langsung bersama Tim Khusus Eskalasi 911.
+
+### Klaster 13: Pengaturan Akun & Keamanan Mitra (`SET`)
+*Tujuan: Konfigurasi jam operasional dan proteksi kredensial merchant.*
+* **S-43 — Pengaturan Toko:** Jam buka-tutup toko, preferensi bahasa (ID/EN), dan pengaturan notifikasi per kategori.
+* **S-44 — Keamanan Akun:** Penggantian kata sandi, otentikasi dua faktor (2FA), riwayat sesi login perangkat dengan fitur logout massal, dan manajemen PIN penarikan dompet.
+
+---
+
+## 6. Spesifikasi Sistem Desain & Token Visual
+
+| Kategori | Nilai Desain | Implementasi |
+|---|---|---|
+| **Tipografi** | Inter (100% Inter font family) | Heading/XL (24pt), Heading/L (20pt), Title/L (16pt), Body/M (14pt), Label/M (12pt), Price/L (18pt) |
+| **Brand Primary** | `#0056FE` | Tombol utama, link aktif, tab terhighlight, radio aktif |
+| **Brand Navy** | `#0F286C` | Background kartu finansial Xpedia Wallet, header dark |
+| **Brand Subtle** | `#EBF2FF` | Background banner informasi, chip aktif |
+| **Status Bahaya / Kritis** | `#FB132D` (Teks/Aksi), `#FFECEE` (Subtle Bg) | Tombol Tolak Pesanan, peringatan SLA habis, badge kritis |
+| **Status Sukses** | `#109553` (Teks), `#E8F8EF` (Subtle Bg) | Status pesanan Selesai, payout aman |
+| **Status Menunggu / Warning**| `#8C5002` (Teks), `#FFF6E5` (Subtle Bg) | Status Processing, peringatan moderasi |
+| **Background Canvas** | `#F7F8FA` | Latar belakang kanvas aplikasi |
+| **Background Surface** | `#FFFFFF` | Latar kartu (*Card surface*) |
+| **Border & Radius** | `border-subtle: #E5E7EB`, `radius-md: 8dp` | Border 1dp hairline, sudut kartu & tombol 8dp |
+| **Spesifikasi Tombol Utama** | Tinggi tepat 52dp, Full Width | Tombol sticky pada bagian bawah layar |
+| **Target Sentuh Minimum** | 48 × 48 dp | Seluruh elemen interaktif dan icon buttons |
+
+---
+
+## 7. Rantai Alur Prototipe Utama (Interactive Flow Paths)
+
+1. **Alur Pemrosesan Pesanan Inti (Golden Path):**
+   `S-11 (Beranda)` ➔ `S-13 (Daftar Pesanan)` ➔ `S-14/S05 (Detail Pesanan)` ➔ `S-21 (Atur Pengiriman)` ➔ `S-22 (Cetak Label Resi)` ➔ `S-23 (Monitoring Pengiriman)` ➔ `S-20 (Final Invoice)`
+2. **Alur Pendaftaran Mitra Baru:**
+   `S-01 (Daftar Akun)` ➔ `S-02 (Tipe Akun)` ➔ `S-03 / S-03b (Identitas)` ➔ `S-04 (Rekening)` ➔ `S-05 (Profil)` ➔ `S-08 (Unggah KYC)` ➔ `S-09 (Review Status)` ➔ `S-10 (Verified Status & Signature)`
+3. **Alur Manajemen Katalog & Kampanye:**
+   `S-11 (Beranda)` ➔ `S-26 (Katalog Produk)` ➔ `S-27 (Tambah Produk)` ➔ `S-28 (Status Kurasi)` ➔ `S-31 (Campaign Promo)` / `S-32 (Xpedia Growth)`
+4. **Alur Finansial & Pencairan Saldo:**
+   `S-11 (Beranda)` ➔ `S-38 (Xpedia Wallet)` ➔ `S-39 (Penarikan Dana & PIN 6 Digit)` ➔ `S-40 (Pusat Notifikasi Sukses)`
+
+---
+*Dokumen ini diterbitkan sebagai cetak biru resmi pengembangan antarmuka dan logika bisnis aplikasi Xpedia Partners.*

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<meta content="mobile_stack" name="shell-type"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body {
+        width: 100vw;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+      }
+      .pt-safe {
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary-fixed-dim": "#b6c4ff",
+            "on-primary": "#ffffff",
+            "bg-sunken": "#EFF1F4",
+            "status-diterima-bg": "#E6F7FA",
+            "status-dalam-pengiriman-fg": "#0047D1",
+            "border-subtle": "#E5E7EB",
+            "brand-navy": "#0F286C",
+            "status-dibatalkan-fg": "#4B5563",
+            "status-diterima-fg": "#08677B",
+            "status-preorder-fg": "#6344D6",
+            "on-surface": "#141b2b",
+            "status-custom-fg": "#4E34AB",
+            "status-processing-fg": "#8C5002",
+            "status-selesai-fg": "#0C7A44",
+            "border-default": "#D1D5DB",
+            "primary": "#0042c7",
+            "border-strong": "#9CA3AF",
+            "danger": "#FB132D",
+            "status-dibatalkan-bg": "#EFF1F4",
+            "warning-subtle": "#FFF6E5",
+            "brand-primary": "#0056FE",
+            "success": "#109553",
+            "text-placeholder": "#9CA3AF",
+            "text-tertiary": "#6B7280",
+            "status-preorder-bg": "#F1EEFE",
+            "warning": "#F59E0B",
+            "error": "#ba1a1a",
+            "text-secondary": "#4B5563",
+            "danger-subtle": "#FFECEE",
+            "text-on-brand": "#FFFFFF",
+            "brand-subtle": "#EBF2FF",
+            "bg-surface": "#FFFFFF",
+            "success-subtle": "#E8F8EF",
+            "status-perlu-tindakan-fg": "#D10C22",
+            "status-dalam-pengiriman-bg": "#EBF2FF",
+            "bg-canvas": "#F7F8FA",
+            "brand-primary-pressed": "#0047D1",
+            "text-primary": "#111827",
+            "status-perlu-tindakan-bg": "#FFECEE",
+            "status-processing-bg": "#FFF6E5",
+            "status-selesai-bg": "#E8F8EF"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bg-canvas font-sans text-text-primary antialiased min-h-screen flex flex-col">
+<!-- Top App Bar (56px clean, no trailing icons) -->
+<header class="fixed top-0 left-0 right-0 z-50 pt-safe bg-bg-surface border-b border-border-subtle">
+<div class="h-14 px-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<button aria-label="Kembali" class="w-10 h-10 -ml-2 rounded-lg flex items-center justify-center text-text-primary hover:bg-bg-sunken active:bg-border-subtle transition-colors" onclick="history.back()" type="button">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="text-[20px] leading-7 font-semibold text-text-primary tracking-tight">Keamanan Akun</h1>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full pt-[calc(3.5rem+env(safe-area-inset-top,0px))] pb-safe">
+<!-- Toast Notification -->
+<div class="fixed top-16 left-4 right-4 z-50 transform -translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center justify-between p-3.5 rounded-xl shadow-lg bg-[#1F2937] text-white" id="toast">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[20px] text-emerald-400">check_circle</span>
+<span class="text-[13px] font-medium" id="toast-message">Perubahan berhasil disimpan</span>
+</div>
+</div>
+<!-- Cards Stack Container (gap-3 = 12px) -->
+<div class="p-4 flex flex-col gap-3 max-w-lg mx-auto">
+<!-- Card 1 — Status Skor Keamanan -->
+<section class="bg-success-subtle border border-[#A7F3D0] rounded-[12px] p-4 shadow-sm">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-[#D1FAE5] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-success text-[24px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-2">
+<h2 class="text-[15px] font-semibold text-text-primary tracking-tight">Tingkat Keamanan: Sangat Baik</h2>
+<span class="bg-bg-surface text-status-selesai-fg text-[12px] font-bold px-2 py-0.5 rounded-full border border-[#A7F3D0] shadow-xs shrink-0">100%</span>
+</div>
+<p class="text-[13px] leading-[18px] text-text-secondary mt-1">3 dari 3 proteksi utama aktif melindungi akun &amp; saldo dompet Anda.</p>
+<div class="w-full bg-[#C6F6D5] rounded-full h-1.5 mt-3 overflow-hidden">
+<div class="bg-success h-1.5 rounded-full w-full"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Card 2 — Kredensial & Kontak Login -->
+<section class="bg-bg-surface border border-border-subtle rounded-[12px] p-4 shadow-sm flex flex-col gap-3">
+<!-- Header -->
+<div class="pb-1 border-b border-border-subtle">
+<h3 class="text-[16px] font-semibold text-text-primary">Kredensial &amp; Kontak</h3>
+<p class="text-[12px] text-text-tertiary">Akses utama ke akun seller</p>
+</div>
+<!-- List Items -->
+<div class="divide-y divide-border-subtle -mx-4 px-4">
+<!-- Item 1: Kata Sandi -->
+<div class="py-3 flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">lock_reset</span>
+</div>
+<div class="min-w-0">
+<p class="text-[14px] font-semibold text-text-primary leading-tight">Kata Sandi</p>
+<p class="text-[12px] text-text-tertiary mt-0.5">Terakhir diubah 3 bulan lalu</p>
+</div>
+</div>
+<button class="flex items-center gap-0.5 text-brand-primary text-[13px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-brand-subtle active:opacity-75 transition-colors shrink-0" onclick="showModal('password-modal')" type="button">
+<span>Ubah</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+<!-- Item 2: Nomor Handphone -->
+<div class="py-3 flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">smartphone</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<p class="text-[14px] font-semibold text-text-primary leading-tight">Nomor Handphone</p>
+<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-status-selesai-bg text-status-selesai-fg text-[11px] font-medium">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check</span> Terverifikasi
+                  </span>
+</div>
+<p class="text-[13px] text-text-secondary font-medium mt-0.5">0812****456</p>
+</div>
+</div>
+<button class="text-brand-primary text-[13px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-brand-subtle active:opacity-75 transition-colors shrink-0" onclick="triggerOtpChange('Nomor Handphone')" type="button">
+              Ubah
+            </button>
+</div>
+<!-- Item 3: Email Terdaftar -->
+<div class="py-3 flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<p class="text-[14px] font-semibold text-text-primary leading-tight">Email Terdaftar</p>
+<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-status-selesai-bg text-status-selesai-fg text-[11px] font-medium">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check</span> Terverifikasi
+                  </span>
+</div>
+<p class="text-[13px] text-text-secondary font-medium mt-0.5 truncate">d***@makmurjaya.com</p>
+</div>
+</div>
+<button class="text-brand-primary text-[13px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-brand-subtle active:opacity-75 transition-colors shrink-0" onclick="triggerOtpChange('Email')" type="button">
+              Ubah
+            </button>
+</div>
+</div>
+<!-- Info Alert -->
+<div class="flex items-start gap-2 bg-bg-canvas p-2.5 rounded-lg border border-border-subtle/80 mt-1">
+<span class="material-symbols-outlined text-text-tertiary text-[16px] mt-0.5 shrink-0">info</span>
+<p class="text-[11px] leading-[15px] text-text-tertiary">Perubahan kontak memerlukan verifikasi OTP demi keamanan saldo toko.</p>
+</div>
+</section>
+<!-- Card 3 — Autentikasi & Proteksi Dompet -->
+<section class="bg-bg-surface border border-border-subtle rounded-[12px] p-4 shadow-sm flex flex-col gap-3">
+<!-- Header -->
+<div class="pb-1 border-b border-border-subtle">
+<h3 class="text-[16px] font-semibold text-text-primary">Autentikasi &amp; Dompet</h3>
+<p class="text-[12px] text-text-tertiary">Perlindungan ganda untuk pencairan dana</p>
+</div>
+<div class="divide-y divide-border-subtle -mx-4 px-4">
+<!-- PIN Penarikan 6-Digit -->
+<div class="py-3 flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-warning-subtle flex items-center justify-center text-status-processing-fg shrink-0">
+<span class="material-symbols-outlined text-[20px]">pin</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<p class="text-[14px] font-semibold text-text-primary leading-tight">PIN Penarikan 6-Digit</p>
+<span class="px-1.5 py-0.5 rounded-full bg-success-subtle text-status-selesai-fg text-[10px] font-bold">Aktif</span>
+</div>
+<p class="text-[12px] text-text-tertiary mt-0.5 leading-[16px]">Otorisasi pencairan dana dompet Xpedia</p>
+</div>
+</div>
+<button class="text-brand-primary text-[13px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-brand-subtle active:opacity-75 transition-colors shrink-0" onclick="showModal('pin-modal')" type="button">
+              Ganti PIN
+            </button>
+</div>
+<!-- Verifikasi 2 Langkah (2FA) -->
+<div class="py-3 flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">security</span>
+</div>
+<div class="min-w-0">
+<p class="text-[14px] font-semibold text-text-primary leading-tight">Verifikasi 2 Langkah (2FA)</p>
+<p class="text-[12px] text-text-tertiary mt-0.5 leading-[16px]">OTP via WhatsApp/SMS setiap login baru</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" id="toggle-2fa" onchange="handleToggle('2FA', this.checked)" type="checkbox"/>
+<div class="w-11 h-6 bg-border-strong rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+</label>
+</div>
+<!-- Biometrik -->
+<div class="py-3 flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">fingerprint</span>
+</div>
+<div class="min-w-0">
+<p class="text-[14px] font-semibold text-text-primary leading-tight">Biometrik (Fingerprint / Face ID)</p>
+<p class="text-[12px] text-text-tertiary mt-0.5 leading-[16px]">Login &amp; konfirmasi cepat tanpa PIN</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" id="toggle-bio" onchange="handleToggle('Biometrik', this.checked)" type="checkbox"/>
+<div class="w-11 h-6 bg-border-strong rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Card 4 — Riwayat Perangkat & Sesi -->
+<section class="bg-bg-surface border border-border-subtle rounded-[12px] p-4 shadow-sm flex flex-col gap-3">
+<!-- Header -->
+<div class="pb-1 border-b border-border-subtle flex items-center justify-between">
+<div>
+<h3 class="text-[16px] font-semibold text-text-primary">Riwayat Perangkat &amp; Sesi</h3>
+<p class="text-[12px] text-text-tertiary">3 perangkat terhubung</p>
+</div>
+</div>
+<!-- Devices List -->
+<div class="divide-y divide-border-subtle -mx-4 px-4">
+<!-- Device 1: Current Device -->
+<div class="py-3 flex items-center justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-brand-subtle flex items-center justify-center text-brand-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">phone_android</span>
+</div>
+<div class="min-w-0">
+<p class="text-[14px] font-semibold text-text-primary truncate">Samsung Galaxy S24 Ultra</p>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-2 h-2 rounded-full bg-success"></span>
+<span class="text-[11px] font-medium text-status-selesai-fg">Perangkat Ini (Aktif)</span>
+<span class="text-text-placeholder">•</span>
+<span class="text-[11px] text-text-tertiary">Jakarta</span>
+</div>
+</div>
+</div>
+<div class="w-7 h-7 rounded-full bg-success-subtle flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-success text-[16px] font-bold">check</span>
+</div>
+</div>
+<!-- Device 2: Xiaomi Pad 6 -->
+<div class="py-3 flex items-center justify-between gap-3" id="device-tab">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-bg-sunken flex items-center justify-center text-text-secondary shrink-0">
+<span class="material-symbols-outlined text-[20px]">tablet_mac</span>
+</div>
+<div class="min-w-0">
+<p class="text-[14px] font-semibold text-text-primary truncate">Xiaomi Pad 6</p>
+<p class="text-[11px] text-text-tertiary mt-0.5 truncate">Jakarta Selatan • Aktif kemarin, 17:40 WIB</p>
+</div>
+</div>
+<button aria-label="Keluarkan Xiaomi Pad 6" class="w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-danger-subtle hover:text-danger active:opacity-70 transition-colors shrink-0" onclick="terminateSingleDevice('device-tab', 'Xiaomi Pad 6')" type="button">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</button>
+</div>
+<!-- Device 3: Chrome Web Portal -->
+<div class="py-3 flex items-center justify-between gap-3" id="device-web">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-bg-sunken flex items-center justify-center text-text-secondary shrink-0">
+<span class="material-symbols-outlined text-[20px]">laptop_chromebook</span>
+</div>
+<div class="min-w-0">
+<p class="text-[14px] font-semibold text-text-primary truncate">Chrome Web Portal</p>
+<p class="text-[11px] text-text-tertiary mt-0.5 truncate">Windows 11 • Aktif 16 Jan 2025</p>
+</div>
+</div>
+<button aria-label="Keluarkan Chrome Web Portal" class="w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-danger-subtle hover:text-danger active:opacity-70 transition-colors shrink-0" onclick="terminateSingleDevice('device-web', 'Chrome Web Portal')" type="button">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</button>
+</div>
+</div>
+<!-- Danger Ghost Button -->
+<button class="w-full mt-1 py-2.5 px-3 rounded-lg border border-danger/30 text-danger hover:bg-danger-subtle active:bg-danger-subtle/80 text-[13px] font-semibold transition-colors flex items-center justify-center gap-2" onclick="showModal('logout-all-modal')" type="button">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+          Keluar dari Semua Perangkat Lain
+        </button>
+</section>
+<!-- Card 5 — Badge Jaminan (Xpedia Guardian Protection) -->
+<section class="bg-brand-subtle border border-[#BFDBFE] rounded-[12px] p-4 shadow-sm flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs">
+<span class="material-symbols-outlined text-brand-primary text-[22px]">shield_lock</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="text-[13px] font-bold text-brand-navy uppercase tracking-wider">Xpedia Guardian Protection</span>
+<span class="material-symbols-outlined text-brand-primary text-[16px]">verified</span>
+</div>
+<p class="text-[11px] leading-[16px] text-text-secondary mt-1">
+            Dilindungi standar enkripsi perbankan ISO/IEC 27001 dan pengawasan Bank Indonesia. Sesi tidak aktif di browser akan keluar otomatis setelah 14 hari.
+          </p>
+</div>
+</section>
+</div>
+</main>
+<!-- Modal 1: Confirmation Keluar dari Semua Perangkat -->
+<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs hidden transition-opacity duration-200" id="logout-all-modal">
+<div class="bg-bg-surface w-full max-w-md rounded-t-2xl sm:rounded-xl p-5 flex flex-col gap-4 shadow-2xl">
+<div class="w-10 h-1 bg-border-default rounded-full self-center sm:hidden"></div>
+<div class="w-12 h-12 rounded-full bg-danger-subtle text-danger flex items-center justify-center mx-auto">
+<span class="material-symbols-outlined text-[28px]">warning</span>
+</div>
+<div class="text-center">
+<h4 class="text-[17px] font-semibold text-text-primary">Keluarkan Semua Sesi Lain?</h4>
+<p class="text-[13px] text-text-secondary mt-1.5 leading-relaxed">
+          Semua sesi login di perangkat lain (tablet, komputer, browser) akan dihentikan seketika. Anda tetap terhubung di ponsel ini.
+        </p>
+</div>
+<div class="flex flex-col gap-2 mt-1">
+<button class="h-11 w-full rounded-lg bg-danger text-white text-[14px] font-semibold active:opacity-90 transition-colors" onclick="confirmLogoutAll()" type="button">
+          Ya, Keluarkan Semua Sesi
+        </button>
+<button class="h-11 w-full rounded-lg bg-bg-sunken text-text-primary text-[14px] font-medium hover:bg-border-subtle transition-colors" onclick="hideModal('logout-all-modal')" type="button">
+          Batalkan
+        </button>
+</div>
+</div>
+</div>
+<!-- Modal 2: Dialog Dummy Ubah Sandi -->
+<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs hidden transition-opacity duration-200" id="password-modal">
+<div class="bg-bg-surface w-full max-w-md rounded-t-2xl sm:rounded-xl p-5 flex flex-col gap-4 shadow-2xl">
+<div class="w-10 h-1 bg-border-default rounded-full self-center sm:hidden"></div>
+<div class="flex items-center justify-between">
+<h4 class="text-[17px] font-semibold text-text-primary">Ubah Kata Sandi</h4>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-text-tertiary hover:bg-bg-sunken" onclick="hideModal('password-modal')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<p class="text-[13px] text-text-secondary leading-relaxed">
+        Masukkan kata sandi lama Anda kemudian buat kombinasi baru minimal 8 karakter dengan huruf dan angka.
+      </p>
+<div class="flex flex-col gap-3">
+<div class="bg-bg-sunken rounded-lg p-3 border border-border-subtle">
+<label class="block text-[11px] font-medium text-text-tertiary">Kata Sandi Saat Ini</label>
+<input class="w-full bg-transparent text-[14px] text-text-primary focus:outline-none mt-1" type="password" value="secret123"/>
+</div>
+<div class="bg-bg-sunken rounded-lg p-3 border border-border-subtle">
+<label class="block text-[11px] font-medium text-text-tertiary">Kata Sandi Baru</label>
+<input class="w-full bg-transparent text-[14px] text-text-primary focus:outline-none mt-1" placeholder="Minimal 8 karakter" type="password"/>
+</div>
+</div>
+<button class="h-11 w-full rounded-lg bg-brand-primary text-white text-[14px] font-semibold active:bg-brand-primary-pressed transition-colors mt-1" onclick="hideModal('password-modal'); showToast('Kata sandi berhasil diperbarui');" type="button">
+        Simpan Sandi Baru
+      </button>
+</div>
+</div>
+<!-- Modal 3: Dialog PIN 6-Digit -->
+<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs hidden transition-opacity duration-200" id="pin-modal">
+<div class="bg-bg-surface w-full max-w-md rounded-t-2xl sm:rounded-xl p-5 flex flex-col gap-4 shadow-2xl">
+<div class="w-10 h-1 bg-border-default rounded-full self-center sm:hidden"></div>
+<div class="flex items-center justify-between">
+<h4 class="text-[17px] font-semibold text-text-primary">Ganti PIN Dompet Xpedia</h4>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-text-tertiary hover:bg-bg-sunken" onclick="hideModal('pin-modal')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<p class="text-[13px] text-text-secondary leading-relaxed">
+        Demi keamanan penarikan saldo, tautan verifikasi OTP akan dikirimkan ke WhatsApp nomor 0812****456.
+      </p>
+<div class="bg-warning-subtle p-3 rounded-lg border border-amber-200 flex items-start gap-2">
+<span class="material-symbols-outlined text-status-processing-fg text-[18px] shrink-0 mt-0.5">shield</span>
+<span class="text-[11px] leading-[15px] text-status-processing-fg">Jangan pernah memberitahukan 6-digit PIN dompet kepada siapa pun termasuk pihak Xpedia.</span>
+</div>
+<button class="h-11 w-full rounded-lg bg-brand-primary text-white text-[14px] font-semibold active:bg-brand-primary-pressed transition-colors mt-1" onclick="hideModal('pin-modal'); showToast('Kode OTP dikirimkan ke WhatsApp Anda');" type="button">
+        Kirim Tautan Verifikasi OTP
+      </button>
+</div>
+</div>
+<script>
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      if (!toast || !toastMsg) return;
+      toastMsg.textContent = msg;
+      toast.classList.remove('opacity-0', '-translate-y-24', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-24', 'pointer-events-none');
+      }, 2800);
+    }
+
+    function showModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+    }
+
+    function hideModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    }
+
+    function handleToggle(featureName, state) {
+      const status = state ? 'diaktifkan' : 'dinonaktifkan';
+      showToast(featureName + ' berhasil ' + status);
+    }
+
+    function triggerOtpChange(field) {
+      showToast('Kode OTP verifikasi pergantian ' + field + ' telah dikirimkan');
+    }
+
+    function terminateSingleDevice(elemId, devName) {
+      const el = document.getElementById(elemId);
+      if (el) {
+        el.classList.add('opacity-30', 'pointer-events-none');
+        setTimeout(() => {
+          el.remove();
+          showToast('Sesi ' + devName + ' berhasil diakhiri');
+        }, 250);
+      }
+    }
+
+    function confirmLogoutAll() {
+      hideModal('logout-all-modal');
+      const t = document.getElementById('device-tab');
+      const w = document.getElementById('device-web');
+      if (t) t.remove();
+      if (w) w.remove();
+      showToast('Semua perangkat lain berhasil dikeluarkan');
+    }
+  </script>
+</body></html>
